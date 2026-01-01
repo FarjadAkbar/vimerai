@@ -29,7 +29,7 @@ export default function LoginPage() {
     // Mock authentication
     setTimeout(() => {
       localStorage.setItem("user", JSON.stringify({ email: data.email }))
-      router.push("/generator")
+      router.push("/my-videos")
       setIsLoading(false)
     }, 500)
   }

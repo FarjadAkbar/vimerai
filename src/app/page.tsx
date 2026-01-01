@@ -1,25 +1,28 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import Link from "next/link"
-import { Button } from "@/components/ui/button"
-import { ArrowRight, Sparkles, Zap, BarChart3, Play } from "lucide-react"
+import { useState } from "react";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { ArrowRight, Sparkles, Zap, BarChart3, Play } from "lucide-react";
+import { ModeToggle } from "@/components/ui/darkmode";
 
 export default function LandingPage() {
-  const [hoveredCard, setHoveredCard] = useState<string | null>(null)
+  const [hoveredCard, setHoveredCard] = useState<string | null>(null);
 
   const features = [
     {
       id: "ai-powered",
       icon: Sparkles,
       title: "AI-Powered Generation",
-      description: "Turn text prompts into stunning videos using advanced AI models.",
+      description:
+        "Turn text prompts into stunning videos using advanced AI models.",
     },
     {
       id: "fast-rendering",
       icon: Zap,
       title: "Lightning Fast",
-      description: "Generate videos in minutes, not hours. Get results instantly.",
+      description:
+        "Generate videos in minutes, not hours. Get results instantly.",
     },
     {
       id: "analytics",
@@ -27,7 +30,7 @@ export default function LandingPage() {
       title: "Performance Tracking",
       description: "Monitor your video performance with detailed analytics.",
     },
-  ]
+  ];
 
   const pricingPlans = [
     {
@@ -35,7 +38,12 @@ export default function LandingPage() {
       price: "$29",
       period: "/month",
       description: "Perfect for trying out Vimerai",
-      features: ["5 video generations/month", "720p resolution", "Standard templates", "Email support"],
+      features: [
+        "5 video generations/month",
+        "720p resolution",
+        "Standard templates",
+        "Email support",
+      ],
       cta: "Get Started",
     },
     {
@@ -58,10 +66,16 @@ export default function LandingPage() {
       price: "Custom",
       period: "pricing",
       description: "For teams and agencies",
-      features: ["Unlimited generations", "8K resolution", "Custom templates", "Dedicated support", "API access"],
+      features: [
+        "Unlimited generations",
+        "8K resolution",
+        "Custom templates",
+        "Dedicated support",
+        "API access",
+      ],
       cta: "Contact Sales",
     },
-  ]
+  ];
 
   const faqs = [
     {
@@ -81,9 +95,10 @@ export default function LandingPage() {
     },
     {
       question: "Is there a free trial?",
-      answer: "Yes, all plans come with a 7-day free trial. No credit card required to get started.",
+      answer:
+        "Yes, all plans come with a 7-day free trial. No credit card required to get started.",
     },
-  ]
+  ];
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -97,13 +112,22 @@ export default function LandingPage() {
             <span className="text-xl font-bold">Vimerai</span>
           </div>
           <div className="hidden md:flex items-center gap-8">
-            <a href="#features" className="text-sm hover:text-primary transition-colors">
+            <a
+              href="#features"
+              className="text-sm hover:text-primary transition-colors"
+            >
               Features
             </a>
-            <a href="#pricing" className="text-sm hover:text-primary transition-colors">
+            <a
+              href="#pricing"
+              className="text-sm hover:text-primary transition-colors"
+            >
               Pricing
             </a>
-            <a href="#faq" className="text-sm hover:text-primary transition-colors">
+            <a
+              href="#faq"
+              className="text-sm hover:text-primary transition-colors"
+            >
               FAQ
             </a>
           </div>
@@ -118,6 +142,7 @@ export default function LandingPage() {
                 Get Started
               </Button>
             </Link>
+            <ModeToggle />
           </div>
         </div>
       </nav>
@@ -125,8 +150,10 @@ export default function LandingPage() {
       {/* Hero Section */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 md:py-32">
         <div className="text-center space-y-8">
-          <div className="inline-block px-4 py-2 bg-primary/10 border border-primary/20 rounded-full">
-            <p className="text-sm text-primary font-medium">AI Video Generation Simplified</p>
+          <div className="inline-block px-4 py-2 bg-primary/10 border border-primary/20 rounded-full">  
+            <p className="text-sm text-primary font-medium">
+              AI Video Generation Simplified
+            </p>
           </div>
 
           <h1 className="text-5xl md:text-7xl font-bold leading-tight text-balance">
@@ -134,13 +161,17 @@ export default function LandingPage() {
           </h1>
 
           <p className="text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-            Transform your ideas into stunning videos. No experience needed. No expensive software. Just describe what
-            you want and let AI bring it to life.
+            Transform your ideas into stunning videos. No experience needed. No
+            expensive software. Just describe what you want and let AI bring it
+            to life.
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
             <Link href="/signup">
-              <Button size="lg" className="bg-primary hover:bg-primary/90 gap-2">
+              <Button
+                size="lg"
+                className="bg-primary hover:bg-primary/90 gap-2"
+              >
                 Start Creating <ArrowRight className="w-4 h-4" />
               </Button>
             </Link>
@@ -151,15 +182,23 @@ export default function LandingPage() {
 
           <div className="mt-16 grid grid-cols-3 gap-8 md:gap-12 text-center border-t border-border pt-12">
             <div>
-              <p className="text-2xl md:text-3xl font-bold text-primary">50K+</p>
-              <p className="text-sm text-muted-foreground mt-2">Videos Generated</p>
+              <p className="text-2xl md:text-3xl font-bold text-primary">
+                50K+
+              </p>
+              <p className="text-sm text-muted-foreground mt-2">
+                Videos Generated
+              </p>
             </div>
             <div>
-              <p className="text-2xl md:text-3xl font-bold text-primary">1000+</p>
+              <p className="text-2xl md:text-3xl font-bold text-primary">
+                1000+
+              </p>
               <p className="text-sm text-muted-foreground mt-2">Active Users</p>
             </div>
             <div>
-              <p className="text-2xl md:text-3xl font-bold text-primary">99.9%</p>
+              <p className="text-2xl md:text-3xl font-bold text-primary">
+                99.9%
+              </p>
               <p className="text-sm text-muted-foreground mt-2">Uptime SLA</p>
             </div>
           </div>
@@ -167,15 +206,22 @@ export default function LandingPage() {
       </section>
 
       {/* Features Section */}
-      <section id="features" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 border-t border-border">
+      <section
+        id="features"
+        className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 border-t border-border"
+      >
         <div className="text-center mb-16">
-          <h2 className="text-4xl md:text-5xl font-bold mb-4">Powerful Features</h2>
-          <p className="text-lg text-muted-foreground">Everything you need to create professional videos</p>
+          <h2 className="text-4xl md:text-5xl font-bold mb-4">
+            Powerful Features
+          </h2>
+          <p className="text-lg text-muted-foreground">
+            Everything you need to create professional videos
+          </p>
         </div>
 
         <div className="grid md:grid-cols-3 gap-8">
           {features.map((feature) => {
-            const Icon = feature.icon
+            const Icon = feature.icon;
             return (
               <div
                 key={feature.id}
@@ -187,16 +233,23 @@ export default function LandingPage() {
                 <h3 className="text-xl font-semibold mb-3">{feature.title}</h3>
                 <p className="text-muted-foreground">{feature.description}</p>
               </div>
-            )
+            );
           })}
         </div>
       </section>
 
       {/* Pricing Section */}
-      <section id="pricing" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 border-t border-border">
+      <section
+        id="pricing"
+        className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 border-t border-border"
+      >
         <div className="text-center mb-16">
-          <h2 className="text-4xl md:text-5xl font-bold mb-4">Simple, Transparent Pricing</h2>
-          <p className="text-lg text-muted-foreground">Choose the plan that fits your needs</p>
+          <h2 className="text-4xl md:text-5xl font-bold mb-4">
+            Simple, Transparent Pricing
+          </h2>
+          <p className="text-lg text-muted-foreground">
+            Choose the plan that fits your needs
+          </p>
         </div>
 
         <div className="grid md:grid-cols-3 gap-8">
@@ -210,7 +263,9 @@ export default function LandingPage() {
               } p-8`}
             >
               <h3 className="text-2xl font-bold mb-2">{plan.name}</h3>
-              <p className="text-muted-foreground text-sm mb-6">{plan.description}</p>
+              <p className="text-muted-foreground text-sm mb-6">
+                {plan.description}
+              </p>
               <div className="mb-6">
                 <span className="text-4xl font-bold">{plan.price}</span>
                 <span className="text-muted-foreground">/{plan.period}</span>
@@ -223,7 +278,10 @@ export default function LandingPage() {
                   </li>
                 ))}
               </ul>
-              <Button className="w-full" variant={plan.featured ? "default" : "outline"}>
+              <Button
+                className="w-full"
+                variant={plan.featured ? "default" : "outline"}
+              >
                 {plan.cta}
               </Button>
             </div>
@@ -232,15 +290,25 @@ export default function LandingPage() {
       </section>
 
       {/* FAQ Section */}
-      <section id="faq" className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-20 border-t border-border">
+      <section
+        id="faq"
+        className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-20 border-t border-border"
+      >
         <div className="text-center mb-16">
-          <h2 className="text-4xl md:text-5xl font-bold mb-4">Frequently Asked Questions</h2>
-          <p className="text-lg text-muted-foreground">Have a question? We have answers.</p>
+          <h2 className="text-4xl md:text-5xl font-bold mb-4">
+            Frequently Asked Questions
+          </h2>
+          <p className="text-lg text-muted-foreground">
+            Have a question? We have answers.
+          </p>
         </div>
 
         <div className="space-y-6">
           {faqs.map((faq, idx) => (
-            <div key={idx} className="p-6 rounded-xl border border-border hover:border-primary/50 transition-all">
+            <div
+              key={idx}
+              className="p-6 rounded-xl border border-border hover:border-primary/50 transition-all"
+            >
               <h3 className="text-lg font-semibold mb-3">{faq.question}</h3>
               <p className="text-muted-foreground">{faq.answer}</p>
             </div>
@@ -250,9 +318,12 @@ export default function LandingPage() {
 
       {/* CTA Section */}
       <section className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-20 border-t border-border text-center">
-        <h2 className="text-4xl md:text-5xl font-bold mb-6">Ready to Create?</h2>
+        <h2 className="text-4xl md:text-5xl font-bold mb-6">
+          Ready to Create?
+        </h2>
         <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
-          Join thousands of creators using Vimerai to bring their visions to life.
+          Join thousands of creators using Vimerai to bring their visions to
+          life.
         </p>
         <Link href="/signup">
           <Button size="lg" className="bg-primary hover:bg-primary/90 gap-2">
@@ -272,7 +343,9 @@ export default function LandingPage() {
                 </div>
                 <span className="font-bold">Vimerai</span>
               </div>
-              <p className="text-sm text-muted-foreground">Create stunning videos with AI</p>
+              <p className="text-sm text-muted-foreground">
+                Create stunning videos with AI
+              </p>
             </div>
             <div>
               <h4 className="font-semibold mb-4">Product</h4>
@@ -347,5 +420,5 @@ export default function LandingPage() {
         </div>
       </footer>
     </div>
-  )
+  );
 }
