@@ -108,10 +108,7 @@ export class AuthService implements IAuthService {
     resetExpires.setHours(resetExpires.getHours() + 1); // 1 hour expiry
 
     // Update user with reset token
-    const updatedUser = user.updatePasswordResetToken(
-      resetToken,
-      resetExpires,
-    );
+    const updatedUser = user.updatePasswordResetToken(resetToken, resetExpires);
     await this.userRepository.updateUser(updatedUser);
 
     // In a real application, you would send an email here with the reset token
@@ -137,4 +134,3 @@ export class AuthService implements IAuthService {
     await this.userRepository.updateUser(updatedUser);
   }
 }
-
