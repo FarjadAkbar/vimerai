@@ -15,7 +15,7 @@ export const useSignup = () => {
       apiClient.setToken(response.token);
       localStorage.setItem('user', JSON.stringify(response.user));
       queryClient.setQueryData(['user'], response.user);
-      router.push('/my-videos');
+      router.push('/dashboard/my-videos');
     },
   });
 };
@@ -31,7 +31,7 @@ export const useLogin = () => {
       apiClient.setToken(response.token);
       localStorage.setItem('user', JSON.stringify(response.user));
       queryClient.setQueryData(['user'], response.user);
-      router.push('/my-videos');
+      router.push('/dashboard/my-videos');
     },
   });
 };

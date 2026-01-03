@@ -1,8 +1,6 @@
 "use client"
 
-import { useState } from "react"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Button } from "@/components/ui/button"
@@ -13,7 +11,6 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { useLogin } from "@/lib/hooks/use-auth"
 
 export default function LoginPage() {
-  const router = useRouter()
   const login = useLogin()
 
   const form = useForm<LoginInput>({
@@ -26,8 +23,8 @@ export default function LoginPage() {
 
   const onSubmit = async (data: LoginInput) => {
     login.mutate(data, {
-      onError: (error: any) => {
-        const message = error?.response?.data?.message || "Login failed. Please try again."
+      onError: (error: unknown) => {
+        const message = (error as { response?: { data?: { message?: string } } })?.response?.data?.message || "Login failed. Please try again."
         form.setError("root", { message })
       },
     })
@@ -111,7 +108,7 @@ export default function LoginPage() {
         </Form>
 
         <p className="text-center text-sm text-muted-foreground">
-          Don't have an account?{" "}
+          Don&apos;t have an account?{" "}
           <Link href="/signup" className="text-primary hover:underline">
             Sign up
           </Link>

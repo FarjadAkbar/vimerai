@@ -49,9 +49,14 @@ export const promptTemplateSchema = z.object({
     .max(2000, "Template must be less than 2000 characters"),
 })
 
+export const updateUserSchema = z.object({
+  email: z.string().email("Invalid email address").optional(),
+})
+
 export type LoginInput = z.infer<typeof loginSchema>
 export type SignupInput = z.infer<typeof signupSchema>
 export type PasswordResetRequestInput = z.infer<typeof passwordResetRequestSchema>
 export type PasswordResetInput = z.infer<typeof passwordResetSchema>
 export type GenerateVideoInput = z.infer<typeof generateVideoSchema>
 export type PromptTemplateInput = z.infer<typeof promptTemplateSchema>
+export type UpdateUserInput = z.infer<typeof updateUserSchema>

@@ -1,13 +1,12 @@
 "use client"
 
-import type React from "react"
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Button } from "@/components/ui/button"
-import { Sparkles, ArrowLeft, Wand2, Clock, Download, AlertCircle } from "lucide-react"
+import { ArrowLeft, Wand2, Clock, AlertCircle, Zap, Film, Users } from "lucide-react"
 import { generateVideoSchema, type GenerateVideoInput } from "@/lib/auth/schema"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Textarea } from "@/components/ui/textarea"
@@ -39,8 +38,7 @@ export default function GeneratorPage() {
 
   useEffect(() => {
     if (statusData?.status === "completed" && statusData.videoUrl) {
-      // Video generation completed
-      router.push("/my-videos")
+      router.push("/dashboard/my-videos")
     }
   }, [statusData, router])
 
@@ -51,9 +49,9 @@ export default function GeneratorPage() {
         onSuccess: (response) => {
           setJobId(response.jobId)
         },
-        onError: (error: any) => {
+        onError: (error: unknown) => {
           const message =
-            error?.response?.data?.message ||
+            (error as { response?: { data?: { message?: string } } })?.response?.data?.message ||
             "Failed to generate video. Please try again."
           form.setError("root", { message })
         },
@@ -79,45 +77,72 @@ export default function GeneratorPage() {
   const isGenerating = generateVideo.isPending || (jobId && statusData?.status !== "completed" && statusData?.status !== "failed")
   const canGenerate = subscription ? subscription.videosRemaining > 0 : false
 
-  return (
-    <div className="min-h-screen bg-background">
-      {/* Navigation */}
-      <nav className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-              <Sparkles className="w-5 h-5 text-primary-foreground" />
-            </div>
-            <span className="text-xl font-bold">Vimerai</span>
-          </div>
-          <Link href="/my-videos">
-            <Button variant="outline" className="gap-2 bg-transparent">
-              <ArrowLeft className="w-4 h-4" /> Back to My Videos
-            </Button>
-          </Link>
-        </div>
-      </nav>
+  const modes = [
+    {
+      value: "fast",
+      label: "Fast Mode",
+      description: "Perfect for social media. 2-5 min generation.",
+      icon: Zap,
+      color: "text-yellow-500",
+      bgColor: "bg-yellow-500/10",
+    },
+    {
+      value: "cinematic",
+      label: "Cinematic Mode",
+      description: "Premium quality. 4K-8K resolution.",
+      icon: Film,
+      color: "text-purple-500",
+      bgColor: "bg-purple-500/10",
+    },
+    {
+      value: "avatar",
+      label: "Avatar Mode",
+      description: "AI-powered avatars. Coming soon.",
+      icon: Users,
+      color: "text-blue-500",
+      bgColor: "bg-blue-500/10",
+      disabled: true,
+    },
+  ]
 
-      {/* Main Content */}
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="mb-12">
+  return (
+    <div className="w-full">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        {/* Header */}
+        <div className="mb-8">
+          <Link href="/dashboard" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground mb-4">
+            <ArrowLeft className="w-4 h-4" /> Back to Dashboard
+          </Link>
           <h1 className="text-4xl font-bold mb-2">Create Your Video</h1>
           <p className="text-muted-foreground">
             Describe what you want and our AI will bring it to life
           </p>
           {subscription && (
-            <p className="text-sm text-muted-foreground mt-2">
-              Videos remaining: {subscription.videosRemaining} / {subscription.limit}
-            </p>
+            <div className="mt-4 flex items-center gap-2 text-sm">
+              <span className="text-muted-foreground">Videos remaining:</span>
+              <span className="font-semibold text-primary">
+                {subscription.videosRemaining} / {subscription.limit}
+              </span>
+            </div>
           )}
         </div>
 
         {!canGenerate && (
           <div className="mb-6 p-4 bg-destructive/10 border border-destructive/20 rounded-lg flex items-center gap-2">
             <AlertCircle className="w-5 h-5 text-destructive" />
-            <p className="text-sm text-destructive">
-              You've reached your video generation limit. Please upgrade your plan.
-            </p>
+            <div className="flex-1">
+              <p className="text-sm font-medium text-destructive">
+                You&apos;ve reached your video generation limit
+              </p>
+              <p className="text-xs text-destructive/80 mt-1">
+                Please upgrade your plan to continue generating videos.
+              </p>
+            </div>
+            <Link href="/pricing">
+              <Button size="sm" variant="outline">
+                Upgrade
+              </Button>
+            </Link>
           </div>
         )}
 
@@ -159,15 +184,27 @@ export default function GeneratorPage() {
                 <FormItem>
                   <FormLabel>Generation Mode</FormLabel>
                   <FormControl>
-                    <select
-                      {...field}
-                      className="w-full px-4 py-3 bg-card border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-foreground"
-                      disabled={isGenerating || !canGenerate}
-                    >
-                      <option value="fast">Fast Mode</option>
-                      <option value="cinematic">Cinematic Mode</option>
-                      <option value="avatar">Avatar Mode</option>
-                    </select>
+                    <div className="grid md:grid-cols-3 gap-4">
+                      {modes.map((mode) => (
+                        <button
+                          key={mode.value}
+                          type="button"
+                          onClick={() => !mode.disabled && field.onChange(mode.value)}
+                          disabled={mode.disabled || isGenerating || !canGenerate}
+                          className={`p-4 rounded-xl border-2 transition-all text-left ${
+                            field.value === mode.value
+                              ? "border-primary bg-primary/5"
+                              : "border-border hover:border-primary/50"
+                          } ${mode.disabled ? "opacity-50 cursor-not-allowed" : ""}`}
+                        >
+                          <div className={`w-10 h-10 ${mode.bgColor} rounded-lg flex items-center justify-center mb-3`}>
+                            <mode.icon className={`w-5 h-5 ${mode.color}`} />
+                          </div>
+                          <h3 className="font-semibold mb-1">{mode.label}</h3>
+                          <p className="text-xs text-muted-foreground">{mode.description}</p>
+                        </button>
+                      ))}
+                    </div>
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -210,3 +247,4 @@ export default function GeneratorPage() {
     </div>
   )
 }
+
