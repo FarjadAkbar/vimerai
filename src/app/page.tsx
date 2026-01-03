@@ -5,6 +5,9 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Sparkles, Zap, BarChart3, Play } from "lucide-react";
 import { ModeToggle } from "@/components/ui/darkmode";
+import { NumberTicker } from "@/components/ui/number-ticker";
+import { RainbowButton } from "@/components/ui/rainbow-button";
+import { AnimatedThemeToggler } from "@/components/ui/animated-theme-toggler"
 
 export default function LandingPage() {
   const [hoveredCard, setHoveredCard] = useState<string | null>(null);
@@ -142,7 +145,7 @@ export default function LandingPage() {
                 Get Started
               </Button>
             </Link>
-            <ModeToggle />
+            <AnimatedThemeToggler />
           </div>
         </div>
       </nav>
@@ -150,7 +153,7 @@ export default function LandingPage() {
       {/* Hero Section */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 md:py-32">
         <div className="text-center space-y-8">
-          <div className="inline-block px-4 py-2 bg-primary/10 border border-primary/20 rounded-full">  
+          <div className="inline-block px-4 py-2 bg-primary/10 border border-primary/20 rounded-full">
             <p className="text-sm text-primary font-medium">
               AI Video Generation Simplified
             </p>
@@ -168,37 +171,47 @@ export default function LandingPage() {
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
             <Link href="/signup">
-              <Button
-                size="lg"
-                className="bg-primary hover:bg-primary/90 gap-2"
-              >
+              <RainbowButton variant="outline" size={"lg"}>
                 Start Creating <ArrowRight className="w-4 h-4" />
-              </Button>
+              </RainbowButton>
             </Link>
-            <button className="px-6 py-3 rounded-lg border border-primary/30 hover:border-primary/60 text-foreground hover:bg-primary/5 transition-all flex items-center gap-2">
+            <RainbowButton className="bg-white" size={"lg"}>
               <Play className="w-4 h-4" /> Watch Demo
-            </button>
+            </RainbowButton>
           </div>
 
           <div className="mt-16 grid grid-cols-3 gap-8 md:gap-12 text-center border-t border-border pt-12">
             <div>
-              <p className="text-2xl md:text-3xl font-bold text-primary">
-                50K+
-              </p>
+              <NumberTicker
+                value={50}
+                className="text-5xl font-medium tracking-tighter text-black dark:text-white"
+              />
+              <span className="text-5xl font-medium text-black dark:text-white">
+                K+
+              </span>
               <p className="text-sm text-muted-foreground mt-2">
                 Videos Generated
               </p>
             </div>
             <div>
-              <p className="text-2xl md:text-3xl font-bold text-primary">
-                1000+
-              </p>
+              <NumberTicker
+                value={1000}
+                className="text-5xl font-medium tracking-tighter text-black dark:text-white"
+              />
+              <span className="text-5xl font-medium text-black dark:text-white">
+                +
+              </span>
               <p className="text-sm text-muted-foreground mt-2">Active Users</p>
             </div>
             <div>
-              <p className="text-2xl md:text-3xl font-bold text-primary">
-                99.9%
-              </p>
+              <NumberTicker
+                value={99.9}
+                decimalPlaces={1}
+                className="text-5xl font-medium tracking-tighter text-black dark:text-white"
+              />
+              <span className="text-5xl font-medium text-black dark:text-white">
+                %
+              </span>
               <p className="text-sm text-muted-foreground mt-2">Uptime SLA</p>
             </div>
           </div>
