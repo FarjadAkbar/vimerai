@@ -1,5 +1,15 @@
-import { Controller, Get, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  UseGuards,
+  ValidationPipe,
+  HttpCode,
+  HttpStatus,
+} from '@nestjs/common';
 import { SubscriptionService } from './subscription.service';
+import { CreateCheckoutDto } from './dto/create-checkout.dto';
 import { JwtAuthGuard } from '@/infrastructure/auth/jwt-auth.guard';
 import { CurrentUser } from '@/infrastructure/auth/current-user.decorator';
 
@@ -16,6 +26,29 @@ export class SubscriptionController {
   @Get('usage')
   async getUsage(@CurrentUser() user: { userId: string }) {
     return this.subscriptionService.getUsage(user.userId);
+  }
+
+  @Post('checkout')
+  @HttpCode(HttpStatus.OK)
+  async createCheckout(
+    @CurrentUser() user: { userId: string },
+    @Body(ValidationPipe) dto: CreateCheckoutDto,
+  ) {
+    return this.subscriptionService.createCheckoutSession(
+      user.userId,
+      dto.plan,
+      dto.successUrl,
+      dto.cancelUrl,
+    );
+  }
+
+  @Post('portal')
+  @HttpCode(HttpStatus.OK)
+  async createPortal(
+    @CurrentUser() user: { userId: string },
+    @Body('returnUrl') returnUrl: string,
+  ) {
+    return this.subscriptionService.createPortalSession(user.userId, returnUrl);
   }
 }
 
@@ -48,4 +81,3 @@ export class SubscriptionPublicController {
     };
   }
 }
-

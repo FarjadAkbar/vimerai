@@ -6,9 +6,7 @@ import { Subscription } from '@/domain/subscription.entity';
 import { SubscriptionEntity } from '../entities/subscription.entity';
 
 @Injectable()
-export class TypeOrmSubscriptionRepository
-  implements ISubscriptionRepository
-{
+export class TypeOrmSubscriptionRepository implements ISubscriptionRepository {
   constructor(
     @InjectRepository(SubscriptionEntity)
     private readonly repository: Repository<SubscriptionEntity>,
@@ -19,9 +17,7 @@ export class TypeOrmSubscriptionRepository
     await this.repository.save(entity);
   }
 
-  async getSubscriptionByUserId(
-    userId: string,
-  ): Promise<Subscription | null> {
+  async getSubscriptionByUserId(userId: string): Promise<Subscription | null> {
     const entity = await this.repository.findOne({ where: { userId } });
     return entity ? SubscriptionEntity.toDomain(entity) : null;
   }
@@ -31,4 +27,3 @@ export class TypeOrmSubscriptionRepository
     await this.repository.save(entity);
   }
 }
-

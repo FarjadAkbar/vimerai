@@ -1,55 +1,83 @@
 "use client"
 
 import type React from "react"
-
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
+import { useForm } from "react-hook-form"
+import { zodResolver } from "@hookform/resolvers/zod"
 import { Button } from "@/components/ui/button"
-import { Sparkles, ArrowLeft, Wand2, Clock, Download } from "lucide-react"
-import type { User, GeneratedVideo } from "@/types"
+import { Sparkles, ArrowLeft, Wand2, Clock, Download, AlertCircle } from "lucide-react"
+import { generateVideoSchema, type GenerateVideoInput } from "@/lib/auth/schema"
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
+import { Textarea } from "@/components/ui/textarea"
+import { useUser } from "@/lib/hooks/use-user"
+import { useGenerateVideo, useGenerationStatus } from "@/lib/hooks/use-generator"
+import { useCurrentSubscription } from "@/lib/hooks/use-subscription"
 
 export default function GeneratorPage() {
   const router = useRouter()
-  const [user, setUser] = useState<User | null>(null)
-  const [prompt, setPrompt] = useState("")
-  const [isGenerating, setIsGenerating] = useState(false)
-  const [generatedVideo, setGeneratedVideo] = useState<GeneratedVideo | null>(null)
+  const { data: userData, isLoading: userLoading } = useUser()
+  const { data: subscription } = useCurrentSubscription()
+  const generateVideo = useGenerateVideo()
+  const [jobId, setJobId] = useState<string | null>(null)
+  const { data: statusData } = useGenerationStatus(jobId, !!jobId)
+
+  const form = useForm<GenerateVideoInput>({
+    resolver: zodResolver(generateVideoSchema),
+    defaultValues: {
+      prompt: "",
+      mode: "fast",
+    },
+  })
 
   useEffect(() => {
-    const userData = localStorage.getItem("user")
-    if (!userData) {
+    if (!userLoading && !userData) {
       router.push("/login")
-    } else {
-      setUser(JSON.parse(userData))
     }
-  }, [router])
+  }, [userData, userLoading, router])
 
-  const handleGenerate = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!prompt.trim()) return
+  useEffect(() => {
+    if (statusData?.status === "completed" && statusData.videoUrl) {
+      // Video generation completed
+      router.push("/my-videos")
+    }
+  }, [statusData, router])
 
-    setIsGenerating(true)
-
-    setTimeout(() => {
-      setGeneratedVideo({
-        id: Date.now().toString(),
-        title: prompt.substring(0, 50),
-      })
-      setIsGenerating(false)
-    }, 2000)
+  const onSubmit = async (data: GenerateVideoInput) => {
+    generateVideo.mutate(
+      { prompt: data.prompt, mode: data.mode },
+      {
+        onSuccess: (response) => {
+          setJobId(response.jobId)
+        },
+        onError: (error: any) => {
+          const message =
+            error?.response?.data?.message ||
+            "Failed to generate video. Please try again."
+          form.setError("root", { message })
+        },
+      },
+    )
   }
 
-  const handleEditVideo = () => {
-    if (generatedVideo) {
-      localStorage.setItem("videoToEdit", JSON.stringify(generatedVideo))
-      router.push(`/editor/${generatedVideo.id}`)
-    }
+  if (userLoading) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <Clock className="w-8 h-8 animate-spin mx-auto mb-4" />
+          <p className="text-muted-foreground">Loading...</p>
+        </div>
+      </div>
+    )
   }
 
-  if (!user) {
+  if (!userData) {
     return null
   }
+
+  const isGenerating = generateVideo.isPending || (jobId && statusData?.status !== "completed" && statusData?.status !== "failed")
+  const canGenerate = subscription ? subscription.videosRemaining > 0 : false
 
   return (
     <div className="min-h-screen bg-background">
@@ -74,51 +102,97 @@ export default function GeneratorPage() {
       <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="mb-12">
           <h1 className="text-4xl font-bold mb-2">Create Your Video</h1>
-          <p className="text-muted-foreground">Describe what you want and our AI will bring it to life</p>
+          <p className="text-muted-foreground">
+            Describe what you want and our AI will bring it to life
+          </p>
+          {subscription && (
+            <p className="text-sm text-muted-foreground mt-2">
+              Videos remaining: {subscription.videosRemaining} / {subscription.limit}
+            </p>
+          )}
         </div>
 
-        {!generatedVideo ? (
-          <form onSubmit={handleGenerate} className="space-y-6">
-            <div>
-              <label className="block text-sm font-medium mb-3">Video Description</label>
-              <textarea
-                placeholder="E.g., A professional product launch video for a new smartphone showing features like camera, battery life, and design..."
-                value={prompt}
-                onChange={(e) => setPrompt(e.target.value)}
-                className="w-full h-32 px-4 py-3 bg-card border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-foreground"
-              />
-              <p className="text-xs text-muted-foreground mt-2">Be as detailed as possible for best results</p>
-            </div>
+        {!canGenerate && (
+          <div className="mb-6 p-4 bg-destructive/10 border border-destructive/20 rounded-lg flex items-center gap-2">
+            <AlertCircle className="w-5 h-5 text-destructive" />
+            <p className="text-sm text-destructive">
+              You've reached your video generation limit. Please upgrade your plan.
+            </p>
+          </div>
+        )}
 
-            <div className="grid md:grid-cols-2 gap-6">
-              <div>
-                <label className="block text-sm font-medium mb-3">Video Length</label>
-                <select className="w-full px-4 py-3 bg-card border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-foreground">
-                  <option>15 seconds</option>
-                  <option>30 seconds</option>
-                  <option>1 minute</option>
-                  <option>2 minutes</option>
-                  <option>5 minutes</option>
-                </select>
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            {form.formState.errors.root && (
+              <div className="flex items-center gap-2 p-3 text-sm text-destructive bg-destructive/10 rounded-md">
+                <AlertCircle className="h-4 w-4" />
+                <span>{form.formState.errors.root.message}</span>
               </div>
+            )}
 
-              <div>
-                <label className="block text-sm font-medium mb-3">Style</label>
-                <select className="w-full px-4 py-3 bg-card border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-foreground">
-                  <option>Professional</option>
-                  <option>Cinematic</option>
-                  <option>Casual</option>
-                  <option>Animated</option>
-                  <option>Minimalist</option>
-                </select>
+            <FormField
+              control={form.control}
+              name="prompt"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Video Description</FormLabel>
+                  <FormControl>
+                    <Textarea
+                      placeholder="E.g., A professional product launch video for a new smartphone showing features like camera, battery life, and design..."
+                      className="min-h-32"
+                      {...field}
+                      disabled={isGenerating || !canGenerate}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                  <p className="text-xs text-muted-foreground">
+                    Be as detailed as possible for best results (10-1000 characters)
+                  </p>
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="mode"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Generation Mode</FormLabel>
+                  <FormControl>
+                    <select
+                      {...field}
+                      className="w-full px-4 py-3 bg-card border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-foreground"
+                      disabled={isGenerating || !canGenerate}
+                    >
+                      <option value="fast">Fast Mode</option>
+                      <option value="cinematic">Cinematic Mode</option>
+                      <option value="avatar">Avatar Mode</option>
+                    </select>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {statusData && (
+              <div className="p-4 bg-primary/5 border border-primary/20 rounded-lg">
+                <div className="flex items-center gap-2 mb-2">
+                  <Clock className="w-4 h-4 animate-spin" />
+                  <span className="font-medium">Status: {statusData.status}</span>
+                </div>
+                {statusData.status === "processing" && (
+                  <p className="text-sm text-muted-foreground">
+                    Your video is being generated. This may take a few minutes...
+                  </p>
+                )}
               </div>
-            </div>
+            )}
 
             <Button
               type="submit"
               size="lg"
               className="w-full bg-primary hover:bg-primary/90 gap-2"
-              disabled={isGenerating || !prompt.trim()}
+              disabled={isGenerating || !canGenerate}
             >
               {isGenerating ? (
                 <>
@@ -130,51 +204,8 @@ export default function GeneratorPage() {
                 </>
               )}
             </Button>
-
-            <div className="p-4 bg-primary/5 border border-primary/20 rounded-lg">
-              <p className="text-sm text-muted-foreground">
-                This is a demo. Video generation typically takes 2-5 minutes depending on length and complexity.
-              </p>
-            </div>
           </form>
-        ) : (
-          <div className="space-y-6">
-            <div className="rounded-xl border border-border overflow-hidden">
-              <div className="aspect-video bg-gradient-to-br from-primary/30 to-primary/10 flex items-center justify-center">
-                <div className="text-center">
-                  <Sparkles className="w-16 h-16 text-primary mx-auto mb-4" />
-                  <p className="text-muted-foreground">Video Preview</p>
-                  <p className="text-sm text-muted-foreground mt-2">ID: {generatedVideo.id}</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="p-8 bg-card rounded-xl border border-border text-center">
-              <Sparkles className="w-16 h-16 text-primary mx-auto mb-4" />
-              <h2 className="text-2xl font-bold mb-2">Video Generated!</h2>
-              <p className="text-muted-foreground mb-6">Your video is ready for download and editing</p>
-              <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                <Button size="lg" className="bg-primary hover:bg-primary/90 gap-2">
-                  <Download className="w-5 h-5" /> Download
-                </Button>
-                <Button size="lg" variant="outline" onClick={handleEditVideo} className="bg-transparent">
-                  Edit Video
-                </Button>
-                <Button
-                  size="lg"
-                  variant="outline"
-                  className="bg-transparent"
-                  onClick={() => {
-                    setGeneratedVideo(null)
-                    setPrompt("")
-                  }}
-                >
-                  Create Another
-                </Button>
-              </div>
-            </div>
-          </div>
-        )}
+        </Form>
       </div>
     </div>
   )

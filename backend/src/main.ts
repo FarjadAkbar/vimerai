@@ -1,10 +1,17 @@
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { AppModule } from './app.module';
-import { serverConfig } from '@/infrastructure/config/server.config';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, {
+    rawBody: true, // Required for Stripe webhooks
+  });
+
+  const configService = app.get(ConfigService);
+  const port = configService.get<number>('server.port') || 8001;
+  const frontendUrl =
+    configService.get<string>('server.frontendUrl') || 'http://localhost:3000';
 
   // Enable global validation
   app.useGlobalPipes(
@@ -17,10 +24,10 @@ async function bootstrap() {
 
   // Enable CORS for frontend
   app.enableCors({
-    origin: serverConfig.frontendUrl,
+    origin: frontendUrl,
     credentials: true,
   });
 
-  await app.listen(serverConfig.port);
+  await app.listen(port);
 }
 void bootstrap();

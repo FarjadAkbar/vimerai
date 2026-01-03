@@ -54,4 +54,3 @@ export class TypeOrmVideoRepository implements IVideoRepository {
     await this.repository.delete(id);
   }
 }
-

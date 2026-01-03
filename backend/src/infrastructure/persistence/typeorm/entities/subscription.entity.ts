@@ -29,6 +29,12 @@ export class SubscriptionEntity {
   @Column({ default: true })
   isActive: boolean;
 
+  @Column({ nullable: true, type: 'varchar' })
+  stripeCustomerId: string | null;
+
+  @Column({ nullable: true, type: 'varchar' })
+  stripeSubscriptionId: string | null;
+
   @CreateDateColumn()
   createdAt: Date;
 
@@ -43,6 +49,8 @@ export class SubscriptionEntity {
       entity.videosUsed,
       entity.videosLimit,
       entity.isActive,
+      entity.stripeCustomerId,
+      entity.stripeSubscriptionId,
       entity.createdAt,
       entity.updatedAt,
     );
@@ -56,9 +64,10 @@ export class SubscriptionEntity {
     entity.videosUsed = domain.videosUsed;
     entity.videosLimit = domain.videosLimit;
     entity.isActive = domain.isActive;
+    entity.stripeCustomerId = domain.stripeCustomerId;
+    entity.stripeSubscriptionId = domain.stripeSubscriptionId;
     if (domain.createdAt) entity.createdAt = domain.createdAt;
     if (domain.updatedAt) entity.updatedAt = domain.updatedAt;
     return entity;
   }
 }
-

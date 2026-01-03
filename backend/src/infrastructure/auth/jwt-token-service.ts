@@ -30,4 +30,3 @@ export class JwtTokenService implements ITokenService {
     return crypto.randomBytes(32).toString('hex');
   }
 }
-

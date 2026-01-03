@@ -12,4 +12,3 @@ export interface IVideoRepository {
   updateVideo(video: Video): Promise<void>;
   deleteVideo(id: string): Promise<void>;
 }
-

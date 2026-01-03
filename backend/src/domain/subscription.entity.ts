@@ -12,6 +12,8 @@ export class Subscription {
     public readonly videosUsed: number,
     public readonly videosLimit: number,
     public readonly isActive: boolean,
+    public readonly stripeCustomerId: string | null,
+    public readonly stripeSubscriptionId: string | null,
     public readonly createdAt: Date,
     public readonly updatedAt: Date,
   ) {}
@@ -21,6 +23,8 @@ export class Subscription {
     userId: string,
     plan: SubscriptionPlan,
     videosLimit: number,
+    stripeCustomerId?: string | null,
+    stripeSubscriptionId?: string | null,
   ): Subscription {
     const now = new Date();
     return new Subscription(
@@ -30,6 +34,8 @@ export class Subscription {
       0,
       videosLimit,
       true,
+      stripeCustomerId || null,
+      stripeSubscriptionId || null,
       now,
       now,
     );
@@ -43,6 +49,8 @@ export class Subscription {
       this.videosUsed + 1,
       this.videosLimit,
       this.isActive,
+      this.stripeCustomerId,
+      this.stripeSubscriptionId,
       this.createdAt,
       new Date(),
     );
@@ -56,6 +64,41 @@ export class Subscription {
       this.videosUsed,
       videosLimit,
       this.isActive,
+      this.stripeCustomerId,
+      this.stripeSubscriptionId,
+      this.createdAt,
+      new Date(),
+    );
+  }
+
+  updateStripeIds(
+    customerId: string | null,
+    subscriptionId: string | null,
+  ): Subscription {
+    return new Subscription(
+      this.id,
+      this.userId,
+      this.plan,
+      this.videosUsed,
+      this.videosLimit,
+      this.isActive,
+      customerId,
+      subscriptionId,
+      this.createdAt,
+      new Date(),
+    );
+  }
+
+  updateActiveStatus(isActive: boolean): Subscription {
+    return new Subscription(
+      this.id,
+      this.userId,
+      this.plan,
+      this.videosUsed,
+      this.videosLimit,
+      isActive,
+      this.stripeCustomerId,
+      this.stripeSubscriptionId,
       this.createdAt,
       new Date(),
     );
@@ -69,4 +112,3 @@ export class Subscription {
     return Math.max(0, this.videosLimit - this.videosUsed);
   }
 }
-

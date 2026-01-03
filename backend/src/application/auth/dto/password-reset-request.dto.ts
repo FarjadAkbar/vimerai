@@ -4,4 +4,3 @@ export class PasswordResetRequestDto {
   @IsEmail()
   email: string;
 }
-

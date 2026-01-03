@@ -43,4 +43,3 @@ export class GeneratorController {
     return this.generatorService.getGenerationStatus(jobId);
   }
 }
-

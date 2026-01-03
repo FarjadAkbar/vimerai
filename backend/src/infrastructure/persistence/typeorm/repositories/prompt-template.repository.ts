@@ -6,9 +6,7 @@ import { PromptTemplate } from '@/domain/prompt-template.entity';
 import { PromptTemplateEntity } from '../entities/prompt-template.entity';
 
 @Injectable()
-export class TypeOrmPromptTemplateRepository
-  implements IPromptTemplateRepository
-{
+export class TypeOrmPromptTemplateRepository implements IPromptTemplateRepository {
   constructor(
     @InjectRepository(PromptTemplateEntity)
     private readonly repository: Repository<PromptTemplateEntity>,
@@ -41,4 +39,3 @@ export class TypeOrmPromptTemplateRepository
     await this.repository.delete(id);
   }
 }
-

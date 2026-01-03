@@ -28,10 +28,7 @@ export class User {
     );
   }
 
-  updatePasswordResetToken(
-    token: string | null,
-    expiresAt: Date | null,
-  ): User {
+  updatePasswordResetToken(token: string | null, expiresAt: Date | null): User {
     return new User(
       this.id,
       this.email,
@@ -55,4 +52,3 @@ export class User {
     );
   }
 }
-

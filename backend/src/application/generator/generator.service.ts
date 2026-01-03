@@ -10,8 +10,9 @@ import {
   GenerateVideoDto,
   GeneratePreviewDto,
 } from '@/core/ports/generator.service';
-import { IVideoRepository } from '@/core/ports/video.repository';
-import { ISubscriptionService } from '@/core/ports/subscription.service';
+import type { IVideoRepository } from '@/core/ports/video.repository';
+import type { ISubscriptionService } from '@/core/ports/subscription.service';
+import type { IVideoGenerationProvider } from '@/core/ports/video-generation.provider';
 import { Video, GenerationMode, VideoStatus } from '@/domain/video.entity';
 
 @Injectable()
@@ -21,6 +22,8 @@ export class GeneratorService implements IGeneratorService {
     private readonly videoRepository: IVideoRepository,
     @Inject('ISubscriptionService')
     private readonly subscriptionService: ISubscriptionService,
+    @Inject('IVideoGenerationProvider')
+    private readonly videoGenerationProvider: IVideoGenerationProvider,
   ) {}
 
   async generateVideo(
@@ -36,27 +39,51 @@ export class GeneratorService implements IGeneratorService {
     const jobId = uuidv4();
     const mode = (dto.mode as GenerationMode) || GenerationMode.FAST;
 
-    const video = Video.create(
-      uuidv4(),
-      userId,
-      dto.prompt,
-      mode,
-      jobId,
-    );
+    const video = Video.create(uuidv4(), userId, dto.prompt, mode, jobId);
 
     await this.videoRepository.createVideo(video);
 
-    // Record usage
-    await this.subscriptionService.recordVideoGeneration(userId);
+    // Generate video using provider (Sora)
+    try {
+      const generationResult = await this.videoGenerationProvider.generateVideo(
+        {
+          prompt: dto.prompt,
+          mode,
+        },
+      );
 
-    // Mock: In Phase 1, immediately mark as completed with mock URL
-    const completedVideo = video.updateStatus(
-      VideoStatus.COMPLETED,
-      `https://mock-video-url.com/${jobId}.mp4`,
-    );
-    await this.videoRepository.updateVideo(completedVideo);
+      // Update video with generation result
+      const statusMap: Record<string, VideoStatus> = {
+        pending: VideoStatus.PENDING,
+        processing: VideoStatus.PROCESSING,
+        completed: VideoStatus.COMPLETED,
+        failed: VideoStatus.FAILED,
+      };
 
-    return { jobId, status: 'pending' };
+      const updatedVideo = video.updateStatus(
+        statusMap[generationResult.status] || VideoStatus.PENDING,
+        generationResult.videoUrl || null,
+      );
+
+      await this.videoRepository.updateVideo(updatedVideo);
+
+      // Only record usage if generation was successful
+      if (generationResult.status === 'completed') {
+        await this.subscriptionService.recordVideoGeneration(userId);
+      }
+
+      return {
+        jobId: generationResult.jobId || jobId,
+        status: generationResult.status,
+      };
+    } catch (error) {
+      // If generation fails, mark video as failed
+      const failedVideo = video.updateStatus(VideoStatus.FAILED, null);
+      await this.videoRepository.updateVideo(failedVideo);
+      throw new BadRequestException(
+        `Video generation failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      );
+    }
   }
 
   async generatePreview(
@@ -80,12 +107,20 @@ export class GeneratorService implements IGeneratorService {
       jobId,
     );
 
-    const previewUrl = `https://mock-preview-url.com/${jobId}.gif`;
-    const videoWithPreview = video.updatePreviewUrl(previewUrl);
+    // Generate preview using provider
+    try {
+      const previewResult = await this.videoGenerationProvider.generatePreview(
+        dto.prompt,
+      );
+      const videoWithPreview = video.updatePreviewUrl(previewResult.previewUrl);
+      await this.videoRepository.createVideo(videoWithPreview);
 
-    await this.videoRepository.createVideo(videoWithPreview);
-
-    return { previewUrl, used: true };
+      return { previewUrl: previewResult.previewUrl, used: true };
+    } catch (error) {
+      throw new BadRequestException(
+        `Preview generation failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      );
+    }
   }
 
   async getGenerationStatus(jobId: string): Promise<{
@@ -97,10 +132,52 @@ export class GeneratorService implements IGeneratorService {
       throw new NotFoundException('Generation job not found');
     }
 
+    // If still processing, check with provider
+    if (
+      video.status === VideoStatus.PENDING ||
+      video.status === VideoStatus.PROCESSING
+    ) {
+      try {
+        const statusResult =
+          await this.videoGenerationProvider.getGenerationStatus(jobId);
+
+        // Update video status if changed
+        if (statusResult.status !== video.status) {
+          const statusMap: Record<string, VideoStatus> = {
+            pending: VideoStatus.PENDING,
+            processing: VideoStatus.PROCESSING,
+            completed: VideoStatus.COMPLETED,
+            failed: VideoStatus.FAILED,
+          };
+
+          const updatedVideo = video.updateStatus(
+            statusMap[statusResult.status] || video.status,
+            statusResult.videoUrl || null,
+          );
+          await this.videoRepository.updateVideo(updatedVideo);
+
+          // Record usage if completed
+          if (statusResult.status === 'completed') {
+            await this.subscriptionService.recordVideoGeneration(video.userId);
+          }
+        }
+
+        return {
+          status: statusResult.status,
+          videoUrl: statusResult.videoUrl,
+        };
+      } catch (error) {
+        // If status check fails, return current video status
+        return {
+          status: video.status,
+          videoUrl: video.videoUrl ?? undefined,
+        };
+      }
+    }
+
     return {
       status: video.status,
       videoUrl: video.videoUrl ?? undefined,
     };
   }
 }
-

@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { Inject } from '@nestjs/common';
-import { IUserRepository } from '@/core/ports/user.repository';
+import type { IUserRepository } from '@/core/ports/user.repository';
 import { USER_REPOSITORY_TOKEN } from '@/core/tokens/injection.tokens';
 import { UpdateUserDto } from './dto/update-user.dto';
 
@@ -41,4 +41,3 @@ export class UsersService {
     };
   }
 }
-

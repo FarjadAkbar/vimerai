@@ -16,4 +16,3 @@ import { TypeOrmVideoRepository } from '@/infrastructure/persistence/typeorm/rep
   ],
 })
 export class VideosModule {}
-

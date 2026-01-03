@@ -69,4 +69,3 @@ export class VideoEntity {
     return entity;
   }
 }
-

@@ -59,4 +59,3 @@ export class UserEntity {
     return entity;
   }
 }
-

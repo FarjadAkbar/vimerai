@@ -8,4 +8,3 @@ export interface IUserRepository {
   updateUser(user: User): Promise<void>;
   deleteUser(id: string): Promise<void>;
 }
-

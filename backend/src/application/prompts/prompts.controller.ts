@@ -54,4 +54,3 @@ export class PromptsController {
     return this.promptsService.deleteTemplate(user.userId, id);
   }
 }
-

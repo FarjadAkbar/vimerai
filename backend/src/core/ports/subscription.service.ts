@@ -14,4 +14,3 @@ export interface ISubscriptionService {
   canGenerate(userId: string): Promise<boolean>;
   recordVideoGeneration(userId: string): Promise<void>;
 }
-

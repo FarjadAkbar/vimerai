@@ -5,7 +5,7 @@ import {
 } from '@nestjs/common';
 import { Inject } from '@nestjs/common';
 import { v4 as uuidv4 } from 'uuid';
-import { IPromptTemplateRepository } from '@/core/ports/prompt-template.repository';
+import type { IPromptTemplateRepository } from '@/core/ports/prompt-template.repository';
 import { PromptTemplate } from '@/domain/prompt-template.entity';
 import { CreatePromptTemplateDto } from '../videos/dto/create-prompt-template.dto';
 import { UpdatePromptTemplateDto } from '../videos/dto/update-prompt-template.dto';
@@ -18,7 +18,8 @@ export class PromptsService {
   ) {}
 
   async getUserTemplates(userId: string) {
-    const templates = await this.templateRepository.getTemplatesByUserId(userId);
+    const templates =
+      await this.templateRepository.getTemplatesByUserId(userId);
     return { prompts: templates };
   }
 
@@ -62,4 +63,3 @@ export class PromptsService {
     return { message: 'Template deleted successfully' };
   }
 }
-

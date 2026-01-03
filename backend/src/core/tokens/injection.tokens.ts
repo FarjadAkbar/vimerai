@@ -5,4 +5,5 @@ export const VIDEO_REPOSITORY_TOKEN = 'IVideoRepository';
 export const PROMPT_TEMPLATE_REPOSITORY_TOKEN = 'IPromptTemplateRepository';
 export const SUBSCRIPTION_REPOSITORY_TOKEN = 'ISubscriptionRepository';
 export const SUBSCRIPTION_SERVICE_TOKEN = 'ISubscriptionService';
-
+export const PAYMENT_SERVICE_TOKEN = 'IPaymentService';
+export const VIDEO_GENERATION_PROVIDER_TOKEN = 'IVideoGenerationProvider';

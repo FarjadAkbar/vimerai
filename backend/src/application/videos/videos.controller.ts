@@ -46,4 +46,3 @@ export class VideosController {
     return this.videosService.getDownloadUrl(id);
   }
 }
-

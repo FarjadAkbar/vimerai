@@ -16,4 +16,3 @@ import { TypeOrmPromptTemplateRepository } from '@/infrastructure/persistence/ty
   ],
 })
 export class PromptsModule {}
-

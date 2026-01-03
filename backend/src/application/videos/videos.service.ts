@@ -4,7 +4,7 @@ import {
   ForbiddenException,
 } from '@nestjs/common';
 import { Inject } from '@nestjs/common';
-import { IVideoRepository } from '@/core/ports/video.repository';
+import type { IVideoRepository } from '@/core/ports/video.repository';
 
 @Injectable()
 export class VideosService {
@@ -47,4 +47,3 @@ export class VideosService {
     };
   }
 }
-

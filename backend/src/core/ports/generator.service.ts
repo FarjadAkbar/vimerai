@@ -23,4 +23,3 @@ export interface IGeneratorService {
     videoUrl?: string;
   }>;
 }
-

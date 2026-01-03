@@ -31,4 +31,3 @@ export interface IAuthService {
   requestPasswordReset(dto: PasswordResetRequestDto): Promise<void>;
   resetPassword(dto: PasswordResetDto): Promise<void>;
 }
-

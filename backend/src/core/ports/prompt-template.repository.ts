@@ -7,4 +7,3 @@ export interface IPromptTemplateRepository {
   updateTemplate(template: PromptTemplate): Promise<void>;
   deleteTemplate(id: string): Promise<void>;
 }
-

@@ -7,4 +7,3 @@ export class CreatePromptTemplateDto {
   @IsString()
   template: string;
 }
-

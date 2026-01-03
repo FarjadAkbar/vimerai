@@ -9,4 +9,3 @@ export class UpdatePromptTemplateDto {
   @IsString()
   template?: string;
 }
-

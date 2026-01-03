@@ -5,4 +5,3 @@ export interface ISubscriptionRepository {
   getSubscriptionByUserId(userId: string): Promise<Subscription | null>;
   updateSubscription(subscription: Subscription): Promise<void>;
 }
-

@@ -4,4 +4,3 @@ export class GeneratePreviewDto {
   @IsString()
   prompt: string;
 }
-

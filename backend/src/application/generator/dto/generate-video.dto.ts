@@ -9,4 +9,3 @@ export class GenerateVideoDto {
   @IsEnum(GenerationMode)
   mode?: GenerationMode;
 }
-

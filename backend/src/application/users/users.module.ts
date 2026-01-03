@@ -17,4 +17,3 @@ import { USER_REPOSITORY_TOKEN } from '@/core/tokens/injection.tokens';
   ],
 })
 export class UsersModule {}
-

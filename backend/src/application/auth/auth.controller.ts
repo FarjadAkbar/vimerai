@@ -53,4 +53,3 @@ export class AuthController {
     return { message: 'Password has been reset successfully' };
   }
 }
-

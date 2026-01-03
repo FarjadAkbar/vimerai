@@ -3,4 +3,3 @@ export interface ITokenService {
   verifyToken(token: string): { userId: string; email: string } | null;
   generateResetToken(): string;
 }
-
