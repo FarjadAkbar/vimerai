@@ -22,4 +22,5 @@ export interface IGeneratorService {
     status: string;
     videoUrl?: string;
   }>;
+  downloadVideo(videoId: string): Promise<Buffer>;
 }

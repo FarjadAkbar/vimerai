@@ -8,7 +8,9 @@ import {
   HttpCode,
   HttpStatus,
   ValidationPipe,
+  Res,
 } from '@nestjs/common';
+import type { Response } from 'express';
 import { GeneratorService } from './generator.service';
 import { GenerateVideoDto } from './dto/generate-video.dto';
 import { GeneratePreviewDto } from './dto/generate-preview.dto';
@@ -41,5 +43,16 @@ export class GeneratorController {
   @Get('status/:jobId')
   async getStatus(@Param('jobId') jobId: string) {
     return this.generatorService.getGenerationStatus(jobId);
+  }
+
+  @Get('download/:videoId')
+  async downloadVideo(
+    @Param('videoId') videoId: string,
+    @Res() res: Response,
+  ) {
+    const videoBuffer = await this.generatorService.downloadVideo(videoId);
+    res.setHeader('Content-Type', 'video/mp4');
+    res.setHeader('Content-Disposition', `attachment; filename="${videoId}.mp4"`);
+    res.send(videoBuffer);
   }
 }

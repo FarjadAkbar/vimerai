@@ -296,56 +296,6 @@ export default function LandingPage() {
     },
   ];
 
-  const videoShowcase = [
-    {
-      id: 1,
-      title: "Social Media Ad",
-      category: "Marketing",
-      thumbnail: "🎬",
-    },
-    {
-      id: 2,
-      title: "Product Demo",
-      category: "E-commerce",
-      thumbnail: "📱",
-    },
-    {
-      id: 3,
-      title: "Tutorial",
-      category: "Education",
-      thumbnail: "📚",
-    },
-    {
-      id: 4,
-      title: "Brand Story",
-      category: "Marketing",
-      thumbnail: "✨",
-    },
-    {
-      id: 5,
-      title: "Event Promo",
-      category: "Events",
-      thumbnail: "🎉",
-    },
-    {
-      id: 6,
-      title: "Testimonial",
-      category: "Marketing",
-      thumbnail: "💬",
-    },
-    {
-      id: 7,
-      title: "Explainer",
-      category: "Education",
-      thumbnail: "🎯",
-    },
-    {
-      id: 8,
-      title: "Announcement",
-      category: "Corporate",
-      thumbnail: "📢",
-    },
-  ];
 
   const faqs = [
     {
@@ -487,30 +437,19 @@ export default function LandingPage() {
             </Link>
           </div>
 
-          {/* Video Preview Placeholder with More Visual Elements */}
+          {/* Video Preview */}
           <div className="mt-16 max-w-5xl mx-auto">
             <div className="relative rounded-2xl border-2 border-border bg-card/50 backdrop-blur-sm overflow-hidden shadow-2xl">
-              <div className="aspect-video bg-gradient-to-br from-primary/20 via-purple-500/20 to-pink-500/20 relative overflow-hidden">
-                {/* Animated background elements */}
-                <div className="absolute inset-0">
-                  <div className="absolute top-10 left-10 w-32 h-32 bg-primary/10 rounded-full blur-2xl animate-pulse" />
-                  <div className="absolute bottom-10 right-10 w-40 h-40 bg-purple-500/10 rounded-full blur-2xl animate-pulse [animation-delay:1s]" />
-                </div>
-                <div className="relative h-full flex items-center justify-center">
-                  <div className="text-center space-y-4">
-                    <div className="w-24 h-24 mx-auto rounded-full bg-primary/20 flex items-center justify-center ring-4 ring-primary/20">
-                      <Play className="w-12 h-12 text-primary" />
-                    </div>
-                    <div className="space-y-2">
-                      <p className="text-base font-semibold">Video preview will appear here</p>
-                      <p className="text-xs text-muted-foreground">
-                        Watch your AI-generated video come to life
-                      </p>
-                    </div>
-                  </div>
-                </div>
+              <div className="aspect-video relative overflow-hidden bg-black">
+                <iframe
+                  className="absolute inset-0 w-full h-full"
+                  src="https://www.youtube.com/embed/dQw4w9WgXcQ?rel=0&modestbranding=1&showinfo=0&controls=1&autoplay=0"
+                  title="Watch your AI-generated video come to life"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                />
                 {/* Video controls overlay */}
-                <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/60 to-transparent">
+                <div className="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/60 to-transparent pointer-events-none">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
@@ -523,7 +462,7 @@ export default function LandingPage() {
                   </div>
                 </div>
               </div>
-              <div className="absolute top-4 right-4 px-3 py-1 bg-background/90 backdrop-blur-sm rounded-full text-xs font-medium border border-border">
+              <div className="absolute top-4 right-4 px-3 py-1 bg-background/90 backdrop-blur-sm rounded-full text-xs font-medium border border-border z-10">
                 ⚡ Generated in 3:24
               </div>
             </div>
@@ -564,68 +503,126 @@ export default function LandingPage() {
           </p>
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-          {videoShowcase.map((video) => (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+          {[
+            {
+              id: 1,
+              title: "AI Video Generation Demo",
+              category: "Tutorial",
+              videoId: "dQw4w9WgXcQ", // Replace with actual video ID
+            },
+            {
+              id: 2,
+              title: "Social Media Content",
+              category: "Marketing",
+              videoId: "jNQXAC9IVRw", // Replace with actual video ID
+            },
+            {
+              id: 3,
+              title: "Product Showcase",
+              category: "E-commerce",
+              videoId: "9bZkp7q19f0", // Replace with actual video ID
+            },
+            {
+              id: 4,
+              title: "Brand Story Video",
+              category: "Marketing",
+              videoId: "kJQP7kiw5Fk", // Replace with actual video ID
+            },
+            {
+              id: 5,
+              title: "Event Promotion",
+              category: "Events",
+              videoId: "L_jWHffIx5E", // Replace with actual video ID
+            },
+            {
+              id: 6,
+              title: "Testimonial Video",
+              category: "Marketing",
+              videoId: "fJ9rUzIMcZQ", // Replace with actual video ID
+            },
+          ].map((video) => (
             <motion.div
               key={video.id}
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.5 }}
-              className="group relative aspect-video rounded-lg border border-border overflow-hidden hover:border-primary/50 transition-all cursor-pointer"
+              className="group relative aspect-video rounded-lg border border-border overflow-hidden hover:border-primary/50 transition-all shadow-lg hover:shadow-xl"
             >
-              <div className="absolute inset-0 bg-gradient-to-br from-primary/30 via-purple-500/30 to-pink-500/30 flex items-center justify-center text-4xl">
-                {video.thumbnail}
-              </div>
-              {/* Animated overlay pattern */}
-              <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity">
-                <div className="absolute inset-0 bg-[linear-gradient(45deg,transparent_25%,rgba(255,255,255,0.1)_50%,transparent_75%)] bg-[length:20px_20px] [animation:shimmer_2s_infinite]" />
-              </div>
-              <div className="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition-colors flex items-center justify-center">
-                <motion.div
-                  initial={{ scale: 0 }}
-                  whileHover={{ scale: 1.1 }}
-                  className="w-16 h-16 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center"
-                >
-                  <Play className="w-8 h-8 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
-                </motion.div>
-              </div>
-              <div className="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black/90 via-black/70 to-transparent">
-                <p className="text-xs font-medium text-white mb-1">{video.title}</p>
+              <iframe
+                className="absolute inset-0 w-full h-full"
+                src={`https://www.youtube.com/embed/${video.videoId}?rel=0&modestbranding=1&showinfo=0`}
+                title={video.title}
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+              />
+              <div className="absolute bottom-0 left-0 right-0 p-3 bg-gradient-to-t from-black/80 via-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity">
+                <p className="text-sm font-medium text-white mb-1">{video.title}</p>
                 <p className="text-xs text-white/70">{video.category}</p>
               </div>
-              {/* Duration badge */}
-              <div className="absolute top-2 right-2 px-2 py-1 bg-black/60 backdrop-blur-sm rounded text-xs text-white font-medium">
-                <Clock className="w-3 h-3 inline mr-1" />
-                30s
-              </div>
-            </motion.div>
-          ))}
-        </div>
-
-        {/* Additional video grid for more visual content */}
-        <div className="grid grid-cols-3 md:grid-cols-6 gap-3">
-          {[...Array(6)].map((_, idx) => (
-            <motion.div
-              key={idx}
-              initial={{ opacity: 0, scale: 0.9 }}
-              whileInView={{ opacity: 1, scale: 1 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.3, delay: idx * 0.1 }}
-              className="group relative aspect-square rounded-lg border border-border overflow-hidden hover:border-primary/50 transition-all cursor-pointer"
-            >
-              <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-purple-500/20 to-pink-500/20 flex items-center justify-center text-2xl">
-                {["🎬", "📱", "✨", "🎯", "📢", "💼"][idx]}
-              </div>
-              <div className="absolute inset-0 bg-black/30 group-hover:bg-black/10 transition-colors" />
             </motion.div>
           ))}
         </div>
         </div>
       </section>
 
-      {/* Free Demo Tool Section - Like Synthesia */}
+
+      {/* Generation Modes Section */}
       <section className="w-full px-4 sm:px-6 lg:px-8 py-20 border-t border-border">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-16">
+          <h2 className="text-4xl md:text-5xl font-bold mb-4">
+            Choose Your Generation Mode
+          </h2>
+          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+            Three powerful modes to match your needs. Fast Mode is perfect for daily social media content.
+          </p>
+        </div>
+
+        <div className="grid md:grid-cols-3 gap-6 mb-8">
+          {generationModes.map((mode) => {
+            const Icon = mode.icon;
+            const isActive = activeMode === mode.id;
+            return (
+              <button
+                key={mode.id}
+                onClick={() => !mode.comingSoon && setActiveMode(mode.id as "fast" | "cinematic" | "avatar")}
+                className={`text-left p-6 rounded-xl border-2 transition-all ${
+                  isActive
+                    ? `${mode.borderColor} ${mode.bgColor} border-2`
+                    : "border-border hover:border-primary/50"
+                } ${mode.comingSoon ? "opacity-60 cursor-not-allowed" : "cursor-pointer"}`}
+              >
+                <div className="flex items-center gap-3 mb-4">
+                  <div className={`p-3 rounded-lg ${mode.bgColor}`}>
+                    <Icon className={`w-6 h-6 ${mode.color}`} />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-semibold">{mode.name}</h3>
+                    {mode.comingSoon && (
+                      <span className="text-xs text-muted-foreground">Coming Soon</span>
+                    )}
+                  </div>
+                </div>
+                <p className="text-muted-foreground mb-4">{mode.description}</p>
+                <ul className="space-y-2">
+                  {mode.features.map((feature, idx) => (
+                    <li key={idx} className="flex items-center gap-2 text-sm">
+                      <Check className="w-4 h-4 text-primary" />
+                      <span>{feature}</span>
+                    </li>
+                  ))}
+                </ul>
+              </button>
+            );
+          })}
+        </div>
+        </div>
+      </section>
+
+      {/* Free Demo Tool Section - Like Synthesia */}
+      {/* <section className="w-full px-4 sm:px-6 lg:px-8 py-20 border-t border-border">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-12">
             <div className="inline-block px-4 py-2 bg-primary/10 border border-primary/20 rounded-full mb-4">
@@ -640,7 +637,6 @@ export default function LandingPage() {
           </div>
 
         <div className="grid lg:grid-cols-2 gap-8 items-start">
-          {/* Left Side - Controls */}
           <div className="space-y-6">
             <div>
               <h3 className="text-lg font-semibold mb-4">Step 1: Select an AI avatar</h3>
@@ -695,7 +691,6 @@ export default function LandingPage() {
             </p>
           </div>
 
-          {/* Right Side - Video Preview */}
           <div className="relative">
             <div className="sticky top-24">
               <div className="relative rounded-2xl border-2 border-border bg-card overflow-hidden shadow-2xl">
@@ -717,7 +712,7 @@ export default function LandingPage() {
           </div>
         </div>
         </div>
-      </section>
+      </section> */}
 
       {/* Tabs Video Section - Like Synthesia Interface */}
       <section className="w-full px-4 sm:px-6 lg:px-8 py-20 border-t border-border">
@@ -875,23 +870,27 @@ export default function LandingPage() {
             <div className="relative">
               <div className="sticky top-24">
                 <div className="relative rounded-2xl border-2 border-border bg-card overflow-hidden shadow-2xl">
-                  <div className="aspect-video bg-gradient-to-br from-primary/20 via-purple-500/20 to-pink-500/20 flex items-center justify-center">
-                    <div className="text-center space-y-4">
-                      <div className="w-24 h-24 mx-auto rounded-full bg-primary/20 flex items-center justify-center">
-                        {activeTab === "create" && <FileVideo className="w-12 h-12 text-primary" />}
-                        {activeTab === "edit" && <Palette className="w-12 h-12 text-primary" />}
-                        {activeTab === "collaborate" && <Users className="w-12 h-12 text-primary" />}
-                        {activeTab === "translate" && <Globe className="w-12 h-12 text-primary" />}
-                        {activeTab === "publish" && <Rocket className="w-12 h-12 text-primary" />}
-                      </div>
-                      <p className="text-sm text-muted-foreground font-medium">
-                        {activeTab === "create" && "Create your video"}
-                        {activeTab === "edit" && "Edit and customize"}
-                        {activeTab === "collaborate" && "Work with your team"}
-                        {activeTab === "translate" && "Translate instantly"}
-                        {activeTab === "publish" && "Publish and share"}
-                      </p>
-                    </div>
+                  <div className="aspect-video relative overflow-hidden bg-black">
+                    <iframe
+                      className="absolute inset-0 w-full h-full"
+                      src={`https://www.youtube.com/embed/${
+                        activeTab === "create" ? "dQw4w9WgXcQ" :
+                        activeTab === "edit" ? "jNQXAC9IVRw" :
+                        activeTab === "collaborate" ? "9bZkp7q19f0" :
+                        activeTab === "translate" ? "kJQP7kiw5Fk" :
+                        "L_jWHffIx5E"
+                      }?rel=0&modestbranding=1&showinfo=0&controls=1&autoplay=0`}
+                      title={
+                        activeTab === "create" ? "Create your video" :
+                        activeTab === "edit" ? "Edit and customize" :
+                        activeTab === "collaborate" ? "Work with your team" :
+                        activeTab === "translate" ? "Translate instantly" :
+                        "Publish and share"
+                      }
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      allowFullScreen
+                      key={activeTab}
+                    />
                   </div>
                 </div>
               </div>
@@ -901,122 +900,7 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Generation Modes Section */}
-      <section className="w-full px-4 sm:px-6 lg:px-8 py-20 border-t border-border">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-16">
-          <h2 className="text-4xl md:text-5xl font-bold mb-4">
-            Choose Your Generation Mode
-          </h2>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Three powerful modes to match your needs. Fast Mode is perfect for daily social media content.
-          </p>
-        </div>
-
-        <div className="grid md:grid-cols-3 gap-6 mb-8">
-          {generationModes.map((mode) => {
-            const Icon = mode.icon;
-            const isActive = activeMode === mode.id;
-            return (
-              <button
-                key={mode.id}
-                onClick={() => !mode.comingSoon && setActiveMode(mode.id as "fast" | "cinematic" | "avatar")}
-                className={`text-left p-6 rounded-xl border-2 transition-all ${
-                  isActive
-                    ? `${mode.borderColor} ${mode.bgColor} border-2`
-                    : "border-border hover:border-primary/50"
-                } ${mode.comingSoon ? "opacity-60 cursor-not-allowed" : "cursor-pointer"}`}
-              >
-                <div className="flex items-center gap-3 mb-4">
-                  <div className={`p-3 rounded-lg ${mode.bgColor}`}>
-                    <Icon className={`w-6 h-6 ${mode.color}`} />
-                  </div>
-                  <div>
-                    <h3 className="text-xl font-semibold">{mode.name}</h3>
-                    {mode.comingSoon && (
-                      <span className="text-xs text-muted-foreground">Coming Soon</span>
-                    )}
-                  </div>
-                </div>
-                <p className="text-muted-foreground mb-4">{mode.description}</p>
-                <ul className="space-y-2">
-                  {mode.features.map((feature, idx) => (
-                    <li key={idx} className="flex items-center gap-2 text-sm">
-                      <Check className="w-4 h-4 text-primary" />
-                      <span>{feature}</span>
-                    </li>
-                  ))}
-                </ul>
-              </button>
-            );
-          })}
-        </div>
-        </div>
-      </section>
-
-      {/* Video Templates Section */}
-      <section id="templates" className="w-full px-4 sm:px-6 lg:px-8 py-20 border-t border-border">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-16">
-          <h2 className="text-4xl md:text-5xl font-bold mb-4">
-            Professional Video Templates
-          </h2>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Start with professionally designed templates. Customize them to match your brand.
-          </p>
-        </div>
-
-        <div className="grid md:grid-cols-3 gap-6">
-          {videoTemplates.map((template) => (
-            <div
-              key={template.id}
-              className="group relative rounded-xl border border-border overflow-hidden hover:border-primary/50 transition-all cursor-pointer"
-              onMouseEnter={() => setHoveredTemplate(template.id)}
-              onMouseLeave={() => setHoveredTemplate(null)}
-            >
-              <div className="aspect-video bg-gradient-to-br from-primary/20 to-purple-500/20 flex items-center justify-center text-6xl">
-                {template.thumbnail}
-              </div>
-              <div className="p-6 pb-14">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-xs font-medium text-primary bg-primary/10 px-2 py-1 rounded">
-                    {template.category}
-                  </span>
-                  <span className="text-xs text-muted-foreground flex items-center gap-1">
-                    <Clock className="w-3 h-3" />
-                    {template.duration}
-                  </span>
-                </div>
-                <h3 className="text-lg font-semibold mb-2">{template.name}</h3>
-                <p className="text-sm text-muted-foreground">{template.description}</p>
-              </div>
-              <div className="absolute bottom-0 left-0 right-0 p-6 pt-0">
-                <div
-                  className={`transition-all duration-300 ${
-                    hoveredTemplate === template.id
-                      ? "opacity-100 translate-y-0"
-                      : "opacity-0 translate-y-2 pointer-events-none"
-                  }`}
-                >
-                  <Button size="sm" className="w-full">
-                    Use Template
-                  </Button>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        <div className="text-center mt-12">
-          <Link href="/generator">
-            <Button variant="outline" size="lg">
-              Browse All Templates
-            </Button>
-          </Link>
-        </div>
-        </div>
-      </section>
-
+      
       {/* Use Cases Section */}
       <section className="w-full px-4 sm:px-6 lg:px-8 py-20 border-t border-border">
         <div className="max-w-7xl mx-auto">
@@ -1059,6 +943,71 @@ export default function LandingPage() {
         </div>
         </div>
       </section>
+
+
+      {/* Video Templates Section */}
+      <section id="templates" className="w-full px-4 sm:px-6 lg:px-8 py-20 border-t border-border">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-16">
+          <h2 className="text-4xl md:text-5xl font-bold mb-4">
+            Professional Video Templates
+          </h2>
+          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+            Start with professionally designed templates. Customize them to match your brand.
+          </p>
+        </div>
+
+        <div className="grid md:grid-cols-3 gap-6">
+          {videoTemplates.map((template) => (
+            <div
+              key={template.id}
+              className="group relative rounded-xl border border-border overflow-hidden hover:border-primary/50 transition-all cursor-pointer"
+              onMouseEnter={() => setHoveredTemplate(template.id)}
+              onMouseLeave={() => setHoveredTemplate(null)}
+            >
+              <div className="aspect-video bg-gradient-to-br from-primary/20 to-purple-500/20 flex items-center justify-center text-6xl">
+                {template.thumbnail}
+              </div>
+              <div className="p-6 pb-14">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs font-medium text-primary bg-primary/10 px-2 py-1 rounded">
+                    {template.category}
+                  </span>
+                  <span className="text-xs text-muted-foreground flex items-center gap-1">
+                    <Clock className="w-3 h-3" />
+                    {template.duration}
+                  </span>
+                </div>
+                <h3 className="text-lg font-semibold mb-2">{template.name}</h3>
+                <p className="text-sm text-muted-foreground mb-2">{template.description}</p>
+              </div>
+              <div className="absolute bottom-0 left-0 right-0 p-6 pt-0">
+                <div
+                  className={`transition-all duration-300 ${
+                    hoveredTemplate === template.id
+                      ? "opacity-100 translate-y-0"
+                      : "opacity-0 translate-y-2 pointer-events-none"
+                  }`}
+                >
+                  <Button size="sm" className="w-full">
+                    Use Template
+                  </Button>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className="text-center mt-12">
+          <Link href="/generator">
+            <Button variant="outline" size="lg">
+              Browse All Templates
+            </Button>
+          </Link>
+        </div>
+        </div>
+      </section>
+
 
       {/* Features Section */}
       <section
@@ -1231,95 +1180,48 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Final CTA Section - Like Synthesia */}
-      <section className="w-full px-4 sm:px-6 lg:px-8 py-20 border-t border-border">
-        <div className="max-w-7xl mx-auto">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
-            {/* Left Side - CTA Content */}
-            <div className="space-y-6">
-            <div className="inline-block px-4 py-2 bg-primary/10 border border-primary/20 rounded-full">
-              <p className="text-sm text-primary font-medium">READY TO GET STARTED?</p>
-            </div>
-            <h2 className="text-4xl md:text-5xl font-bold">
-              Ready to try Vimerai?
-            </h2>
-            <p className="text-xl text-muted-foreground">
-              Join <NumberTicker value={1000000} />+ users today and start making AI videos with professional quality in minutes.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4">
-              <Link href="/dashboard/generator">
-                <Button size="lg" className="bg-primary hover:bg-primary/90 gap-2 text-lg px-8 w-full sm:w-auto">
-                  Get Started for FREE <ArrowRight className="w-5 h-5" />
-                </Button>
-              </Link>
-              <Link href="/signup">
-                <Button size="lg" variant="outline" className="text-lg px-8 w-full sm:w-auto">
-                  Book demo
-                </Button>
-              </Link>
-            </div>
-            <div className="pt-6 border-t border-border">
-              <p className="text-sm text-muted-foreground mb-4">7-Day free Vimerai trial</p>
-              <p className="text-sm font-semibold mb-2">You get free access to:</p>
-              <ul className="space-y-2 text-sm text-muted-foreground">
-                <li className="flex items-center gap-2">
-                  <Check className="w-4 h-4 text-primary" />
-                  <span>125+ AI Avatars</span>
-                </li>
-                <li className="flex items-center gap-2">
-                  <Check className="w-4 h-4 text-primary" />
-                  <span>AI video assistant</span>
-                </li>
-                <li className="flex items-center gap-2">
-                  <Check className="w-4 h-4 text-primary" />
-                  <span>3 personal avatars</span>
-                </li>
-              </ul>
-              <Link href="/signup" className="inline-block mt-4">
-                <Button variant="link" className="text-primary p-0">
-                  Claim FREE Trial →
-                </Button>
-              </Link>
-            </div>
-          </div>
-
-          {/* Right Side - Stats and Social Proof */}
-          <div className="space-y-8">
-            <div className="grid grid-cols-3 gap-6 text-center">
-              <div>
-                <p className="text-3xl font-bold text-primary mb-2">
-                  <NumberTicker value={1000000} />+
-                </p>
-                <p className="text-sm text-muted-foreground">Users</p>
-              </div>
-              <div>
-                <p className="text-3xl font-bold text-primary mb-2">4.7</p>
-                <div className="flex items-center justify-center gap-1 mb-2">
-                  {[...Array(5)].map((_, i) => (
-                    <Star key={i} className="w-4 h-4 fill-yellow-500 text-yellow-500" />
-                  ))}
-                </div>
-                <p className="text-sm text-muted-foreground">Rating</p>
-              </div>
-              <div>
-                <p className="text-3xl font-bold text-primary mb-2">90%</p>
-                <p className="text-sm text-muted-foreground">Fortune 100</p>
-              </div>
-            </div>
-
-            <div className="relative rounded-2xl border-2 border-border bg-card overflow-hidden shadow-2xl">
-              <div className="aspect-video bg-gradient-to-br from-primary/20 via-purple-500/20 to-pink-500/20 flex items-center justify-center">
-                <div className="text-center space-y-4">
-                  <div className="w-20 h-20 mx-auto rounded-full bg-primary/20 flex items-center justify-center">
-                    <Play className="w-10 h-10 text-primary" />
-                  </div>
-                  <p className="text-sm text-muted-foreground font-medium">
-                    See Vimerai in action
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
+      {/* Final CTA Section - Simple and Centered */}
+      <section className="relative w-full px-4 sm:px-6 lg:px-8 py-24 md:py-32 overflow-hidden">
+        {/* Video Background */}
+        <div className="absolute inset-0 w-full h-full">
+          <video
+            autoPlay
+            loop
+            muted
+            playsInline
+            className="absolute inset-0 w-full h-full object-cover"
+          >
+            <source src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4" type="video/mp4" />
+            {/* Fallback to local video if available */}
+            <source src="/assets/videos/Login.mp4" type="video/mp4" />
+          </video>
+          {/* Overlay for better text readability */}
+          <div className="absolute inset-0 bg-gradient-to-b from-black/70 via-black/60 to-black/70" />
+        </div>
+        
+        {/* Content */}
+        <div className="relative max-w-3xl mx-auto text-center space-y-8 z-10">
+          <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white drop-shadow-lg">
+            Ready to try Vimerai?
+          </h2>
+          <p className="text-lg md:text-xl text-white/95 max-w-xl mx-auto drop-shadow-md">
+            Join thousands of creators and start making AI videos in minutes.
+          </p>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-2">
+            <Link href="/dashboard/generator">
+              <Button
+                size="lg"
+              >
+                Get Started Free <ArrowRight className="w-5 h-5" />
+              </Button>
+            </Link>
+            <Link href="/signup">
+              <Button
+                size="lg"
+              >
+                Book a Demo
+              </Button>
+            </Link>
           </div>
         </div>
       </section>
@@ -1357,7 +1259,7 @@ function FooterWithAnimation() {
   };
 
   return (
-    <footer ref={ref} className="border-t border-border bg-card mt-20 py-12">
+    <footer ref={ref} className="border-t border-border bg-card py-12">
       <motion.div
         className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8"
         variants={containerVariants}

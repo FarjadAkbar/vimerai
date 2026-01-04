@@ -55,5 +55,12 @@ export const generatorApi = {
     );
     return response.data;
   },
+
+  downloadVideo: async (videoId: string): Promise<Blob> => {
+    const response = await api.get(`/generator/download/${videoId}`, {
+      responseType: 'blob',
+    });
+    return response.data;
+  },
 };
 

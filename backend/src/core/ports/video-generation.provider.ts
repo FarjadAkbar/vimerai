@@ -17,4 +17,5 @@ export interface IVideoGenerationProvider {
   generateVideo(request: GenerateVideoRequest): Promise<GenerateVideoResponse>;
   getGenerationStatus(jobId: string): Promise<GenerateVideoResponse>;
   generatePreview(prompt: string): Promise<{ previewUrl: string }>;
+  downloadVideo(videoId: string): Promise<Buffer>;
 }

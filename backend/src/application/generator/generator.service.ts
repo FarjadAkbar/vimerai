@@ -180,4 +180,8 @@ export class GeneratorService implements IGeneratorService {
       videoUrl: video.videoUrl ?? undefined,
     };
   }
+
+  async downloadVideo(videoId: string): Promise<Buffer> {
+    return this.videoGenerationProvider.downloadVideo(videoId);
+  }
 }
