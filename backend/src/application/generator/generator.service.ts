@@ -49,6 +49,7 @@ export class GeneratorService implements IGeneratorService {
         {
           prompt: dto.prompt,
           mode,
+          jobId, // Pass the jobId to the provider so it uses the same one
         },
       );
 

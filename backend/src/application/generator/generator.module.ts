@@ -4,7 +4,8 @@ import { GeneratorService } from './generator.service';
 import { DatabaseModule } from '@/infrastructure/persistence/database.module';
 import { TypeOrmVideoRepository } from '@/infrastructure/persistence/typeorm/repositories/video.repository';
 import { SubscriptionModule } from '../subscription/subscription.module';
-import { SoraVideoGenerationProvider } from '@/infrastructure/video-generation/sora-video-generation.provider';
+// import { SoraVideoGenerationProvider } from '@/infrastructure/video-generation/sora-video-generation.provider';
+import { MockVideoGenerationProvider } from '@/infrastructure/video-generation/mock-video-generation.provider';
 
 @Module({
   imports: [DatabaseModule, SubscriptionModule],
@@ -17,7 +18,10 @@ import { SoraVideoGenerationProvider } from '@/infrastructure/video-generation/s
     },
     {
       provide: 'IVideoGenerationProvider',
-      useClass: SoraVideoGenerationProvider,
+      // Use MockVideoGenerationProvider for demonstration (no Sora credits needed)
+      // Switch back to SoraVideoGenerationProvider when ready for production
+      useClass: MockVideoGenerationProvider,
+      // useClass: SoraVideoGenerationProvider,
     },
   ],
   exports: [GeneratorService],

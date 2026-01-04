@@ -3,6 +3,7 @@ import { GenerationMode } from '@/domain/video.entity';
 export interface GenerateVideoRequest {
   prompt: string;
   mode: GenerationMode;
+  jobId?: string; // Optional jobId to use if provided
 }
 
 export interface GenerateVideoResponse {

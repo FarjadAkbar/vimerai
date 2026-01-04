@@ -713,193 +713,6 @@ export default function LandingPage() {
         </div>
         </div>
       </section> */}
-
-      {/* Tabs Video Section - Like Synthesia Interface */}
-      <section className="w-full px-4 sm:px-6 lg:px-8 py-20 border-t border-border">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-16">
-          <h2 className="text-4xl md:text-5xl font-bold mb-4">
-            One Platform to Create, Edit, and Publish
-          </h2>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Everything you need to create professional videos in one place. No switching between tools.
-          </p>
-        </div>
-
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-5 mb-8 h-auto p-1 bg-muted/50">
-            <TabsTrigger value="create" className="data-[state=active]:bg-background">
-              <FileVideo className="w-4 h-4 mr-2" />
-              CREATE
-            </TabsTrigger>
-            <TabsTrigger value="edit" className="data-[state=active]:bg-background">
-              <Palette className="w-4 h-4 mr-2" />
-              EDIT
-            </TabsTrigger>
-            <TabsTrigger value="collaborate" className="data-[state=active]:bg-background">
-              <Users className="w-4 h-4 mr-2" />
-              COLLABORATE
-            </TabsTrigger>
-            <TabsTrigger value="translate" className="data-[state=active]:bg-background">
-              <Globe className="w-4 h-4 mr-2" />
-              TRANSLATE
-            </TabsTrigger>
-            <TabsTrigger value="publish" className="data-[state=active]:bg-background">
-              <Rocket className="w-4 h-4 mr-2" />
-              PUBLISH
-            </TabsTrigger>
-          </TabsList>
-
-          <div className="grid lg:grid-cols-2 gap-8 items-center">
-            <TabsContent value="create" className="mt-0">
-              <div className="space-y-4">
-                <h3 className="text-2xl font-bold">Create Videos from Text</h3>
-                <p className="text-muted-foreground">
-                  Transform your ideas into videos instantly. Just type your script and let AI generate professional videos with avatars, voiceovers, and visuals.
-                </p>
-                <ul className="space-y-2">
-                  <li className="flex items-center gap-2">
-                    <Check className="w-5 h-5 text-primary" />
-                    <span>240+ AI Avatars to choose from</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <Check className="w-5 h-5 text-primary" />
-                    <span>140+ languages and voices</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <Check className="w-5 h-5 text-primary" />
-                    <span>Professional templates</span>
-                  </li>
-                </ul>
-              </div>
-            </TabsContent>
-
-            <TabsContent value="edit" className="mt-0">
-              <div className="space-y-4">
-                <h3 className="text-2xl font-bold">Edit with Ease</h3>
-                <p className="text-muted-foreground">
-                  Fine-tune every detail of your video. Adjust timing, add captions, change backgrounds, and customize every element to match your brand.
-                </p>
-                <ul className="space-y-2">
-                  <li className="flex items-center gap-2">
-                    <Check className="w-5 h-5 text-primary" />
-                    <span>Real-time preview</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <Check className="w-5 h-5 text-primary" />
-                    <span>Drag-and-drop interface</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <Check className="w-5 h-5 text-primary" />
-                    <span>Brand kit integration</span>
-                  </li>
-                </ul>
-              </div>
-            </TabsContent>
-
-            <TabsContent value="collaborate" className="mt-0">
-              <div className="space-y-4">
-                <h3 className="text-2xl font-bold">Collaborate in Real-Time</h3>
-                <p className="text-muted-foreground">
-                  Work together with your team. Share projects, leave comments, review changes, and approve videos all in one place.
-                </p>
-                <ul className="space-y-2">
-                  <li className="flex items-center gap-2">
-                    <Check className="w-5 h-5 text-primary" />
-                    <span>Live collaboration</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <Check className="w-5 h-5 text-primary" />
-                    <span>Comment and review system</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <Check className="w-5 h-5 text-primary" />
-                    <span>Version control</span>
-                  </li>
-                </ul>
-              </div>
-            </TabsContent>
-
-            <TabsContent value="translate" className="mt-0">
-              <div className="space-y-4">
-                <h3 className="text-2xl font-bold">Translate in One Click</h3>
-                <p className="text-muted-foreground">
-                  Reach global audiences instantly. Translate any video into 140+ languages with perfect lip-sync and natural voices.
-                </p>
-                <ul className="space-y-2">
-                  <li className="flex items-center gap-2">
-                    <Check className="w-5 h-5 text-primary" />
-                    <span>140+ languages supported</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <Check className="w-5 h-5 text-primary" />
-                    <span>Automatic lip-sync</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <Check className="w-5 h-5 text-primary" />
-                    <span>Natural-sounding voices</span>
-                  </li>
-                </ul>
-              </div>
-            </TabsContent>
-
-            <TabsContent value="publish" className="mt-0">
-              <div className="space-y-4">
-                <h3 className="text-2xl font-bold">Publish Anywhere</h3>
-                <p className="text-muted-foreground">
-                  Export your videos in any format. Share directly to social media, embed in websites, or download for offline use.
-                </p>
-                <ul className="space-y-2">
-                  <li className="flex items-center gap-2">
-                    <Check className="w-5 h-5 text-primary" />
-                    <span>Multiple export formats</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <Check className="w-5 h-5 text-primary" />
-                    <span>Direct social media sharing</span>
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <Check className="w-5 h-5 text-primary" />
-                    <span>Analytics and insights</span>
-                  </li>
-                </ul>
-              </div>
-            </TabsContent>
-
-            {/* Video Preview for All Tabs */}
-            <div className="relative">
-              <div className="sticky top-24">
-                <div className="relative rounded-2xl border-2 border-border bg-card overflow-hidden shadow-2xl">
-                  <div className="aspect-video relative overflow-hidden bg-black">
-                    <iframe
-                      className="absolute inset-0 w-full h-full"
-                      src={`https://www.youtube.com/embed/${
-                        activeTab === "create" ? "dQw4w9WgXcQ" :
-                        activeTab === "edit" ? "jNQXAC9IVRw" :
-                        activeTab === "collaborate" ? "9bZkp7q19f0" :
-                        activeTab === "translate" ? "kJQP7kiw5Fk" :
-                        "L_jWHffIx5E"
-                      }?rel=0&modestbranding=1&showinfo=0&controls=1&autoplay=0`}
-                      title={
-                        activeTab === "create" ? "Create your video" :
-                        activeTab === "edit" ? "Edit and customize" :
-                        activeTab === "collaborate" ? "Work with your team" :
-                        activeTab === "translate" ? "Translate instantly" :
-                        "Publish and share"
-                      }
-                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                      allowFullScreen
-                      key={activeTab}
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </Tabs>
-        </div>
-      </section>
-
       
       {/* Use Cases Section */}
       <section className="w-full px-4 sm:px-6 lg:px-8 py-20 border-t border-border">
@@ -949,22 +762,32 @@ export default function LandingPage() {
       <section id="templates" className="w-full px-4 sm:px-6 lg:px-8 py-20 border-t border-border">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
-          <h2 className="text-4xl md:text-5xl font-bold mb-4">
-            Professional Video Templates
-          </h2>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Start with professionally designed templates. Customize them to match your brand.
-          </p>
-        </div>
+            <div className="inline-block px-4 py-2 bg-primary/10 border border-primary/20 rounded-full mb-4">
+              <p className="text-sm text-primary font-medium">COMING SOON</p>
+            </div>
+            <h2 className="text-4xl md:text-5xl font-bold mb-4">
+              Professional Video Templates
+            </h2>
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+              Start with professionally designed templates. Customize them to match your brand. This feature is coming soon!
+            </p>
+          </div>
 
         <div className="grid md:grid-cols-3 gap-6">
           {videoTemplates.map((template) => (
             <div
               key={template.id}
-              className="group relative rounded-xl border border-border overflow-hidden hover:border-primary/50 transition-all cursor-pointer"
+              className="group relative rounded-xl border border-border overflow-hidden hover:border-primary/50 transition-all cursor-not-allowed opacity-75"
               onMouseEnter={() => setHoveredTemplate(template.id)}
               onMouseLeave={() => setHoveredTemplate(null)}
             >
+              {/* Coming Soon Overlay */}
+              <div className="absolute inset-0 bg-background/60 backdrop-blur-sm z-10 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                <div className="px-4 py-2 bg-primary text-primary-foreground rounded-lg font-semibold text-sm">
+                  Coming Soon
+                </div>
+              </div>
+              
               <div className="aspect-video bg-gradient-to-br from-primary/20 to-purple-500/20 flex items-center justify-center text-6xl">
                 {template.thumbnail}
               </div>
@@ -989,8 +812,8 @@ export default function LandingPage() {
                       : "opacity-0 translate-y-2 pointer-events-none"
                   }`}
                 >
-                  <Button size="sm" className="w-full">
-                    Use Template
+                  <Button size="sm" className="w-full" disabled>
+                    Coming Soon
                   </Button>
                 </div>
               </div>
@@ -999,11 +822,9 @@ export default function LandingPage() {
         </div>
 
         <div className="text-center mt-12">
-          <Link href="/generator">
-            <Button variant="outline" size="lg">
-              Browse All Templates
-            </Button>
-          </Link>
+          <Button variant="outline" size="lg" disabled>
+            Browse All Templates (Coming Soon)
+          </Button>
         </div>
         </div>
       </section>

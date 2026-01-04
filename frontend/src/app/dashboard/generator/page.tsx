@@ -18,7 +18,7 @@ import { generatorApi } from "@/lib/api/generator.api"
 export default function GeneratorPage() {
   const router = useRouter()
   const { data: userData, isLoading: userLoading } = useUser()
-  const { data: subscription } = useCurrentSubscription()
+  const { data: subscription, isLoading: subscriptionLoading } = useCurrentSubscription()
   const generateVideo = useGenerateVideo()
   const [jobId, setJobId] = useState<string | null>(null)
   const [isDownloading, setIsDownloading] = useState(false)
@@ -106,7 +106,14 @@ export default function GeneratorPage() {
   }
 
   const isGenerating = generateVideo.isPending || (jobId && statusData?.status !== "completed" && statusData?.status !== "failed") || isDownloading
-  const canGenerate = subscription ? subscription.videosRemaining > 0 : false
+  // Only check canGenerate after subscription data has loaded
+  // Don't show limit card while loading to avoid flickering
+  const canGenerate = subscriptionLoading 
+    ? true // Assume can generate while loading to prevent false negative
+    : subscription 
+      ? subscription.videosRemaining > 0 
+      : false
+  const hasReachedLimit = !subscriptionLoading && subscription && subscription.videosRemaining === 0
 
   const modes = [
     {
@@ -124,6 +131,7 @@ export default function GeneratorPage() {
       icon: Film,
       color: "text-purple-500",
       bgColor: "bg-purple-500/10",
+      disabled: true,
     },
     {
       value: "avatar",
@@ -158,7 +166,7 @@ export default function GeneratorPage() {
           )}
         </div>
 
-        {!canGenerate && (
+        {hasReachedLimit && (
           <div className="mb-6 p-4 bg-destructive/10 border border-destructive/20 rounded-lg flex items-center gap-2">
             <AlertCircle className="w-5 h-5 text-destructive" />
             <div className="flex-1">
