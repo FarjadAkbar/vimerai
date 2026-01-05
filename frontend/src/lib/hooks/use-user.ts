@@ -5,10 +5,29 @@ import type { UpdateUserRequest } from '@/lib/api/users.api';
 export const useUser = () => {
   return useQuery({
     queryKey: ['user'],
-    queryFn: () => usersApi.getMe(),
+    queryFn: async () => {
+      try {
+        return await usersApi.getMe();
+      } catch (error) {
+        // If API call fails, try to get from localStorage
+        if (typeof window !== 'undefined') {
+          const userData = localStorage.getItem('user');
+          if (userData) {
+            try {
+              const user = JSON.parse(userData);
+              return { user };
+            } catch {
+              throw error;
+            }
+          }
+        }
+        throw error;
+      }
+    },
     staleTime: 5 * 60 * 1000, // 5 minutes
+    retry: false, // Don't retry on error to avoid redirect loops
     initialData: () => {
-      // Try to get from localStorage
+      // Try to get from localStorage for initial render
       if (typeof window !== 'undefined') {
         const userData = localStorage.getItem('user');
         if (userData) {

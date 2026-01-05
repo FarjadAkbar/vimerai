@@ -12,13 +12,14 @@ import type { Request } from 'express';
 import { SubscriptionService } from './subscription.service';
 import type { IPaymentService } from '@/core/ports/payment.service';
 import { Inject } from '@nestjs/common';
+import { PAYMENT_SERVICE_TOKEN } from '@/core/tokens/injection.tokens';
 import { SubscriptionPlan } from '@/domain/subscription.entity';
 
 @Controller('webhooks/stripe')
 export class SubscriptionWebhookController {
   constructor(
     private readonly subscriptionService: SubscriptionService,
-    @Inject('IPaymentService')
+    @Inject(PAYMENT_SERVICE_TOKEN)
     private readonly paymentService: IPaymentService,
   ) {}
 

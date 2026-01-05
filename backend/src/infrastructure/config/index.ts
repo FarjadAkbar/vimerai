@@ -4,3 +4,4 @@ export { default as serverConfig } from './server.config';
 export { default as jwtConfig } from './jwt.config';
 export { default as stripeConfig } from './stripe.config';
 export { default as videoGenerationConfig } from './video-generation.config';
+export { default as storageConfig } from './storage.config';

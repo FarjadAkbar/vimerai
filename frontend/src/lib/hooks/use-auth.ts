@@ -14,8 +14,9 @@ export const useSignup = () => {
       // Store token and user
       apiClient.setToken(response.token);
       localStorage.setItem('user', JSON.stringify(response.user));
-      queryClient.setQueryData(['user'], response.user);
-      router.push('/dashboard/my-videos');
+      queryClient.setQueryData(['user'], { user: response.user });
+      // Redirect to generator as per Phase 1 requirements
+      router.push('/');
     },
   });
 };
@@ -30,8 +31,9 @@ export const useLogin = () => {
       // Store token and user
       apiClient.setToken(response.token);
       localStorage.setItem('user', JSON.stringify(response.user));
-      queryClient.setQueryData(['user'], response.user);
-      router.push('/dashboard/my-videos');
+      queryClient.setQueryData(['user'], { user: response.user });
+      // Redirect to generator as per Phase 1 requirements
+      router.push('/');
     },
   });
 };

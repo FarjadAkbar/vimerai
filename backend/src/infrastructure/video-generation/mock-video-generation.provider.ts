@@ -86,14 +86,71 @@ export class MockVideoGenerationProvider implements IVideoGenerationProvider {
     };
   }
 
-  async generatePreview(prompt: string): Promise<{ previewUrl: string }> {
-    // Return a preview URL immediately (using a sample video)
+  async generatePreview(prompt: string, jobId?: string): Promise<GenerateVideoResponse> {
+    // Use provided jobId if available, otherwise generate one
+    const previewJobId = jobId || `mock_preview_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    
+    // Get a random sample video for preview
     const previewUrl =
       this.SAMPLE_VIDEOS[
         Math.floor(Math.random() * this.SAMPLE_VIDEOS.length)
       ];
 
-    return { previewUrl };
+    // Initialize job as pending
+    this.jobStatuses.set(previewJobId, {
+      status: 'pending',
+      createdAt: Date.now(),
+    });
+
+    // Simulate async preview processing (shorter delay than full video)
+    this.processPreviewGeneration(previewJobId, previewUrl).catch(
+      (error) => {
+        console.error('Mock preview generation error:', error);
+        this.jobStatuses.set(previewJobId, {
+          status: 'failed',
+          createdAt: Date.now(),
+        });
+      },
+    );
+
+    return {
+      jobId: previewJobId,
+      status: 'pending',
+    };
+  }
+
+  /**
+   * Simulates preview generation with realistic delays (shorter than full video)
+   */
+  private async processPreviewGeneration(
+    jobId: string,
+    previewUrl: string,
+  ): Promise<void> {
+    // Preview is faster - 2 seconds delay
+    const delay = 2000;
+
+    // Update to processing after 0.5 seconds
+    setTimeout(() => {
+      const job = this.jobStatuses.get(jobId);
+      if (job) {
+        this.jobStatuses.set(jobId, {
+          ...job,
+          status: 'processing',
+        });
+      }
+    }, 500);
+
+    // Complete after the delay
+    setTimeout(() => {
+      const job = this.jobStatuses.get(jobId);
+      if (job) {
+        this.jobStatuses.set(jobId, {
+          ...job,
+          status: 'completed',
+          previewUrl,
+        });
+      }
+    }, delay);
   }
 
   async downloadVideo(videoId: string): Promise<Buffer> {

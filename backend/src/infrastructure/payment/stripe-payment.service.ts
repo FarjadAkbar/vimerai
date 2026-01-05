@@ -21,21 +21,23 @@ export class StripePaymentService implements IPaymentService {
   };
 
   constructor(private readonly configService: ConfigService) {
-    const stripeConfig = this.configService.get<{
-      secretKey: string;
-      webhookSecret: string;
-      priceIds: {
-        starter: string;
-        creator: string;
-        pro: string;
+    const paymentConfig = this.configService.get<{
+      stripe: {
+        secretKey: string;
+        webhookSecret: string;
+        priceIds: {
+          starter: string;
+          creator: string;
+          pro: string;
+        };
       };
-    }>('stripe');
+    }>('payment');
 
-    if (!stripeConfig) {
+    if (!paymentConfig?.stripe) {
       throw new Error('Stripe configuration is missing');
     }
 
-    this.stripeConfig = stripeConfig;
+    this.stripeConfig = paymentConfig.stripe;
     this.stripe = new Stripe(this.stripeConfig.secretKey, {
       apiVersion: '2025-02-24.acacia',
     });

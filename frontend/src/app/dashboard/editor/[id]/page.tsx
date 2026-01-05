@@ -192,28 +192,41 @@ export default function EditorPage() {
                 </div>
 
                 <div className="pt-4 border-t border-border space-y-3">
-                  <Button
-                    type="submit"
-                    size="lg"
-                    className="w-full bg-primary hover:bg-primary/90 gap-2"
-                    disabled={isSaving || !title.trim()}
-                  >
-                    <Save className="w-5 h-5" /> {isSaving ? "Saving..." : "Save Changes"}
-                  </Button>
-                  {video.videoUrl && (
-                    <Button
-                      type="button"
-                      size="lg"
-                      variant="outline"
-                      className="w-full gap-2"
-                      onClick={() => {
-                        if (video.videoUrl) {
-                          window.open(video.videoUrl, "_blank")
-                        }
-                      }}
-                    >
-                      <Download className="w-5 h-5" /> Download Video
-                    </Button>
+                  {video.status === "completed" && video.videoUrl ? (
+                    <>
+                      <Button
+                        type="submit"
+                        size="lg"
+                        className="w-full bg-primary hover:bg-primary/90 gap-2"
+                        disabled={isSaving || !title.trim()}
+                      >
+                        <Save className="w-5 h-5" /> {isSaving ? "Saving..." : "Save Changes"}
+                      </Button>
+                      <Button
+                        type="button"
+                        size="lg"
+                        variant="outline"
+                        className="w-full gap-2"
+                        onClick={() => {
+                          if (video.videoUrl) {
+                            window.open(video.videoUrl, "_blank")
+                          }
+                        }}
+                      >
+                        <Download className="w-5 h-5" /> Download Video
+                      </Button>
+                    </>
+                  ) : (
+                    <div className="p-4 bg-primary/10 rounded-lg text-center">
+                      <p className="text-sm text-primary font-medium mb-1">
+                        {video.status === "processing" ? "Video is still processing" : video.status === "pending" ? "Video is pending" : "Video generation failed"}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {video.status === "processing" || video.status === "pending" 
+                          ? "Please wait for the video to complete before editing or downloading."
+                          : "This video cannot be edited or downloaded."}
+                      </p>
+                    </div>
                   )}
                   <Link href="/dashboard/my-videos" className="block">
                     <Button type="button" size="lg" variant="outline" className="w-full">

@@ -17,7 +17,7 @@ export interface IGeneratorService {
   generatePreview(
     userId: string,
     dto: GeneratePreviewDto,
-  ): Promise<{ previewUrl: string; used: boolean }>;
+  ): Promise<{ jobId: string; status: string }>;
   getGenerationStatus(jobId: string): Promise<{
     status: string;
     videoUrl?: string;

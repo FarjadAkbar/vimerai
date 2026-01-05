@@ -13,6 +13,8 @@ import {
 import type { IVideoRepository } from '@/core/ports/video.repository';
 import type { ISubscriptionService } from '@/core/ports/subscription.service';
 import type { IVideoGenerationProvider } from '@/core/ports/video-generation.provider';
+import type { IStorageService } from '@/core/ports/storage.service';
+import { STORAGE_SERVICE_TOKEN, VIDEO_GENERATION_PROVIDER_TOKEN } from '@/core/tokens/injection.tokens';
 import { Video, GenerationMode, VideoStatus } from '@/domain/video.entity';
 
 @Injectable()
@@ -22,8 +24,10 @@ export class GeneratorService implements IGeneratorService {
     private readonly videoRepository: IVideoRepository,
     @Inject('ISubscriptionService')
     private readonly subscriptionService: ISubscriptionService,
-    @Inject('IVideoGenerationProvider')
+    @Inject(VIDEO_GENERATION_PROVIDER_TOKEN)
     private readonly videoGenerationProvider: IVideoGenerationProvider,
+    @Inject(STORAGE_SERVICE_TOKEN)
+    private readonly storageService: IStorageService,
   ) {}
 
   async generateVideo(
@@ -61,7 +65,10 @@ export class GeneratorService implements IGeneratorService {
         failed: VideoStatus.FAILED,
       };
 
-      const updatedVideo = video.updateStatus(
+      const providerJobId = generationResult.jobId || jobId;
+      let updatedVideo = video.updateJobId(providerJobId);
+
+      updatedVideo = updatedVideo.updateStatus(
         statusMap[generationResult.status] || VideoStatus.PENDING,
         generationResult.videoUrl || null,
       );
@@ -74,7 +81,7 @@ export class GeneratorService implements IGeneratorService {
       }
 
       return {
-        jobId: generationResult.jobId || jobId,
+        jobId: providerJobId,
         status: generationResult.status,
       };
     } catch (error) {
@@ -90,7 +97,7 @@ export class GeneratorService implements IGeneratorService {
   async generatePreview(
     userId: string,
     dto: GeneratePreviewDto,
-  ): Promise<{ previewUrl: string; used: boolean }> {
+  ): Promise<{ jobId: string; status: string }> {
     // Check if user already used preview
     const videos = await this.videoRepository.getVideosByUserId(userId, 1, 0);
     const hasPreview = videos.videos.some((v) => v.previewUrl !== null);
@@ -108,16 +115,47 @@ export class GeneratorService implements IGeneratorService {
       jobId,
     );
 
-    // Generate preview using provider
+    await this.videoRepository.createVideo(video);
+
+    // Generate preview using provider (async - returns jobId for status polling)
     try {
       const previewResult = await this.videoGenerationProvider.generatePreview(
         dto.prompt,
+        jobId, // Pass jobId so provider can use it
       );
-      const videoWithPreview = video.updatePreviewUrl(previewResult.previewUrl);
-      await this.videoRepository.createVideo(videoWithPreview);
 
-      return { previewUrl: previewResult.previewUrl, used: true };
+      // Update video with generation result
+      const statusMap: Record<string, VideoStatus> = {
+        pending: VideoStatus.PENDING,
+        processing: VideoStatus.PROCESSING,
+        completed: VideoStatus.COMPLETED,
+        failed: VideoStatus.FAILED,
+      };
+
+      const providerJobId = previewResult.jobId || jobId;
+      let updatedVideo = video.updateJobId(providerJobId);
+
+      updatedVideo = updatedVideo.updateStatus(
+        statusMap[previewResult.status] || VideoStatus.PENDING,
+        null, // No videoUrl for previews
+      );
+
+      // Set previewUrl if provided
+      if (previewResult.previewUrl) {
+        updatedVideo = updatedVideo.updatePreviewUrl(previewResult.previewUrl);
+      }
+
+      await this.videoRepository.updateVideo(updatedVideo);
+
+      return {
+        jobId: providerJobId,
+        status: previewResult.status,
+      };
     } catch (error) {
+      // If generation fails, mark video as failed
+      const failedVideo = video.updateStatus(VideoStatus.FAILED, null);
+      await this.videoRepository.updateVideo(failedVideo);
+
       throw new BadRequestException(
         `Preview generation failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
       );
@@ -127,10 +165,29 @@ export class GeneratorService implements IGeneratorService {
   async getGenerationStatus(jobId: string): Promise<{
     status: string;
     videoUrl?: string;
+    previewUrl?: string;
   }> {
     const video = await this.videoRepository.getVideoByJobId(jobId);
     if (!video) {
       throw new NotFoundException('Generation job not found');
+    }
+
+    // Check for timeout: if video has been processing for more than 30 minutes, mark as failed
+    const MAX_PROCESSING_TIME = 30 * 60 * 1000; // 30 minutes in milliseconds
+    const processingTime = Date.now() - video.createdAt.getTime();
+    
+    if (
+      (video.status === VideoStatus.PENDING || video.status === VideoStatus.PROCESSING) &&
+      processingTime > MAX_PROCESSING_TIME
+    ) {
+      // Mark as failed due to timeout
+      const failedVideo = video.updateStatus(VideoStatus.FAILED, null);
+      await this.videoRepository.updateVideo(failedVideo);
+      
+      return {
+        status: 'failed',
+        videoUrl: undefined,
+      };
     }
 
     // If still processing, check with provider
@@ -143,46 +200,91 @@ export class GeneratorService implements IGeneratorService {
           await this.videoGenerationProvider.getGenerationStatus(jobId);
 
         // Update video status if changed
-        if (statusResult.status !== video.status) {
-          const statusMap: Record<string, VideoStatus> = {
-            pending: VideoStatus.PENDING,
-            processing: VideoStatus.PROCESSING,
-            completed: VideoStatus.COMPLETED,
-            failed: VideoStatus.FAILED,
-          };
+        const statusMap: Record<string, VideoStatus> = {
+          pending: VideoStatus.PENDING,
+          processing: VideoStatus.PROCESSING,
+          completed: VideoStatus.COMPLETED,
+          failed: VideoStatus.FAILED,
+        };
 
-          const updatedVideo = video.updateStatus(
-            statusMap[statusResult.status] || video.status,
-            statusResult.videoUrl || null,
+        const newStatus = statusMap[statusResult.status] || video.status;
+        
+        // Always update if status changed, if we got a video URL, or if we got a preview URL
+        if (
+          newStatus !== video.status ||
+          (statusResult.videoUrl && !video.videoUrl) ||
+          (statusResult.previewUrl && !video.previewUrl)
+        ) {
+          let updatedVideo = video.updateStatus(
+            newStatus,
+            statusResult.videoUrl || video.videoUrl || null,
           );
+          
+          // Update previewUrl if provided
+          if (statusResult.previewUrl) {
+            updatedVideo = updatedVideo.updatePreviewUrl(statusResult.previewUrl);
+          }
+          
           await this.videoRepository.updateVideo(updatedVideo);
 
           // Record usage if completed
-          if (statusResult.status === 'completed') {
+          if (newStatus === VideoStatus.COMPLETED) {
             await this.subscriptionService.recordVideoGeneration(video.userId);
           }
         }
 
         return {
           status: statusResult.status,
-          videoUrl: statusResult.videoUrl,
+          videoUrl: statusResult.videoUrl ?? video.videoUrl ?? undefined,
+          previewUrl: statusResult.previewUrl ?? video.previewUrl ?? undefined,
         };
       } catch (error) {
-        // If status check fails, return current video status
+        console.error('Status check failed:', error);
+        
+        // If status check fails multiple times and video has been processing for a while,
+        // we might want to mark it as failed, but for now, return current status
+        // to allow polling to continue
         return {
-          status: video.status,
+          status: video.status.toString(),
           videoUrl: video.videoUrl ?? undefined,
+          previewUrl: video.previewUrl ?? undefined,
         };
       }
     }
 
     return {
-      status: video.status,
+      status: video.status.toString(),
       videoUrl: video.videoUrl ?? undefined,
+      previewUrl: video.previewUrl ?? undefined,
     };
   }
 
   async downloadVideo(videoId: string): Promise<Buffer> {
-    return this.videoGenerationProvider.downloadVideo(videoId);
+    // Get the video record by jobId (videoId from Sora)
+    const video = await this.videoRepository.getVideoByJobId(videoId);
+    if (!video) {
+      throw new NotFoundException('Video not found');
+    }
+
+    // Download video from provider (Sora)
+    const videoBuffer =
+      await this.videoGenerationProvider.downloadVideo(videoId);
+
+    // If video URL is not set, save the file and update the URL
+    if (!video.videoUrl) {
+      // Save video to storage and get the URL
+      const key = `videos/${videoId}.mp4`;
+      const savedVideoUrl = await this.storageService.upload(
+        key,
+        videoBuffer,
+        'video/mp4',
+      );
+
+      // Update video record with the saved URL
+      const updatedVideo = video.updateStatus(video.status, savedVideoUrl);
+      await this.videoRepository.updateVideo(updatedVideo);
+    }
+
+    return videoBuffer;
   }
 }

@@ -17,13 +17,14 @@ export interface GeneratePreviewRequest {
 }
 
 export interface GeneratePreviewResponse {
-  previewUrl: string;
-  used: boolean;
+  jobId: string;
+  status: string;
 }
 
 export interface GenerationStatusResponse {
   status: string;
   videoUrl?: string;
+  previewUrl?: string;
 }
 
 export const generatorApi = {

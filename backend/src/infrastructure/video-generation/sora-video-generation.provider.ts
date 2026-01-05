@@ -76,9 +76,24 @@ export class SoraVideoGenerationProvider implements IVideoGenerationProvider {
         maxBodyLength: Infinity,
       });
 
-      // Sora API typically returns a job ID and status
+      // Sora API returns a video ID - extract it from various possible response fields
+      // This video ID will be used as the jobId for status checking
+      const videoId =
+        response.data.id ||
+        response.data.video_id ||
+        response.data.job_id ||
+        response.data.videoId ||
+        request.jobId; // Fallback to provided jobId if Sora doesn't return one
+
+      console.log('Sora API response:', {
+        videoId,
+        status: response.data.status,
+        hasVideoUrl: !!response.data.video_url,
+        responseData: response.data,
+      });
+
       return {
-        jobId: response.data.id || response.data.job_id,
+        jobId: videoId, // Return the video ID as jobId for status checks
         status: this.mapSoraStatus(response.data.status),
         videoUrl: response.data.video_url,
         previewUrl: response.data.preview_url,
@@ -131,7 +146,7 @@ export class SoraVideoGenerationProvider implements IVideoGenerationProvider {
     }
   }
 
-  async generatePreview(prompt: string): Promise<{ previewUrl: string }> {
+  async generatePreview(prompt: string, jobId?: string): Promise<GenerateVideoResponse> {
     try {
       // For preview, use a shorter duration
       const formData = new FormData();
@@ -153,7 +168,17 @@ export class SoraVideoGenerationProvider implements IVideoGenerationProvider {
         maxBodyLength: Infinity,
       });
 
+      // Sora API returns a video ID - extract it from various possible response fields
+      const videoId =
+        response.data.id ||
+        response.data.video_id ||
+        response.data.job_id ||
+        response.data.videoId ||
+        jobId; // Fallback to provided jobId if Sora doesn't return one
+
       return {
+        jobId: videoId,
+        status: this.mapSoraStatus(response.data.status || 'pending'),
         previewUrl: response.data.preview_url || response.data.video_url,
       };
     } catch (error) {

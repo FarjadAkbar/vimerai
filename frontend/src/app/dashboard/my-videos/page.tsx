@@ -7,6 +7,17 @@ import { Plus, Play, Download, Trash2, Loader2, Video as VideoIcon, Search } fro
 import { useVideos, useDeleteVideo, useDownloadVideo } from "@/lib/hooks/use-videos"
 import { useState } from "react"
 import { Input } from "@/components/ui/input"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 
 export default function MyVideosPage() {
   const router = useRouter()
@@ -14,10 +25,19 @@ export default function MyVideosPage() {
   const deleteVideo = useDeleteVideo()
   const downloadVideo = useDownloadVideo()
   const [searchQuery, setSearchQuery] = useState("")
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [videoToDelete, setVideoToDelete] = useState<string | null>(null)
 
-  const handleDelete = async (id: string) => {
-    if (confirm("Are you sure you want to delete this video?")) {
-      deleteVideo.mutate(id)
+  const handleDeleteClick = (id: string) => {
+    setVideoToDelete(id)
+    setDeleteDialogOpen(true)
+  }
+
+  const handleDeleteConfirm = () => {
+    if (videoToDelete) {
+      deleteVideo.mutate(videoToDelete)
+      setDeleteDialogOpen(false)
+      setVideoToDelete(null)
     }
   }
 
@@ -130,7 +150,7 @@ export default function MyVideosPage() {
                     <div className="flex items-center gap-2 mb-3">
                       <span
                         className={`px-2 py-1 rounded text-xs font-medium ${
-                          video.status === "completed"
+                          video.status === "completed" || video.previewUrl
                             ? "bg-primary/10 text-primary"
                             : video.status === "processing"
                               ? "bg-yellow-500/10 text-yellow-500"
@@ -139,7 +159,7 @@ export default function MyVideosPage() {
                                 : "bg-muted text-muted-foreground"
                         }`}
                       >
-                        {video.status}
+                        {video.previewUrl ? "preview" : video.status}
                       </span>
                       {video.mode && (
                         <span className="px-2 py-1 rounded text-xs bg-muted text-muted-foreground">
@@ -148,7 +168,7 @@ export default function MyVideosPage() {
                       )}
                     </div>
                     <div className="flex items-center gap-2">
-                      {video.status === "completed" && video.videoUrl ? (
+                      {(video.status === "completed" || video.previewUrl) && (video.videoUrl || video.previewUrl) ? (
                         <>
                           <Button
                             variant="outline"
@@ -164,20 +184,73 @@ export default function MyVideosPage() {
                               Edit
                             </Button>
                           </Link>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="bg-transparent"
-                            onClick={() => handleDelete(video.id)}
-                            disabled={deleteVideo.isPending}
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
+                          <AlertDialog open={deleteDialogOpen && videoToDelete === video.id} onOpenChange={setDeleteDialogOpen}>
+                            <AlertDialogTrigger asChild>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="bg-transparent"
+                                onClick={() => handleDeleteClick(video.id)}
+                                disabled={deleteVideo.isPending}
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Delete Video</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  Are you sure you want to delete this video? This action cannot be undone.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction
+                                  onClick={handleDeleteConfirm}
+                                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                >
+                                  Delete
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
                         </>
                       ) : (
-                        <div className="flex-1 px-3 py-2 bg-primary/10 rounded-lg text-xs text-center text-primary">
-                          {video.status === "processing" ? "Processing..." : "Pending..."}
-                        </div>
+                        <>
+                          <div className="flex-1 px-3 py-2 bg-primary/10 rounded-lg text-xs text-center text-primary">
+                            {video.status === "processing" ? "Processing..." : video.status === "pending" ? "Pending..." : "Failed"}
+                          </div>
+                          <AlertDialog open={deleteDialogOpen && videoToDelete === video.id} onOpenChange={setDeleteDialogOpen}>
+                            <AlertDialogTrigger asChild>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="bg-transparent"
+                                onClick={() => handleDeleteClick(video.id)}
+                                disabled={deleteVideo.isPending}
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Delete Video</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  Are you sure you want to delete this video? This action cannot be undone.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction
+                                  onClick={handleDeleteConfirm}
+                                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                >
+                                  Delete
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        </>
                       )}
                     </div>
                   </div>
