@@ -6,14 +6,14 @@ import Link from "next/link"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Button } from "@/components/ui/button"
-import { ArrowLeft, Wand2, Clock, AlertCircle, Zap, Film, Users } from "lucide-react"
+import { ArrowLeft, Wand2, Clock, AlertCircle, Zap, Film, Users, CheckCircle } from "lucide-react"
 import { generateVideoSchema, type GenerateVideoInput } from "@/lib/auth/schema"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Textarea } from "@/components/ui/textarea"
 import { useUser } from "@/lib/hooks/use-user"
 import { useGenerateVideo, useGenerationStatus } from "@/lib/hooks/use-generator"
 import { useCurrentSubscription } from "@/lib/hooks/use-subscription"
-import { generatorApi } from "@/lib/api/generator.api"
+import { useVideos } from "@/lib/hooks/use-videos"
 
 export default function GeneratorPage() {
   const router = useRouter()
@@ -21,8 +21,9 @@ export default function GeneratorPage() {
   const { data: subscription, isLoading: subscriptionLoading } = useCurrentSubscription()
   const generateVideo = useGenerateVideo()
   const [jobId, setJobId] = useState<string | null>(null)
-  const [isDownloading, setIsDownloading] = useState(false)
   const { data: statusData } = useGenerationStatus(jobId, !!jobId)
+  // Get recent videos to check for any processing videos after page refresh
+  const { data: recentVideos } = useVideos(1, 0, !!userData?.user)
 
   const form = useForm<GenerateVideoInput>({
     resolver: zodResolver(generateVideoSchema),
@@ -38,39 +39,19 @@ export default function GeneratorPage() {
     }
   }, [userData, userLoading, router])
 
-
-  // Download video when status is completed
+  // Restore jobId from most recent processing video if page was refreshed
   useEffect(() => {
-    if (statusData?.status === "completed" && jobId && !isDownloading) {
-      const downloadVideo = async () => {
-        try {
-          setIsDownloading(true)
-          const blob = await generatorApi.downloadVideo(jobId)
-          
-          // Create a download link and trigger download
-          const url = window.URL.createObjectURL(blob)
-          const a = document.createElement('a')
-          a.href = url
-          a.download = `${jobId}.mp4`
-          document.body.appendChild(a)
-          a.click()
-          window.URL.revokeObjectURL(url)
-          document.body.removeChild(a)
-          
-          // Redirect to my videos page
-          router.push("/dashboard/my-videos")
-        } catch (error) {
-          const message =
-            (error as { response?: { data?: { message?: string } } })?.response?.data?.message ||
-            "Failed to download video. Please try again."
-          form.setError("root", { message })
-          setIsDownloading(false)
-        }
+    if (userData?.user && recentVideos?.videos && !jobId) {
+      // Find the most recent video that's still processing
+      const processingVideo = recentVideos.videos.find(
+        (v) => v.status === "pending" || v.status === "processing"
+      )
+      if (processingVideo) {
+        // Restore polling for this video
+        setJobId(processingVideo.jobId)
       }
-      
-      downloadVideo()
     }
-  }, [statusData, jobId, isDownloading, router, form])
+  }, [userData, recentVideos, jobId])
 
   const onSubmit = async (data: GenerateVideoInput) => {
     generateVideo.mutate(
@@ -105,7 +86,7 @@ export default function GeneratorPage() {
     return null
   }
 
-  const isGenerating = generateVideo.isPending || (jobId && statusData?.status !== "completed" && statusData?.status !== "failed") || isDownloading
+  const isGenerating = generateVideo.isPending || (jobId && statusData?.status !== "completed" && statusData?.status !== "failed")
   // Only check canGenerate after subscription data has loaded
   // Don't show limit card while loading to avoid flickering
   const canGenerate = subscriptionLoading 
@@ -253,17 +234,31 @@ export default function GeneratorPage() {
             {statusData && (
               <div className="p-4 bg-primary/5 border border-primary/20 rounded-lg">
                 <div className="flex items-center gap-2 mb-2">
-                  <Clock className="w-4 h-4 animate-spin" />
+                  {statusData.status === "pending" || statusData.status === "processing" ? (
+                    <Clock className="w-4 h-4 animate-spin text-primary" />
+                  ) : statusData.status === "completed" ? (
+                    <CheckCircle className="w-4 h-4 text-green-500" />
+                  ) : null}
                   <span className="font-medium">Status: {statusData.status}</span>
                 </div>
                 {statusData.status === "pending" || statusData.status === "processing" ? (
                   <p className="text-sm text-muted-foreground">
                     Your video is being generated. This may take a few minutes...
                   </p>
-                ) : statusData.status === "completed" && isDownloading ? (
-                  <p className="text-sm text-muted-foreground">
-                    Your video is ready! Downloading now...
-                  </p>
+                ) : statusData.status === "completed" ? (
+                  <div className="space-y-2">
+                    <p className="text-sm text-foreground font-medium">
+                      ✅ Your video is ready!
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      You can view and download it from the My Videos page.
+                    </p>
+                    <Link href="/dashboard/my-videos">
+                      <Button size="sm" variant="outline" className="mt-2">
+                        View My Videos
+                      </Button>
+                    </Link>
+                  </div>
                 ) : statusData.status === "failed" ? (
                   <p className="text-sm text-destructive">
                     Video generation failed. Please try again.
@@ -281,7 +276,7 @@ export default function GeneratorPage() {
               {isGenerating ? (
                 <>
                   <Clock className="w-5 h-5 animate-spin" /> 
-                  {isDownloading ? "Downloading..." : statusData?.status === "completed" ? "Preparing download..." : "Generating..."}
+                  Generating...
                 </>
               ) : (
                 <>

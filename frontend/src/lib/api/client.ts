@@ -34,9 +34,11 @@ class ApiClient {
       (response) => response,
       (error: AxiosError) => {
         if (error.response?.status === 401) {
-          // Unauthorized - clear token and redirect to login
+          // Unauthorized - clear token
           this.clearToken();
-          if (typeof window !== 'undefined') {
+          // Only redirect to login if not on the root page (generator)
+          // Root page allows unauthenticated access per Phase 1 requirements
+          if (typeof window !== 'undefined' && window.location.pathname !== '/') {
             window.location.href = '/login';
           }
         }

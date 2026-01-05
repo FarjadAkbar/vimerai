@@ -4,6 +4,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { ISubscriptionService } from '@/core/ports/subscription.service';
 import type { ISubscriptionRepository } from '@/core/ports/subscription.repository';
 import type { IPaymentService } from '@/core/ports/payment.service';
+import { PAYMENT_SERVICE_TOKEN } from '@/core/tokens/injection.tokens';
 import { Subscription, SubscriptionPlan } from '@/domain/subscription.entity';
 
 @Injectable()
@@ -18,7 +19,7 @@ export class SubscriptionService implements ISubscriptionService {
   constructor(
     @Inject('ISubscriptionRepository')
     private readonly subscriptionRepository: ISubscriptionRepository,
-    @Inject('IPaymentService')
+    @Inject(PAYMENT_SERVICE_TOKEN)
     private readonly paymentService: IPaymentService,
   ) {}
 

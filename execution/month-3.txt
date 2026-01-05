@@ -1,0 +1,48 @@
+Deliverables
+
+Fast model real API integration
+
+Real video generation
+
+Generation status handling
+
+Error & retry handling (basic)
+
+“My Videos” (v1)
+
+List user generations
+
+Status: processing / completed / failed
+
+Pricing page (single plan)
+
+Subscription logic
+
+Limit based on number of videos
+
+Payment gateway integration (live)
+
+Usage tracking & enforcement
+
+Basic admin controls
+
+View users
+
+View usage
+
+Soft launch to early users
+
+Start collecting real user feedback
+
+Acceptance
+
+✅ Users can:
+
+Generate real videos
+
+Subscribe to one paid plan
+
+See their generated videos
+
+Be limited by plan usage
+✅ Platform can generate real revenue

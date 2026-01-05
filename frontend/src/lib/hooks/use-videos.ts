@@ -1,10 +1,12 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { videosApi } from '@/lib/api/videos.api';
 
-export const useVideos = (limit = 10, offset = 0) => {
+export const useVideos = (limit = 10, offset = 0, enabled = true, refetchInterval?: number) => {
   return useQuery({
     queryKey: ['videos', limit, offset],
     queryFn: () => videosApi.getVideos(limit, offset),
+    enabled, // Allow disabling the query to prevent API calls when not authenticated
+    refetchInterval: refetchInterval, // Optional refetch interval for polling
   });
 };
 

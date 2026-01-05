@@ -14,6 +14,7 @@ import serverConfig from './infrastructure/config/server.config';
 import jwtConfig from './infrastructure/config/jwt.config';
 import stripeConfig from './infrastructure/config/stripe.config';
 import videoGenerationConfig from './infrastructure/config/video-generation.config';
+import storageConfig from './infrastructure/config/storage.config';
 
 @Module({
   imports: [
@@ -26,6 +27,7 @@ import videoGenerationConfig from './infrastructure/config/video-generation.conf
         jwtConfig,
         stripeConfig,
         videoGenerationConfig,
+        storageConfig,
       ],
     }),
     DatabaseModule,

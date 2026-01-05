@@ -7,10 +7,10 @@ import { SubscriptionWebhookController } from './subscription-webhook.controller
 import { SubscriptionService } from './subscription.service';
 import { DatabaseModule } from '@/infrastructure/persistence/database.module';
 import { TypeOrmSubscriptionRepository } from '@/infrastructure/persistence/typeorm/repositories/subscription.repository';
-import { StripePaymentService } from '@/infrastructure/payment/stripe-payment.service';
+import { PaymentModule } from '@/infrastructure/payment/payment.module';
 
 @Module({
-  imports: [DatabaseModule],
+  imports: [DatabaseModule, PaymentModule],
   controllers: [
     SubscriptionController,
     SubscriptionPublicController,
@@ -25,10 +25,6 @@ import { StripePaymentService } from '@/infrastructure/payment/stripe-payment.se
     {
       provide: 'ISubscriptionService',
       useClass: SubscriptionService,
-    },
-    {
-      provide: 'IPaymentService',
-      useClass: StripePaymentService,
     },
   ],
   exports: [

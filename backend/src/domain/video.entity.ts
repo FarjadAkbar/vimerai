@@ -76,4 +76,19 @@ export class Video {
       new Date(),
     );
   }
+
+  updateJobId(jobId: string): Video {
+    return new Video(
+      this.id,
+      this.userId,
+      this.prompt,
+      this.mode,
+      this.status,
+      this.videoUrl,
+      this.previewUrl,
+      jobId,
+      this.createdAt,
+      new Date(),
+    );
+  }
 }

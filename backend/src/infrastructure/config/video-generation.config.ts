@@ -1,6 +1,7 @@
 import { registerAs } from '@nestjs/config';
 
 export default registerAs('videoGeneration', () => ({
+  provider: process.env.VIDEO_GENERATION_PROVIDER || 'mock', // 'mock' or 'sora'
   sora: {
     apiKey: process.env.SORA_API_KEY || '',
     apiUrl: process.env.SORA_API_URL || 'https://api.openai.com/v1/videos',
