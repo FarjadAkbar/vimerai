@@ -52,7 +52,7 @@ export default function GeneratorPage() {
       }
     }
   }, [userData, recentVideos, jobId])
-
+ 
   const onSubmit = async (data: GenerateVideoInput) => {
     generateVideo.mutate(
       { prompt: data.prompt, mode: data.mode },
@@ -85,7 +85,7 @@ export default function GeneratorPage() {
   if (!userData) {
     return null
   }
-
+  
   const isGenerating = generateVideo.isPending || (jobId && statusData?.status !== "completed" && statusData?.status !== "failed")
   // Only check canGenerate after subscription data has loaded
   // Don't show limit card while loading to avoid flickering
@@ -95,6 +95,9 @@ export default function GeneratorPage() {
       ? subscription.videosRemaining > 0 
       : false
   const hasReachedLimit = !subscriptionLoading && subscription && subscription.videosRemaining === 0
+
+   
+
 
   const modes = [
     {
@@ -280,7 +283,7 @@ export default function GeneratorPage() {
                 </>
               ) : (
                 <>
-                  <Wand2 className="w-5 h-5" /> Generate Video
+                  <Wand2 className="w-5 h-5"  /> Generate Video
                 </>
               )}
             </Button>

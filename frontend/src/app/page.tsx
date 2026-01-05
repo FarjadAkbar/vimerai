@@ -127,9 +127,9 @@ export default function GeneratorPage() {
     }
     
     // If user has already used preview, redirect to pricing
-    if (hasUsedPreview && userData?.user) {
-      router.push("/pricing")
-    }
+    // if (hasUsedPreview && userData?.user) {
+    //   router.push("/")
+    // }
   }, [userData, form, hasUsedPreview, router, onSubmit])
 
   // Show preview overlay when preview is completed

@@ -33,7 +33,7 @@ export const useLogin = () => {
       localStorage.setItem('user', JSON.stringify(response.user));
       queryClient.setQueryData(['user'], { user: response.user });
       // Redirect to generator as per Phase 1 requirements
-      router.push('/');
+      router.push('/dashboard');
     },
   });
 };
