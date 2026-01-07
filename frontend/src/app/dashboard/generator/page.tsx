@@ -89,12 +89,15 @@ export default function GeneratorPage() {
   const isGenerating = generateVideo.isPending || (jobId && statusData?.status !== "completed" && statusData?.status !== "failed")
   // Only check canGenerate after subscription data has loaded
   // Don't show limit card while loading to avoid flickering
-  const canGenerate = subscriptionLoading 
-    ? true // Assume can generate while loading to prevent false negative
-    : subscription 
-      ? subscription.videosRemaining > 0 
-      : false
-  const hasReachedLimit = !subscriptionLoading && subscription && subscription.videosRemaining === 0
+  const canGenerate =
+  !subscriptionLoading &&
+  subscription &&
+  subscription.videosRemaining > 0;
+
+const hasReachedLimit =
+  !subscriptionLoading &&
+  subscription &&
+  subscription.videosRemaining === 0;
 
    
 
@@ -108,24 +111,24 @@ export default function GeneratorPage() {
       color: "text-yellow-500",
       bgColor: "bg-yellow-500/10",
     },
-    {
-      value: "cinematic",
-      label: "Cinematic Mode",
-      description: "Premium quality. 4K-8K resolution.",
-      icon: Film,
-      color: "text-purple-500",
-      bgColor: "bg-purple-500/10",
-      disabled: true,
-    },
-    {
-      value: "avatar",
-      label: "Avatar Mode",
-      description: "AI-powered avatars. Coming soon.",
-      icon: Users,
-      color: "text-blue-500",
-      bgColor: "bg-blue-500/10",
-      disabled: true,
-    },
+    // {
+    //   value: "cinematic",
+    //   label: "Cinematic Mode",
+    //   description: "Premium quality. 4K-8K resolution.",
+    //   icon: Film,
+    //   color: "text-purple-500",
+    //   bgColor: "bg-purple-500/10",
+    //   disabled: true,
+    // },
+    // {
+    //   value: "avatar",
+    //   label: "Avatar Mode",
+    //   description: "AI-powered avatars. Coming soon.",
+    //   icon: Users,
+    //   color: "text-blue-500",
+    //   bgColor: "bg-blue-500/10",
+    //   disabled: true,
+    // },
   ]
 
   return (

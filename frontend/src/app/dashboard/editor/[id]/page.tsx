@@ -82,9 +82,9 @@ export default function EditorPage() {
           <div className="lg:col-span-2 space-y-6">
             <div className="rounded-xl border border-border overflow-hidden bg-card">
               <div className="aspect-video bg-gradient-to-br from-primary/20 to-primary/10 flex flex-col items-center justify-center gap-4 relative">
-                {video.videoUrl ? (
+                {video.videoUrl || video.previewUrl ? (
                   <video
-                    src={video.videoUrl}
+                    src={video.previewUrl!}
                     className="w-full h-full object-cover"
                     controls
                   />

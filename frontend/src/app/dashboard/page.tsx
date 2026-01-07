@@ -41,7 +41,7 @@ export default function DashboardPage() {
       bgColor: "bg-green-500/10",
     },
   ]
-
+console.log("vieos data",videos)
   return (
     <div className="w-full">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -120,6 +120,7 @@ export default function DashboardPage() {
               </Button>
             </Link>
           </div>
+          {}
           {videosLoading || subscriptionLoading ? (
             <div className="flex items-center justify-center py-12">
               <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
@@ -136,14 +137,19 @@ export default function DashboardPage() {
             </div>
           ) : (
             <div className="grid md:grid-cols-3 gap-6">
+              
               {videos.map((video) => (
+                
                 <Link
                   key={video.id}
                   href={`/dashboard/my-videos`}
+                  
                   className="rounded-xl border border-border hover:border-primary/50 overflow-hidden transition-all group"
                 >
                   <div className="aspect-video bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center relative">
-                    <Video className="w-12 h-12 text-primary/50 group-hover:text-primary transition-colors" />
+                  
+                    <Video  className="w-12 h-12 text-primary/50 group-hover:text-primary transition-colors" />
+                    <video src={video.previewUrl!}></video>
                     <div className="absolute top-2 right-2">
                       <span className="px-2 py-1 bg-black/50 text-white text-xs rounded">
                         {new Date(video.createdAt).toLocaleDateString()}
