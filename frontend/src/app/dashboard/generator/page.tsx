@@ -89,11 +89,6 @@ export default function GeneratorPage() {
   const isGenerating = generateVideo.isPending || (jobId && statusData?.status !== "completed" && statusData?.status !== "failed")
   // Only check canGenerate after subscription data has loaded
   // Don't show limit card while loading to avoid flickering
-  const canGenerate =
-  !subscriptionLoading &&
-  subscription &&
-  subscription.videosRemaining > 0;
-
 const hasReachedLimit =
   !subscriptionLoading &&
   subscription &&
@@ -192,7 +187,7 @@ const hasReachedLimit =
                       placeholder="E.g., A professional product launch video for a new smartphone showing features like camera, battery life, and design..."
                       className="min-h-32"
                       {...field}
-                      disabled={isGenerating || !canGenerate}
+                      disabled={isGenerating || !hasReachedLimit}
                     />
                   </FormControl>
                   <FormMessage />
@@ -216,7 +211,7 @@ const hasReachedLimit =
                           key={mode.value}
                           type="button"
                           onClick={() => !mode.disabled && field.onChange(mode.value)}
-                          disabled={mode.disabled || isGenerating || !canGenerate}
+                          disabled={mode.disabled || isGenerating || !hasReachedLimit}
                           className={`p-4 rounded-xl border-2 transition-all text-left ${
                             field.value === mode.value
                               ? "border-primary bg-primary/5"
@@ -277,7 +272,7 @@ const hasReachedLimit =
               type="submit"
               size="lg"
               className="w-full bg-primary hover:bg-primary/90 gap-2"
-              disabled={isGenerating || !canGenerate}
+              disabled={isGenerating || !hasReachedLimit}
             >
               {isGenerating ? (
                 <>

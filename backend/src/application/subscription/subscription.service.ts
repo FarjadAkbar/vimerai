@@ -86,7 +86,7 @@ export class SubscriptionService implements ISubscriptionService {
     if (!subscription) {
       throw new NotFoundException('Subscription not found');
     }
-
+    
     const updated = subscription.incrementUsage();
     await this.subscriptionRepository.updateSubscription(updated);
   }

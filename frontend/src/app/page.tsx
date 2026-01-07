@@ -32,7 +32,7 @@ export default function GeneratorPage() {
   const { data: userData } = useUser();
   // Only fetch videos if user is authenticated to avoid 401 redirect
   // Refetch every 5 seconds to catch new video generations from dashboard
-  const { data: videosData } = useVideos(10, 0, !!userData?.user, 5000);
+  const { data: videosData } = useVideos(10, 0, !!userData?.user);
   const generatePreview = useGeneratePreview();
   const [showPreviewOverlay, setShowPreviewOverlay] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -178,7 +178,7 @@ export default function GeneratorPage() {
       setTimeout(() => {
         setPreviewUrl(statusData.previewUrl!);
         setShowPreviewOverlay(true);
-        setRedirectCountdown(5);
+        setRedirectCountdown(10);
         setLastShownPreviewUrl(statusData.previewUrl!); // Mark this preview as shown
       }, 0);
     }

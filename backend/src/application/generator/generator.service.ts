@@ -98,6 +98,12 @@ export class GeneratorService implements IGeneratorService {
     userId: string,
     dto: GeneratePreviewDto,
   ): Promise<{ jobId: string; status: string }> {
+    const canGenerate = await this.subscriptionService.getCurrentSubscription(userId);
+    console.log(canGenerate, "can")
+    if (!canGenerate) {
+      throw new BadRequestException('Video generation limit reached');
+    }
+
     // Check if user already used preview
     const videos = await this.videoRepository.getVideosByUserId(userId, 1, 0);
     const hasPreview = videos.videos.some((v) => v.previewUrl !== null);

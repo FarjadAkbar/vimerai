@@ -14,6 +14,7 @@ export default function DashboardPage() {
 
   const videos = videosData?.videos || []
   const videosRemaining = subscription?.videosRemaining || 0
+  console.log("Videos Remaining",videosRemaining)
   const totalVideos = subscription?.limit || 0
   const planName = subscription?.plan || "No Plan"
   const totalVideosCreated = videosData?.total || 0
@@ -41,7 +42,6 @@ export default function DashboardPage() {
       bgColor: "bg-green-500/10",
     },
   ]
-console.log("vieos data",videos)
   return (
     <div className="w-full">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">

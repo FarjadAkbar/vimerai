@@ -173,7 +173,7 @@ export default function PricingPage() {
         </div>
 
         {/* Single Shot Option */}
-        <div className="mt-16 text-center">
+        {/* <div className="mt-16 text-center">
           <div className="inline-block p-8 rounded-xl border border-border bg-card/50 max-w-md">
             <h3 className="text-xl font-bold mb-2">Single Shot</h3>
             <p className="text-muted-foreground text-sm mb-4">
@@ -186,7 +186,7 @@ export default function PricingPage() {
               </Button>
             </Link>
           </div>
-        </div>
+        </div> */}
       </div>
     </div>
   )
