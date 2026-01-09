@@ -35,7 +35,7 @@ export default function LoginPage() {
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <div className="w-full max-w-md space-y-8">
         <Link href='/'>
-      <ArrowLeftIcon /> 
+      {/* <ArrowLeftIcon />  */}
         </Link>
         <div className="text-center space-y-2">
           <div className="flex items-center justify-center gap-2">

@@ -4,9 +4,21 @@ import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useForm } from "react-hook-form";
+import { useLogout } from "@/lib/hooks/use-auth";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
-import { Wand2, Clock, AlertCircle, Zap, Sparkles, X } from "lucide-react";
+import { toast } from "react-toastify";
+import {
+  Wand2,
+  Clock,
+  AlertCircle,
+  Zap,
+  Sparkles,
+  X,
+  Settings,
+  LogOut,
+  AlertCircleIcon,
+} from "lucide-react";
 import {
   generateVideoSchema,
   type GenerateVideoInput,
@@ -29,6 +41,7 @@ import { useVideos } from "@/lib/hooks/use-videos";
 
 export default function GeneratorPage() {
   const router = useRouter();
+  
   const { data: userData } = useUser();
   // Only fetch videos if user is authenticated to avoid 401 redirect
   // Refetch every 5 seconds to catch new video generations from dashboard
@@ -88,8 +101,11 @@ export default function GeneratorPage() {
             (error as { response?: { data?: { message?: string } } })?.response
               ?.data?.message || "";
           if (errorMessage.includes("already used")) {
+            toast.error("Your free video limit reached. Redirecting to pricing...");
             // For Phase 1, redirect to pricing after preview is used
-            router.push("/pricing");
+            setTimeout(() => {
+              router.push("/pricing");
+            }, 2000);
           } else {
             form.setError("root", {
               message:
@@ -99,7 +115,9 @@ export default function GeneratorPage() {
         }
       } else {
         // Preview already used, redirect to pricing
-        router.push("/pricing");
+        setTimeout(() => {
+          router.push("/pricing");
+        });
       }
     },
     [userData, hasUsedPreview, generatePreview, router, form]
@@ -230,47 +248,7 @@ export default function GeneratorPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Simple Header */}
-      <nav className="sticky top-0 z-50 border-b border-border bg-background/95 backdrop-blur-md">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-              <Sparkles className="w-5 h-5 text-primary-foreground" />
-            </div>
-            <span className="text-xl font-bold">Vimerai</span>
-          </Link>
-          <div className="flex items-center gap-3">
-            {userData?.user ? (
-              <>
-                <Link href="/dashboard">
-                  <Button variant="ghost" size="sm">
-                    Dashboard
-                  </Button>
-                </Link>
-                <Link href="/pricing">
-                  <Button variant="outline" size="sm">
-                    Pricing
-                  </Button>
-                </Link>
-              </>
-            ) : (
-              <>
-                <Link href="/login">
-                  <Button variant="outline" size="sm">
-                    Sign In
-                  </Button>
-                </Link>
-                <Link href="/signup">
-                  <Button size="sm" className="bg-primary hover:bg-primary/90">
-                    Create Account
-                  </Button>
-                </Link>
-              </>
-            )}
-          </div>
-        </div>
-      </nav>
-
+     
       {/* Generator Interface */}
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {/* Header */}

@@ -1,6 +1,5 @@
 "use client"
 
-import { useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useForm } from "react-hook-form"
@@ -37,10 +36,7 @@ export default function SignupPage() {
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <div className="w-full max-w-md space-y-8">
-        <Link href="/" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors mb-4">
-          <ArrowLeft className="w-4 h-4" />
-          Back to home
-        </Link>
+        
         <div className="text-center space-y-2">
           <div className="flex items-center justify-center gap-2">
             <Sparkles className="h-8 w-8 text-primary" />

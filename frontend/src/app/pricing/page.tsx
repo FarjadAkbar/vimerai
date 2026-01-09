@@ -2,12 +2,10 @@
 
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { Check, Sparkles, ArrowRight } from "lucide-react"
+import { Check, ArrowRight } from "lucide-react"
 import { BorderBeam } from "@/components/ui/border-beam"
-import { useUser } from "@/lib/hooks/use-user"
 
 export default function PricingPage() {
-  const { data: userData } = useUser()
   const pricingPlans = [
     {
       name: "Starter",
@@ -65,52 +63,7 @@ export default function PricingPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <nav className="sticky top-0 z-50 border-b border-border bg-background/95 backdrop-blur-md">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-              <Sparkles className="w-5 h-5 text-primary-foreground" />
-            </div>
-            <span className="text-xl font-bold">Vimerai</span>
-          </Link>
-          <div className="flex items-center gap-3">
-            <Link href="/">
-              <Button variant="ghost" size="sm">
-                Generator
-              </Button>
-            </Link>
-            {userData?.user ? (
-              <>
-                <Link href="/dashboard">
-                  <Button variant="ghost" size="sm">
-                    Dashboard
-                  </Button>
-                </Link>
-                <Link href="/pricing">
-                  <Button variant="outline" size="sm">
-                    Pricing
-                  </Button>
-                </Link>
-              </>
-            ) : (
-              <>
-                <Link href="/login">
-                  <Button variant="outline" size="sm">
-                    Sign In
-                  </Button>
-                </Link>
-                <Link href="/signup">
-                  <Button size="sm" className="bg-primary hover:bg-primary/90">
-                    Create Account
-                  </Button>
-                </Link>
-              </>
-            )}
-          </div>
-        </div>
-      </nav>
-
+ 
       {/* Pricing Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
         <div className="text-center mb-16">
