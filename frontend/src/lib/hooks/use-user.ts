@@ -3,6 +3,9 @@ import { usersApi } from '@/lib/api/users.api';
 import type { UpdateUserRequest } from '@/lib/api/users.api';
 
 export const useUser = () => {
+  // Check if token exists to determine if query should be enabled
+  const hasToken = typeof window !== 'undefined' && !!localStorage.getItem('token');
+  
   return useQuery({
     queryKey: ['user'],
     queryFn: async () => {
@@ -24,6 +27,7 @@ export const useUser = () => {
         throw error;
       }
     },
+    enabled: hasToken, // Only fetch if token exists
     staleTime: 5 * 60 * 1000, // 5 minutes
     retry: false, // Don't retry on error to avoid redirect loops
     initialData: () => {

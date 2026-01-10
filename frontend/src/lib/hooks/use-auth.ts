@@ -33,7 +33,7 @@ export const useLogin = () => {
       localStorage.setItem('user', JSON.stringify(response.user));
       queryClient.setQueryData(['user'], { user: response.user });
       // Redirect to generator as per Phase 1 requirements
-      router.push('/dashboard');
+      router.push('/');
     },
   });
 };
@@ -62,9 +62,21 @@ export const useLogout = () => {
   const router = useRouter();
 
   const logout = () => {
+    // Clear localStorage first
     localStorage.removeItem('token');
     localStorage.removeItem('user');
+    
+    // Cancel any ongoing queries to prevent refetches
+    queryClient.cancelQueries();
+    
+    // Set user query to null to trigger immediate re-render
+    // This will make userData?.user falsy in the header
+    queryClient.setQueryData(['user'], null);
+    
+    // Clear all cached data
     queryClient.clear();
+    
+    // Redirect to login
     router.push('/login');
   };
 
