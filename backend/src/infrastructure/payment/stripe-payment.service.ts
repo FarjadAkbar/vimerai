@@ -23,13 +23,13 @@ export class StripePaymentService implements IPaymentService {
   constructor(private readonly configService: ConfigService) {
     const paymentConfig = this.configService.get<{
       stripe: {
-        secretKey: string;
-        webhookSecret: string;
-        priceIds: {
-          starter: string;
-          creator: string;
-          pro: string;
-        };
+      secretKey: string;
+      webhookSecret: string;
+      priceIds: {
+        starter: string;
+        creator: string;
+        pro: string;
+      };
       };
     }>('payment');
 
