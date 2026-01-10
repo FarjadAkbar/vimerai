@@ -14,7 +14,10 @@ import type { IVideoRepository } from '@/core/ports/video.repository';
 import type { ISubscriptionService } from '@/core/ports/subscription.service';
 import type { IVideoGenerationProvider } from '@/core/ports/video-generation.provider';
 import type { IStorageService } from '@/core/ports/storage.service';
-import { STORAGE_SERVICE_TOKEN, VIDEO_GENERATION_PROVIDER_TOKEN } from '@/core/tokens/injection.tokens';
+import {
+  STORAGE_SERVICE_TOKEN,
+  VIDEO_GENERATION_PROVIDER_TOKEN,
+} from '@/core/tokens/injection.tokens';
 import { Video, GenerationMode, VideoStatus } from '@/domain/video.entity';
 
 @Injectable()
@@ -98,19 +101,16 @@ export class GeneratorService implements IGeneratorService {
     userId: string,
     dto: GeneratePreviewDto,
   ): Promise<{ jobId: string; status: string }> {
-    const canGenerate = await this.subscriptionService.getCurrentSubscription(userId);
-    console.log(canGenerate, "can")
-    if (!canGenerate) {
-      throw new BadRequestException('Video generation limit reached');
-    }
-
-    // Check if user already used preview
+    // Check if user already used preview (first preview is free, no subscription required)
     const videos = await this.videoRepository.getVideosByUserId(userId, 1, 0);
     const hasPreview = videos.videos.some((v) => v.previewUrl !== null);
 
     if (hasPreview) {
       throw new BadRequestException('Preview already used');
     }
+
+    // First preview is free - no subscription check needed
+    // After preview, user will need to subscribe for full video generation
 
     const jobId = uuidv4();
     const video = Video.create(
@@ -181,15 +181,16 @@ export class GeneratorService implements IGeneratorService {
     // Check for timeout: if video has been processing for more than 30 minutes, mark as failed
     const MAX_PROCESSING_TIME = 30 * 60 * 1000; // 30 minutes in milliseconds
     const processingTime = Date.now() - video.createdAt.getTime();
-    
+
     if (
-      (video.status === VideoStatus.PENDING || video.status === VideoStatus.PROCESSING) &&
+      (video.status === VideoStatus.PENDING ||
+        video.status === VideoStatus.PROCESSING) &&
       processingTime > MAX_PROCESSING_TIME
     ) {
       // Mark as failed due to timeout
       const failedVideo = video.updateStatus(VideoStatus.FAILED, null);
       await this.videoRepository.updateVideo(failedVideo);
-      
+
       return {
         status: 'failed',
         videoUrl: undefined,
@@ -214,7 +215,7 @@ export class GeneratorService implements IGeneratorService {
         };
 
         const newStatus = statusMap[statusResult.status] || video.status;
-        
+
         // Always update if status changed, if we got a video URL, or if we got a preview URL
         if (
           newStatus !== video.status ||
@@ -225,16 +226,20 @@ export class GeneratorService implements IGeneratorService {
             newStatus,
             statusResult.videoUrl || video.videoUrl || null,
           );
-          
+
           // Update previewUrl if provided
           if (statusResult.previewUrl) {
-            updatedVideo = updatedVideo.updatePreviewUrl(statusResult.previewUrl);
+            updatedVideo = updatedVideo.updatePreviewUrl(
+              statusResult.previewUrl,
+            );
           }
-          
+
           await this.videoRepository.updateVideo(updatedVideo);
 
-          // Record usage if completed
-          if (newStatus === VideoStatus.COMPLETED) {
+          // Record usage only for full videos (not previews)
+          // Full videos have videoUrl, previews only have previewUrl
+          // Only record if it's a full video (has videoUrl) and not just a preview
+          if (newStatus === VideoStatus.COMPLETED && updatedVideo.videoUrl) {
             await this.subscriptionService.recordVideoGeneration(video.userId);
           }
         }
@@ -246,7 +251,7 @@ export class GeneratorService implements IGeneratorService {
         };
       } catch (error) {
         console.error('Status check failed:', error);
-        
+
         // If status check fails multiple times and video has been processing for a while,
         // we might want to mark it as failed, but for now, return current status
         // to allow polling to continue

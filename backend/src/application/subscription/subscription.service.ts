@@ -9,11 +9,11 @@ import { Subscription, SubscriptionPlan } from '@/domain/subscription.entity';
 
 @Injectable()
 export class SubscriptionService implements ISubscriptionService {
-  // Plan limits (mock for Phase 1)
+  // Plan limits
   private readonly PLAN_LIMITS = {
-    [SubscriptionPlan.STARTER]: 1,
-    [SubscriptionPlan.CREATOR]: 5,
-    [SubscriptionPlan.PRO]: 10,
+    [SubscriptionPlan.STARTER]: 10,
+    [SubscriptionPlan.CREATOR]: 50,
+    [SubscriptionPlan.PRO]: 200,
   };
 
   constructor(
@@ -86,7 +86,7 @@ export class SubscriptionService implements ISubscriptionService {
     if (!subscription) {
       throw new NotFoundException('Subscription not found');
     }
-    
+
     const updated = subscription.incrementUsage();
     await this.subscriptionRepository.updateSubscription(updated);
   }
