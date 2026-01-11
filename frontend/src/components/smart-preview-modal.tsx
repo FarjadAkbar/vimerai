@@ -31,7 +31,7 @@ export function SmartPreviewModal({
       }
     }, 1000);
     return () => clearTimeout(timer);
-  }, [redirectCountdown]);
+  }, [redirectCountdown, router]);
 
   return (
     <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
