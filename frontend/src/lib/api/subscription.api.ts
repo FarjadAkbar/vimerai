@@ -1,6 +1,6 @@
 import { api } from './client';
 
-export type SubscriptionPlan = 'starter' | 'creator' | 'pro';
+export type SubscriptionPlan = 'free' | 'starter' | 'creator' | 'pro';
 
 export interface CurrentSubscriptionResponse {
   plan: SubscriptionPlan;
