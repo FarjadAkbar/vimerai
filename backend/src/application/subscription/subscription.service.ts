@@ -3,6 +3,7 @@ import { Inject } from '@nestjs/common';
 import { v4 as uuidv4 } from 'uuid';
 import { ISubscriptionService } from '@/core/ports/subscription.service';
 import type { ISubscriptionRepository } from '@/core/ports/subscription.repository';
+import type { IVideoRepository } from '@/core/ports/video.repository';
 import type { IPaymentService } from '@/core/ports/payment.service';
 import { PAYMENT_SERVICE_TOKEN } from '@/core/tokens/injection.tokens';
 import { Subscription, SubscriptionPlan } from '@/domain/subscription.entity';
@@ -19,6 +20,8 @@ export class SubscriptionService implements ISubscriptionService {
   constructor(
     @Inject('ISubscriptionRepository')
     private readonly subscriptionRepository: ISubscriptionRepository,
+    @Inject('IVideoRepository')
+    private readonly videoRepository: IVideoRepository,
     @Inject(PAYMENT_SERVICE_TOKEN)
     private readonly paymentService: IPaymentService,
   ) {}
@@ -28,18 +31,26 @@ export class SubscriptionService implements ISubscriptionService {
     videosRemaining: number;
     limit: number;
   }> {
-    let subscription =
+    const subscription =
       await this.subscriptionRepository.getSubscriptionByUserId(userId);
 
-    // Create default subscription if none exists (free tier)
+    // If no subscription exists, return free plan data (no DB entry)
     if (!subscription) {
-      subscription = Subscription.create(
-        uuidv4(),
+      // Check if user has already used their free preview
+      const userVideos = await this.videoRepository.getVideosByUserId(
         userId,
-        SubscriptionPlan.STARTER,
-        this.PLAN_LIMITS[SubscriptionPlan.STARTER],
+        100,
+        0,
       );
-      await this.subscriptionRepository.createSubscription(subscription);
+      const hasUsedPreview = userVideos.videos.some(
+        (v) => v.previewUrl !== null,
+      );
+
+      return {
+        plan: SubscriptionPlan.FREE,
+        videosRemaining: hasUsedPreview ? 0 : 1, // Only 1 preview allowed
+        limit: 1,
+      };
     }
 
     return {
@@ -72,8 +83,18 @@ export class SubscriptionService implements ISubscriptionService {
     const subscription =
       await this.subscriptionRepository.getSubscriptionByUserId(userId);
 
+    // If no subscription, check if user can use free preview
     if (!subscription) {
-      return false;
+      const userVideos = await this.videoRepository.getVideosByUserId(
+        userId,
+        100,
+        0,
+      );
+      const hasUsedPreview = userVideos.videos.some(
+        (v) => v.previewUrl !== null,
+      );
+      // Free users can only generate preview if they haven't used it yet
+      return !hasUsedPreview;
     }
 
     return subscription.canGenerate();
@@ -83,8 +104,10 @@ export class SubscriptionService implements ISubscriptionService {
     const subscription =
       await this.subscriptionRepository.getSubscriptionByUserId(userId);
 
+    // Free plan users don't have a subscription, so don't record usage
+    // (preview usage is tracked via video.previewUrl existence)
     if (!subscription) {
-      throw new NotFoundException('Subscription not found');
+      return;
     }
 
     const updated = subscription.incrementUsage();

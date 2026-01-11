@@ -36,14 +36,19 @@ export class SubscriptionWebhookController {
     // Handle different Stripe event types
     switch (event.type) {
       case 'checkout.session.completed': {
-        const session = event.data;
+        const session = event.data as {
+          metadata?: { userId?: string; plan?: string };
+          customer?: unknown;
+          subscription?: unknown;
+        };
         const userId = session.metadata?.userId;
-        const plan = session.metadata?.plan as SubscriptionPlan;
+        const plan = session.metadata?.plan as SubscriptionPlan | undefined;
+        const subscriptionId = session.subscription as string | undefined;
 
-        if (userId && plan) {
+        if (userId && plan && subscriptionId) {
           await this.subscriptionService.handleStripeWebhook(
-            session.customer as string,
-            session.subscription as string,
+            userId,
+            subscriptionId,
             plan,
             'active',
           );
@@ -53,19 +58,28 @@ export class SubscriptionWebhookController {
 
       case 'customer.subscription.updated':
       case 'customer.subscription.created': {
-        const subscription = event.data;
-        const customerId = subscription.customer as string;
-        const subscriptionId = subscription.id;
-        const status = subscription.status;
+        const subscription = event.data as {
+          customer?: unknown;
+          id?: unknown;
+          status?: string;
+          items?: {
+            data?: Array<{
+              price?: { id?: string };
+            }>;
+          };
+        };
+        const customerId = subscription.customer as string | undefined;
+        const subscriptionId = subscription.id as string | undefined;
+        const status = subscription.status as string | undefined;
 
         // Extract plan from subscription items
         const planItem = subscription.items?.data?.[0];
-        const priceId = planItem?.price?.id;
+        const priceId = planItem?.price?.id as string | undefined;
 
         // Map price ID to plan (you'll need to configure this)
-        const plan = this.mapPriceIdToPlan(priceId);
+        const plan = priceId ? this.mapPriceIdToPlan(priceId) : null;
 
-        if (plan && customerId) {
+        if (plan && customerId && subscriptionId && status) {
           await this.subscriptionService.handleStripeWebhook(
             customerId,
             subscriptionId,
@@ -77,16 +91,22 @@ export class SubscriptionWebhookController {
       }
 
       case 'customer.subscription.deleted': {
-        const subscription = event.data;
-        const customerId = subscription.customer as string;
+        const subscription = event.data as {
+          customer?: unknown;
+          id?: unknown;
+        };
+        const customerId = subscription.customer as string | undefined;
+        const subscriptionId = subscription.id as string | undefined;
 
         // Deactivate subscription
-        await this.subscriptionService.handleStripeWebhook(
-          customerId,
-          subscription.id,
-          SubscriptionPlan.STARTER, // Default to starter on cancellation
-          'canceled',
-        );
+        if (customerId && subscriptionId) {
+          await this.subscriptionService.handleStripeWebhook(
+            customerId,
+            subscriptionId,
+            SubscriptionPlan.STARTER, // Default to starter on cancellation
+            'canceled',
+          );
+        }
         break;
       }
 

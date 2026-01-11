@@ -1,4 +1,5 @@
 export enum SubscriptionPlan {
+  FREE = 'free',
   STARTER = 'starter',
   CREATOR = 'creator',
   PRO = 'pro',

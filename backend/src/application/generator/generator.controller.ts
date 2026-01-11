@@ -4,16 +4,17 @@ import {
   Get,
   Body,
   Param,
+  Query,
   UseGuards,
   HttpCode,
   HttpStatus,
   ValidationPipe,
   Res,
+  BadRequestException,
 } from '@nestjs/common';
 import type { Response } from 'express';
 import { GeneratorService } from './generator.service';
 import { GenerateVideoDto } from './dto/generate-video.dto';
-import { GeneratePreviewDto } from './dto/generate-preview.dto';
 import { JwtAuthGuard } from '@/infrastructure/auth/jwt-auth.guard';
 import { CurrentUser } from '@/infrastructure/auth/current-user.decorator';
 
@@ -26,18 +27,19 @@ export class GeneratorController {
   @HttpCode(HttpStatus.CREATED)
   async generate(
     @CurrentUser() user: { userId: string },
+    @Query('type') type: string,
     @Body(ValidationPipe) dto: GenerateVideoDto,
   ) {
-    return this.generatorService.generateVideo(user.userId, dto);
-  }
-
-  @Post('preview')
-  @HttpCode(HttpStatus.OK)
-  async preview(
-    @CurrentUser() user: { userId: string },
-    @Body(ValidationPipe) dto: GeneratePreviewDto,
-  ) {
-    return this.generatorService.generatePreview(user.userId, dto);
+    if (type !== 'preview' && type !== 'full') {
+      throw new BadRequestException(
+        "Query parameter 'type' must be either 'preview' or 'full'",
+      );
+    }
+    return this.generatorService.generateVideo(
+      user.userId,
+      dto,
+      type as 'preview' | 'full',
+    );
   }
 
   @Get('status/:jobId')
