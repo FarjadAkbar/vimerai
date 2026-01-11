@@ -42,7 +42,8 @@ export default function DashboardLayout({
   }
 
   const userEmail = userData?.user?.email || "User"
-  const videosRemaining = subscription?.videosRemaining || 0
+  const videosRemaining = subscription?.videosRemaining ?? 0
+  const isFreePlan = subscription?.plan === 'free'
 
   return (
     <div className="min-h-screen bg-background">
@@ -82,7 +83,7 @@ export default function DashboardLayout({
                 <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-primary/10 rounded-lg">
                   <Zap className="w-4 h-4 text-primary" />
                   <span className="text-sm font-medium text-primary">
-                    {videosRemaining} videos left
+                    {isFreePlan ? 'Free Plan' : `${videosRemaining} videos left`}
                   </span>
                 </div>
               )}

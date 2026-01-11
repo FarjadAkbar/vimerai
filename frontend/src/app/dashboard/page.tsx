@@ -1,18 +1,21 @@
 "use client"
 
+import { useState } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
-import { Video, Plus, Zap, TrendingUp, Clock, Loader2 } from "lucide-react"
+import { Video, Plus, Zap, TrendingUp } from "lucide-react"
 import { useUser } from "@/lib/hooks/use-user"
 import { useVideos } from "@/lib/hooks/use-videos"
 import { useCurrentSubscription } from "@/lib/hooks/use-subscription"
+import { PricingModal } from "@/components/pricing-modal"
+import { VideoGrid } from "@/components/video-grid"
 
 export default function DashboardPage() {
   const { data: userData } = useUser()
-  const { data: videosData, isLoading: videosLoading } = useVideos(3, 0)
+  const { data: videosData } = useVideos(1, 0) // Just to get total count
   const { data: subscription, isLoading: subscriptionLoading } = useCurrentSubscription()
+  const [showPricingModal, setShowPricingModal] = useState(false)
 
-  const videos = videosData?.videos || []
   const videosRemaining = subscription?.videosRemaining || 0
   const totalVideos = subscription?.limit || 0
   const planName = subscription?.plan || "No Plan"
@@ -76,11 +79,13 @@ export default function DashboardPage() {
                 </div>
               )}
               {stat.label === "Current Plan" && (
-                <Link href="/pricing">
-                  <Button variant="link" className="p-0 h-auto text-primary mt-2">
-                    {subscription ? "Manage" : "Choose Plan"} →
-                  </Button>
-                </Link>
+                <Button
+                  variant="link"
+                  className="p-0 h-auto text-primary mt-2"
+                  onClick={() => setShowPricingModal(true)}
+                >
+                  {subscription ? "Manage" : "Choose Plan"} →
+                </Button>
               )}
             </div>
           ))}
@@ -101,11 +106,14 @@ export default function DashboardPage() {
               </Button>
             </Link>
             {!subscription && (
-              <Link href="/pricing">
-                <Button size="lg" variant="outline" className="gap-2">
-                  <Zap className="w-5 h-5" /> Upgrade Plan
-                </Button>
-              </Link>
+              <Button
+                size="lg"
+                variant="outline"
+                className="gap-2"
+                onClick={() => setShowPricingModal(true)}
+              >
+                <Zap className="w-5 h-5" /> Upgrade Plan
+              </Button>
             )}
           </div>
         </div>
@@ -120,61 +128,28 @@ export default function DashboardPage() {
               </Button>
             </Link>
           </div>
-          {videosLoading || subscriptionLoading ? (
-            <div className="flex items-center justify-center py-12">
-              <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
-            </div>
-          ) : videos.length === 0 ? (
-            <div className="text-center py-12 rounded-xl border border-border bg-card">
-              <Video className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-              <p className="text-muted-foreground mb-4">No videos yet</p>
+          <VideoGrid
+            limit={3}
+            offset={0}
+            enabled={!subscriptionLoading}
+            showSearch={false}
+            showActions={false}
+            showHeader={false}
+            emptyMessage="No videos yet"
+            emptyAction={
               <Link href="/dashboard/generator">
                 <Button className="bg-primary hover:bg-primary/90 gap-2">
                   <Plus className="w-5 h-5" /> Create Your First Video
                 </Button>
               </Link>
-            </div>
-          ) : (
-            <div className="grid md:grid-cols-3 gap-6">
-              {videos.map((video) => (
-                <Link
-                  key={video.id}
-                  href={`/dashboard/my-videos`}
-                  className="rounded-xl border border-border hover:border-primary/50 overflow-hidden transition-all group"
-                >
-                  <div className="aspect-video bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center relative">
-                    <Video className="w-12 h-12 text-primary/50 group-hover:text-primary transition-colors" />
-                    <div className="absolute top-2 right-2">
-                      <span className="px-2 py-1 bg-black/50 text-white text-xs rounded">
-                        {new Date(video.createdAt).toLocaleDateString()}
-                      </span>
-                    </div>
-                  </div>
-                  <div className="p-4">
-                    <h3 className="font-semibold mb-1 line-clamp-2">{video.prompt.substring(0, 60)}</h3>
-                    <p className="text-xs text-muted-foreground mb-3">
-                      {new Date(video.createdAt).toLocaleString()}
-                    </p>
-                    <div className="flex items-center gap-2">
-                      <span
-                        className={`px-2 py-1 rounded text-xs ${
-                          video.status === "completed"
-                            ? "bg-primary/10 text-primary"
-                            : video.status === "processing"
-                              ? "bg-yellow-500/10 text-yellow-500"
-                              : "bg-muted text-muted-foreground"
-                        }`}
-                      >
-                        {video.status}
-                      </span>
-                    </div>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          )}
+            }
+            gridCols="3"
+          />
         </div>
       </div>
+
+      {/* Pricing Modal */}
+      <PricingModal open={showPricingModal} onOpenChange={setShowPricingModal} />
     </div>
   )
 }

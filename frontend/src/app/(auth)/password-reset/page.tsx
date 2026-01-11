@@ -48,9 +48,10 @@ export default function PasswordResetPage() {
       onSuccess: () => {
         setEmailSent(true)
       },
-      onError: (error: any) => {
+      onError: (error: unknown) => {
         const message =
-          error?.response?.data?.message ||
+          (error as { response?: { data?: { message?: string } } })?.response
+            ?.data?.message ||
           "Failed to send reset email. Please try again."
         requestForm.setError("root", { message })
       },
@@ -59,9 +60,10 @@ export default function PasswordResetPage() {
 
   const onResetSubmit = async (data: PasswordResetInput) => {
     resetPassword.mutate(data, {
-      onError: (error: any) => {
+      onError: (error: unknown) => {
         const message =
-          error?.response?.data?.message ||
+          (error as { response?: { data?: { message?: string } } })?.response
+            ?.data?.message ||
           "Failed to reset password. Please try again."
         resetForm.setError("root", { message })
       },

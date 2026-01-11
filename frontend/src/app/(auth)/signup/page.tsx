@@ -26,8 +26,10 @@ export default function SignupPage() {
 
   const onSubmit = async (data: SignupInput) => {
     signup.mutate(data, {
-      onError: (error: any) => {
-        const message = error?.response?.data?.message || "Signup failed. Please try again."
+      onError: (error: unknown) => {
+        const message =
+          (error as { response?: { data?: { message?: string } } })?.response
+            ?.data?.message || "Signup failed. Please try again."
         form.setError("root", { message })
       },
     })
