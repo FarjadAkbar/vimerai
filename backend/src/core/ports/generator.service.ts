@@ -5,22 +5,16 @@ export interface GenerateVideoDto {
   mode?: GenerationMode;
 }
 
-export interface GeneratePreviewDto {
-  prompt: string;
-}
-
 export interface IGeneratorService {
   generateVideo(
     userId: string,
     dto: GenerateVideoDto,
-  ): Promise<{ jobId: string; status: string }>;
-  generatePreview(
-    userId: string,
-    dto: GeneratePreviewDto,
+    type: 'preview' | 'full',
   ): Promise<{ jobId: string; status: string }>;
   getGenerationStatus(jobId: string): Promise<{
     status: string;
     videoUrl?: string;
+    previewUrl?: string;
   }>;
   downloadVideo(videoId: string): Promise<Buffer>;
 }

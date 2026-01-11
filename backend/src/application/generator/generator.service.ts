@@ -8,7 +8,6 @@ import { v4 as uuidv4 } from 'uuid';
 import {
   IGeneratorService,
   GenerateVideoDto,
-  GeneratePreviewDto,
 } from '@/core/ports/generator.service';
 import type { IVideoRepository } from '@/core/ports/video.repository';
 import type { ISubscriptionService } from '@/core/ports/subscription.service';
@@ -36,15 +35,83 @@ export class GeneratorService implements IGeneratorService {
   async generateVideo(
     userId: string,
     dto: GenerateVideoDto,
+    type: 'preview' | 'full',
   ): Promise<{ jobId: string; status: string }> {
+    const jobId = uuidv4();
+    const mode = (dto.mode as GenerationMode) || GenerationMode.FAST;
+
+    // Handle preview generation
+    if (type === 'preview') {
+      // Check if user already used preview (first preview is free, no subscription required)
+      const videos = await this.videoRepository.getVideosByUserId(userId, 100, 0);
+      const hasPreview = videos.videos.some((v) => v.previewUrl !== null);
+
+      if (hasPreview) {
+        throw new BadRequestException('Preview already used');
+      }
+
+      // First preview is free - no subscription check needed
+      const video = Video.create(
+        uuidv4(),
+        userId,
+        dto.prompt,
+        GenerationMode.FAST,
+        jobId,
+      );
+
+      await this.videoRepository.createVideo(video);
+
+      // Generate preview using provider (async - returns jobId for status polling)
+      try {
+        const previewResult = await this.videoGenerationProvider.generatePreview(
+          dto.prompt,
+          jobId, // Pass jobId so provider can use it
+        );
+
+        // Update video with generation result
+        const statusMap: Record<string, VideoStatus> = {
+          pending: VideoStatus.PENDING,
+          processing: VideoStatus.PROCESSING,
+          completed: VideoStatus.COMPLETED,
+          failed: VideoStatus.FAILED,
+        };
+
+        const providerJobId = previewResult.jobId || jobId;
+        let updatedVideo = video.updateJobId(providerJobId);
+
+        updatedVideo = updatedVideo.updateStatus(
+          statusMap[previewResult.status] || VideoStatus.PENDING,
+          null, // No videoUrl for previews
+        );
+
+        // Set previewUrl if provided
+        if (previewResult.previewUrl) {
+          updatedVideo = updatedVideo.updatePreviewUrl(previewResult.previewUrl);
+        }
+
+        await this.videoRepository.updateVideo(updatedVideo);
+
+        return {
+          jobId: providerJobId,
+          status: previewResult.status,
+        };
+      } catch (error) {
+        // If generation fails, mark video as failed
+        const failedVideo = video.updateStatus(VideoStatus.FAILED, null);
+        await this.videoRepository.updateVideo(failedVideo);
+
+        throw new BadRequestException(
+          `Preview generation failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
+        );
+      }
+    }
+
+    // Handle full video generation
     // Check if user can generate
     const canGenerate = await this.subscriptionService.canGenerate(userId);
     if (!canGenerate) {
       throw new BadRequestException('Video generation limit reached');
     }
-
-    const jobId = uuidv4();
-    const mode = (dto.mode as GenerationMode) || GenerationMode.FAST;
 
     const video = Video.create(uuidv4(), userId, dto.prompt, mode, jobId);
 
@@ -93,77 +160,6 @@ export class GeneratorService implements IGeneratorService {
       await this.videoRepository.updateVideo(failedVideo);
       throw new BadRequestException(
         `Video generation failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
-      );
-    }
-  }
-
-  async generatePreview(
-    userId: string,
-    dto: GeneratePreviewDto,
-  ): Promise<{ jobId: string; status: string }> {
-    // Check if user already used preview (first preview is free, no subscription required)
-    const videos = await this.videoRepository.getVideosByUserId(userId, 1, 0);
-    const hasPreview = videos.videos.some((v) => v.previewUrl !== null);
-
-    if (hasPreview) {
-      throw new BadRequestException('Preview already used');
-    }
-
-    // First preview is free - no subscription check needed
-    // After preview, user will need to subscribe for full video generation
-
-    const jobId = uuidv4();
-    const video = Video.create(
-      uuidv4(),
-      userId,
-      dto.prompt,
-      GenerationMode.FAST,
-      jobId,
-    );
-
-    await this.videoRepository.createVideo(video);
-
-    // Generate preview using provider (async - returns jobId for status polling)
-    try {
-      const previewResult = await this.videoGenerationProvider.generatePreview(
-        dto.prompt,
-        jobId, // Pass jobId so provider can use it
-      );
-
-      // Update video with generation result
-      const statusMap: Record<string, VideoStatus> = {
-        pending: VideoStatus.PENDING,
-        processing: VideoStatus.PROCESSING,
-        completed: VideoStatus.COMPLETED,
-        failed: VideoStatus.FAILED,
-      };
-
-      const providerJobId = previewResult.jobId || jobId;
-      let updatedVideo = video.updateJobId(providerJobId);
-
-      updatedVideo = updatedVideo.updateStatus(
-        statusMap[previewResult.status] || VideoStatus.PENDING,
-        null, // No videoUrl for previews
-      );
-
-      // Set previewUrl if provided
-      if (previewResult.previewUrl) {
-        updatedVideo = updatedVideo.updatePreviewUrl(previewResult.previewUrl);
-      }
-
-      await this.videoRepository.updateVideo(updatedVideo);
-
-      return {
-        jobId: providerJobId,
-        status: previewResult.status,
-      };
-    } catch (error) {
-      // If generation fails, mark video as failed
-      const failedVideo = video.updateStatus(VideoStatus.FAILED, null);
-      await this.videoRepository.updateVideo(failedVideo);
-
-      throw new BadRequestException(
-        `Preview generation failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
       );
     }
   }

@@ -24,5 +24,5 @@ export interface IPaymentService {
   handleWebhook(
     payload: string | Buffer,
     signature: string,
-  ): { type: string; data: any };
+  ): { type: string; data: Record<string, unknown> };
 }

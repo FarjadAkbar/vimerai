@@ -12,15 +12,6 @@ export interface GenerateVideoResponse {
   status: string;
 }
 
-export interface GeneratePreviewRequest {
-  prompt: string;
-}
-
-export interface GeneratePreviewResponse {
-  jobId: string;
-  status: string;
-}
-
 export interface GenerationStatusResponse {
   status: string;
   videoUrl?: string;
@@ -30,19 +21,10 @@ export interface GenerationStatusResponse {
 export const generatorApi = {
   generateVideo: async (
     data: GenerateVideoRequest,
+    type: 'preview' | 'full' = 'full',
   ): Promise<GenerateVideoResponse> => {
     const response = await api.post<GenerateVideoResponse>(
-      '/generator/generate',
-      data,
-    );
-    return response.data;
-  },
-
-  generatePreview: async (
-    data: GeneratePreviewRequest,
-  ): Promise<GeneratePreviewResponse> => {
-    const response = await api.post<GeneratePreviewResponse>(
-      '/generator/preview',
+      `/generator/generate?type=${type}`,
       data,
     );
     return response.data;

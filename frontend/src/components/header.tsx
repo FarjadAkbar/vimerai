@@ -1,7 +1,7 @@
 'use client'
 import { useLogout } from '@/lib/hooks/use-auth';
 import { useUser } from '@/lib/hooks/use-user';
-import { House, LogOut, Settings, Sparkles } from 'lucide-react';
+import { House, LogOut, Settings, Sparkles, Plus, Video } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from './ui/button';
 
@@ -20,16 +20,13 @@ const Header = () => {
           <div className="flex items-center gap-3">
             {userData?.user ? (
               <>
-                <Link href="/">
-                  <Button variant="outline" size="sm">
-                    <House />
-                  </Button>
-                </Link>
-                <Link href="/pricing">
-                  <Button variant="outline" size="sm">
-                    Pricing
-                  </Button>
-                </Link>
+                <div className="hidden md:flex items-center gap-2">
+                  <Link href="/dashboard">
+                    <Button variant="ghost" size="sm" className="gap-2">
+                      <House className="w-4 h-4" /> Dashboard
+                    </Button>
+                  </Link>
+                </div>
                 <Link href="/settings">
                   <Button variant="ghost" size="icon">
                     <Settings className="w-5 h-5" />

@@ -23,13 +23,13 @@ export class StripePaymentService implements IPaymentService {
   constructor(private readonly configService: ConfigService) {
     const paymentConfig = this.configService.get<{
       stripe: {
-        secretKey: string;
-        webhookSecret: string;
-        priceIds: {
-          starter: string;
-          creator: string;
-          pro: string;
-        };
+      secretKey: string;
+      webhookSecret: string;
+      priceIds: {
+        starter: string;
+        creator: string;
+        pro: string;
+      };
       };
     }>('payment');
 
@@ -122,7 +122,7 @@ export class StripePaymentService implements IPaymentService {
   handleWebhook(
     payload: string | Buffer,
     signature: string,
-  ): { type: string; data: any } {
+  ): { type: string; data: Record<string, unknown> } {
     try {
       const event = this.stripe.webhooks.constructEvent(
         payload,
@@ -132,7 +132,7 @@ export class StripePaymentService implements IPaymentService {
 
       return {
         type: event.type,
-        data: event.data.object,
+        data: event.data.object as unknown as Record<string, unknown>,
       };
     } catch (error) {
       throw new BadRequestException(

@@ -4,7 +4,6 @@ import { ThemeProvider } from "@/theme/themeprovider";
 import { ToastContainer } from 'react-toastify';
 import { QueryProvider } from "@/lib/providers/query-provider";
 import "./globals.css";
-import Header from '@/components/header'
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -38,7 +37,6 @@ export default function RootLayout({
             enableSystem
             disableTransitionOnChange
           >
-            <Header />
             {children}
             
             <ToastContainer />

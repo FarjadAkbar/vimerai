@@ -1,27 +1,22 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { generatorApi } from '@/lib/api/generator.api';
-import type {
-  GenerateVideoRequest,
-  GeneratePreviewRequest,
-} from '@/lib/api/generator.api';
+import type { GenerateVideoRequest } from '@/lib/api/generator.api';
 
 export const useGenerateVideo = () => {
   const queryClient = useQueryClient();
   
   return useMutation({
-    mutationFn: (data: GenerateVideoRequest) =>
-      generatorApi.generateVideo(data),
+    mutationFn: ({
+      data,
+      type = 'full',
+    }: {
+      data: GenerateVideoRequest;
+      type?: 'preview' | 'full';
+    }) => generatorApi.generateVideo(data, type),
     onSuccess: () => {
       // Invalidate videos query so home page and other pages pick up the new video
       queryClient.invalidateQueries({ queryKey: ['videos'] });
     },
-  });
-};
-
-export const useGeneratePreview = () => {
-  return useMutation({
-    mutationFn: (data: GeneratePreviewRequest) =>
-      generatorApi.generatePreview(data),
   });
 };
 

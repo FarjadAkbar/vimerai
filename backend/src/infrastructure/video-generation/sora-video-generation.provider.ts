@@ -195,8 +195,8 @@ export class SoraVideoGenerationProvider implements IVideoGenerationProvider {
     }
   }
 
-  private mapToSoraParams(request: GenerateVideoRequest): Record<string, any> {
-    const baseParams: Record<string, any> = {
+  private mapToSoraParams(request: GenerateVideoRequest): Record<string, unknown> {
+    const baseParams: Record<string, unknown> = {
       seconds: 8, // Default 8 seconds (supported values: 4, 8, 12)
       size: '1280x720',
     };
