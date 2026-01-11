@@ -37,7 +37,7 @@ export function PricingModal({ open, onOpenChange }: PricingModalProps) {
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-5xl">
+      <DialogContent className="max-w-5xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="text-4xl md:text-5xl font-bold mb-4 text-center">
             Simple, Transparent Pricing
