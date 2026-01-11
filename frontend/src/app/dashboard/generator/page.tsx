@@ -12,10 +12,9 @@ export default function GeneratorPage() {
   const { data: userData, isLoading: userLoading } = useUser()
 
   useEffect(() => {
-    if (!userLoading && !userData) {
-      router.push("/login")
-    }
-  }, [userData, userLoading, router])
+    // Redirect to home (Generator) - no separate generator page needed
+    router.replace("/")
+  }, [router])
 
   if (userLoading) {
     return (

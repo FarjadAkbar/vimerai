@@ -12,7 +12,6 @@ import {
   Clock,
   AlertCircle,
   Zap,
-  X,
   CheckCircle,
 } from "lucide-react";
 import {
@@ -35,13 +34,15 @@ import {
 } from "@/lib/hooks/use-generator";
 import { useVideos } from "@/lib/hooks/use-videos";
 import { useCurrentSubscription } from "@/lib/hooks/use-subscription";
-import { PricingModal } from "@/components/pricing-modal";
 import { VideoGrid } from "@/components/video-grid";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { WordRotate } from "@/components/ui/word-rotate";
+import { SmartPreviewModal } from "@/components/smart-preview-modal";
 
 interface GeneratorProps {
   mode?: "preview" | "full";
@@ -63,25 +64,22 @@ export function Generator({
   className = "",
 }: GeneratorProps) {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const { data: userData } = useUser();
   const { data: subscription, isLoading: subscriptionLoading } =
-    useCurrentSubscription();
+    useCurrentSubscription(!!userData?.user); // Only call API when user is logged in
   const { data: videosData } = useVideos(
     showRecentVideos ? 10 : 1,
     0,
-    !!userData?.user
+    !!userData?.user // Only call videos API when user is logged in
   );
   const generateVideo = useGenerateVideo();
   const [showPreviewOverlayState, setShowPreviewOverlayState] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const [redirectCountdown, setRedirectCountdown] = useState<number | null>(
-    null
-  );
   const [jobId, setJobId] = useState<string | null>(null);
   const [lastShownPreviewUrl, setLastShownPreviewUrl] = useState<string | null>(
     null
   );
-  const [showPricingModal, setShowPricingModal] = useState(false);
 
   // Check if user has already used preview (only for preview mode)
   const hasUsedPreview =
@@ -132,10 +130,10 @@ export function Generator({
                 ?.data?.message || "";
             if (errorMessage.includes("already used")) {
               toast.error(
-                "Your free video limit reached. Please subscribe to continue."
+                "Preview already used. Please subscribe to continue."
               );
               setTimeout(() => {
-                setShowPricingModal(true);
+                router.push("/pricing");
               }, 1000);
             } else {
               form.setError("root", {
@@ -145,8 +143,8 @@ export function Generator({
             }
           }
         } else {
-          // Preview already used, show pricing modal
-          setShowPricingModal(true);
+          // Preview already used, redirect to pricing
+          router.push("/pricing");
         }
       } else {
         // Full video generation mode
@@ -169,9 +167,9 @@ export function Generator({
                   ?.data?.message ||
                 "Failed to generate video. Please try again.";
               form.setError("root", { message });
-              // If limit reached, show pricing modal
+              // If limit reached, redirect to pricing
               if (message.includes("limit reached") || message.includes("limit")) {
-                setShowPricingModal(true);
+                router.push("/pricing");
               }
             },
           }
@@ -181,11 +179,10 @@ export function Generator({
     [userData, hasUsedPreview, generateVideo, router, form, mode, onSuccess]
   );
 
-  const handlePreviewContinue = () => {
+  const handlePreviewClose = useCallback(() => {
     setShowPreviewOverlayState(false);
-    setRedirectCountdown(null);
-    setShowPricingModal(true);
-  };
+    setPreviewUrl(null);
+  }, []);
 
   // Restore jobId from most recent processing video if page was refreshed
   useEffect(() => {
@@ -231,20 +228,86 @@ export function Generator({
     }
   }, [userData, form, mode, onSubmit]);
 
-  // Show preview overlay when preview is completed (preview mode only)
+  // Show preview overlay when preview is completed
   useEffect(() => {
-    if (
-      showPreviewOverlay &&
-      mode === "preview" &&
-      statusData?.status === "completed" &&
-      statusData?.previewUrl &&
-      statusData.previewUrl !== lastShownPreviewUrl
-    ) {
+    if (!jobId) return;
+
+    // Only check for preview overlay if showPreviewOverlay is true or mode is preview
+    if (!showPreviewOverlay && mode !== "preview") return;
+
+    // Check statusData first (from polling) - this is the primary source
+    const statusIsCompleted = statusData?.status === "completed";
+    const previewUrlFromStatus = statusData?.previewUrl || null;
+    const videoUrlFromStatus = statusData?.videoUrl || null;
+
+    // Also check videosData for preview (only if user is logged in and data is available)
+    let previewUrlFromVideo = null;
+    let videoIsCompleted = false;
+    let hasVideoUrl = false;
+    
+    if (userData?.user && videosData?.videos) {
+      const previewVideo = videosData.videos.find(
+        (v) => v.jobId === jobId && v.previewUrl !== null
+      );
+      if (previewVideo) {
+        previewUrlFromVideo = previewVideo.previewUrl;
+        videoIsCompleted = previewVideo.status === "completed";
+        hasVideoUrl = previewVideo.videoUrl !== null && previewVideo.videoUrl !== undefined;
+      }
+    }
+
+    // Use whichever preview URL is available (prefer statusData as it's more up-to-date)
+    const availablePreviewUrl = previewUrlFromStatus || previewUrlFromVideo;
+    
+    // Debug logging (remove in production)
+    if (statusIsCompleted || videoIsCompleted) {
+      console.log('[Preview Overlay Debug]', {
+        jobId,
+        showPreviewOverlay,
+        mode,
+        statusIsCompleted,
+        videoIsCompleted,
+        previewUrlFromStatus,
+        previewUrlFromVideo,
+        availablePreviewUrl,
+        videoUrlFromStatus,
+        hasVideoUrl,
+        lastShownPreviewUrl,
+      });
+    }
+    
+    // Only show preview overlay if:
+    // 1. We have a previewUrl
+    // 2. Status is completed (from either source)
+    // 3. We haven't shown this preview before
+    // 4. There's no videoUrl (this is a preview, not a full video)
+    const shouldShowPreview = 
+      availablePreviewUrl &&
+      availablePreviewUrl !== lastShownPreviewUrl &&
+      (statusIsCompleted || videoIsCompleted) &&
+      !videoUrlFromStatus && // No videoUrl in status means it's a preview
+      !hasVideoUrl; // No videoUrl in video means it's a preview
+
+    console.log('[Preview Overlay] shouldShowPreview:', shouldShowPreview, {
+      hasUrl: !!availablePreviewUrl,
+      notShown: availablePreviewUrl !== lastShownPreviewUrl,
+      completed: statusIsCompleted || videoIsCompleted,
+      noVideoUrl: !videoUrlFromStatus && !hasVideoUrl,
+    });
+
+    if (shouldShowPreview) {
+      console.log('[Preview Overlay] Showing preview with URL:', availablePreviewUrl);
+      
+      // When preview completes, refetch videos to get the latest data (only if logged in)
+      if (userData?.user) {
+        queryClient.invalidateQueries({ queryKey: ['videos'] });
+      }
+
+      // Show the preview overlay (wrapped in setTimeout to avoid linter warning)
       setTimeout(() => {
-        setPreviewUrl(statusData.previewUrl!);
+        setPreviewUrl(availablePreviewUrl);
         setShowPreviewOverlayState(true);
-        setRedirectCountdown(10);
-        setLastShownPreviewUrl(statusData.previewUrl!);
+        setLastShownPreviewUrl(availablePreviewUrl);
       }, 0);
     }
   }, [
@@ -252,33 +315,32 @@ export function Generator({
     mode,
     statusData?.status,
     statusData?.previewUrl,
+    statusData?.videoUrl,
+    videosData?.videos,
+    jobId,
     lastShownPreviewUrl,
+    userData?.user,
+    queryClient,
   ]);
 
-  // Auto-redirect timer for Smart Preview overlay
+  // Auto-hide preview overlay if generation failed
   useEffect(() => {
-    if (!showPreviewOverlayState || redirectCountdown === null) {
-      return;
-    }
-
-    if (redirectCountdown > 0) {
-      const timer = setTimeout(() => {
-        setRedirectCountdown(redirectCountdown - 1);
-      }, 1000);
-
-      return () => clearTimeout(timer);
-    } else if (redirectCountdown === 0) {
-      const redirectTimer = setTimeout(() => {
-        setShowPreviewOverlayState(false);
-        setRedirectCountdown(null);
+    if (
+      showPreviewOverlayState &&
+      (showPreviewOverlay || mode === "preview") &&
+      (statusData?.status === "failed" || 
+       videosData?.videos?.some((v) => v.jobId === jobId && v.status === "failed"))
+    ) {
+      // Hide after 2 seconds on failure
+      const hideTimer = setTimeout(() => {
         setTimeout(() => {
-          setShowPricingModal(true);
+          router.push("/pricing");
         }, 200);
-      }, 0);
+      }, 2000);
 
-      return () => clearTimeout(redirectTimer);
+      return () => clearTimeout(hideTimer);
     }
-  }, [showPreviewOverlayState, redirectCountdown]);
+  }, [showPreviewOverlayState, showPreviewOverlay, mode, statusData?.status, videosData?.videos, jobId, router]);
 
   const isGenerating =
     generateVideo.isPending ||
@@ -318,7 +380,7 @@ export function Generator({
     }
     if (mode === "preview") {
       if (hasUsedPreview) {
-        return "You've already used your free preview. Subscribe to generate more videos.";
+        return "You've already used your preview. Subscribe to generate more videos.";
       }
       if (!userData?.user) {
         return "Please sign up to generate a preview video.";
@@ -349,24 +411,38 @@ export function Generator({
       <div className={className}>
         {header}
 
+        {/* Subscription Info - Simple text only */}
+        {showSubscriptionInfo && !subscriptionLoading && subscription && subscription.plan !== "free" && (
+          <div className="mb-6 p-3 rounded-lg border border-border bg-card/50">
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-muted-foreground">Plan:</span>
+              <span className="font-medium capitalize">
+                {subscription.plan === "creator" ? "AI Creator" : subscription.plan}
+              </span>
+            </div>
+            <div className="flex items-center justify-between text-sm mt-1">
+              <span className="text-muted-foreground">Videos remaining:</span>
+              <span className="font-medium">{subscription.videosRemaining}</span>
+            </div>
+          </div>
+        )}
+
         {hasReachedLimit && (
           <div className="mb-6 p-4 bg-destructive/10 border border-destructive/20 rounded-lg flex items-center gap-2">
             <AlertCircle className="w-5 h-5 text-destructive" />
             <div className="flex-1">
               <p className="text-sm font-medium text-destructive">
-                You&apos;ve reached your video generation limit
-              </p>
-              <p className="text-xs text-destructive/80 mt-1">
-                Please upgrade your plan to continue generating videos.
+                You&apos;ve reached your plan limit. Please upgrade to continue.
               </p>
             </div>
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => setShowPricingModal(true)}
-            >
-              Upgrade
-            </Button>
+            <Link href="/pricing">
+              <Button
+                size="sm"
+                variant="outline"
+              >
+                Upgrade
+              </Button>
+            </Link>
           </div>
         )}
 
@@ -504,16 +580,20 @@ export function Generator({
                       : "Video Generation in Progress"}
                   </p>
                   <p className="text-sm text-muted-foreground">
-                    Status:{" "}
-                    {statusData.status === "processing"
-                      ? isPreviewGeneration
-                        ? "Processing your preview..."
-                        : "Processing your video..."
-                      : "Starting generation..."}
+                    <WordRotate
+                      words={[
+                        "Analyzing your prompt...",
+                        "Generating video content...",
+                        "Processing frames...",
+                        "Optimizing quality...",
+                        "Finalizing your video...",
+                      ]}
+                      duration={2000}
+                    />
                   </p>
                 </div>
                 {!isPreviewGeneration && (
-                  <Link href="/dashboard/my-videos">
+                  <Link href="/my-videos">
                     <Button size="sm" variant="outline">
                       View Status
                     </Button>
@@ -537,7 +617,7 @@ export function Generator({
               <p className="text-sm text-muted-foreground">
                 You can view and download it from the My Videos page.
               </p>
-              <Link href="/dashboard/my-videos">
+              <Link href="/my-videos">
                 <Button size="sm" variant="outline" className="mt-2">
                   View My Videos
                 </Button>
@@ -562,22 +642,13 @@ export function Generator({
           </p>
         )}
 
-        {/* Subscription Info (full mode only) */}
-        {showSubscriptionInfo && subscription && (
-          <div className="mt-4 flex items-center gap-2 text-sm">
-            <span className="text-muted-foreground">Videos remaining:</span>
-            <span className="font-semibold text-primary">
-              {subscription.videosRemaining} / {subscription.limit}
-            </span>
-          </div>
-        )}
 
         {/* Recent Videos (preview mode only) */}
         {showRecentVideos && userData?.user && (
           <div className="mt-16">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-2xl font-bold">Recent Videos</h2>
-              <Link href="/dashboard/my-videos">
+              <Link href="/my-videos">
                 <Button variant="ghost" size="sm">
                   View All →
                 </Button>
@@ -595,64 +666,14 @@ export function Generator({
           </div>
         )}
       </div>
-
-      {/* Smart Preview Overlay */}
+      {/* Smart Preview Modal */}
       {showPreviewOverlayState && previewUrl && (
-        <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
-          <div className="max-w-4xl w-full bg-background rounded-xl border border-border p-6 space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <h2 className="text-2xl font-bold">Smart Preview</h2>
-                {redirectCountdown !== null && redirectCountdown > 0 && (
-                  <p className="text-sm text-muted-foreground mt-1">
-                    Redirecting to pricing in {redirectCountdown} second
-                    {redirectCountdown !== 1 ? "s" : ""}...
-                  </p>
-                )}
-              </div>
-              <Button variant="ghost" size="icon" onClick={handlePreviewContinue}>
-                <X className="w-4 h-4" />
-              </Button>
-            </div>
-
-            <div className="aspect-video bg-black rounded-lg overflow-hidden">
-              <video
-                src={previewUrl}
-                autoPlay
-                loop
-                muted
-                playsInline
-                className="w-full h-full object-contain"
-              />
-            </div>
-
-            <div className="bg-primary/10 border border-primary/20 rounded-lg p-4">
-              <p className="text-sm text-foreground mb-2">
-                <strong>
-                  This is a smart preview to demonstrate the generator&apos;s
-                  capabilities.
-                </strong>
-              </p>
-              <p className="text-sm text-muted-foreground">
-                Full video generation is available after subscription. Subscribe
-                to create unlimited videos.
-              </p>
-            </div>
-
-            <div className="flex gap-3">
-              <Button
-                onClick={handlePreviewContinue}
-                className="flex-1 bg-primary hover:bg-primary/90"
-              >
-                View Pricing Plans
-              </Button>
-            </div>
-          </div>
-        </div>
+        <SmartPreviewModal
+          previewUrl={previewUrl}
+          onClose={handlePreviewClose}
+        />
       )}
 
-      {/* Pricing Modal */}
-      <PricingModal open={showPricingModal} onOpenChange={setShowPricingModal} />
     </>
   );
 }

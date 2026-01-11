@@ -1,14 +1,15 @@
-import { useQuery, useMutation } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { subscriptionApi } from '@/lib/api/subscription.api';
 import type {
   CreateCheckoutRequest,
   CreatePortalRequest,
 } from '@/lib/api/subscription.api';
 
-export const useCurrentSubscription = () => {
+export const useCurrentSubscription = (enabled = true) => {
   return useQuery({
     queryKey: ['subscription', 'current'],
     queryFn: () => subscriptionApi.getCurrentSubscription(),
+    enabled, // Only call API when enabled (user is logged in)
   });
 };
 
@@ -48,6 +49,18 @@ export const useCreatePortal = () => {
       if (data.url && typeof window !== 'undefined') {
         window.location.href = data.url;
       }
+    },
+  });
+};
+
+export const useActivateMockSubscription = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (plan: 'starter' | 'creator' | 'pro') =>
+      subscriptionApi.activateMockSubscription(plan),
+    onSuccess: () => {
+      // Invalidate subscription queries to refetch
+      queryClient.invalidateQueries({ queryKey: ['subscription'] });
     },
   });
 };

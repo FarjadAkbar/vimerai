@@ -180,4 +180,38 @@ export class SubscriptionService implements ISubscriptionService {
       await this.subscriptionRepository.updateSubscription(updated);
     }
   }
+
+  async activateMockSubscription(
+    userId: string,
+    plan: SubscriptionPlan,
+  ): Promise<{ message: string; plan: SubscriptionPlan }> {
+    // Find existing subscription
+    let subscription =
+      await this.subscriptionRepository.getSubscriptionByUserId(userId);
+
+    if (!subscription) {
+      // Create new mock subscription
+      subscription = Subscription.create(
+        uuidv4(),
+        userId,
+        plan,
+        this.PLAN_LIMITS[plan],
+        null, // No Stripe customer ID for mock
+        null, // No Stripe subscription ID for mock
+      );
+      const newSubscription = subscription.updateActiveStatus(true);
+      await this.subscriptionRepository.createSubscription(newSubscription);
+    } else {
+      // Update existing subscription to new plan
+      const updated = subscription
+        .updatePlan(plan, this.PLAN_LIMITS[plan])
+        .updateActiveStatus(true);
+      await this.subscriptionRepository.updateSubscription(updated);
+    }
+
+    return {
+      message: 'Subscription activated successfully',
+      plan,
+    };
+  }
 }

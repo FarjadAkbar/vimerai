@@ -12,6 +12,7 @@ import { SubscriptionService } from './subscription.service';
 import { CreateCheckoutDto } from './dto/create-checkout.dto';
 import { JwtAuthGuard } from '@/infrastructure/auth/jwt-auth.guard';
 import { CurrentUser } from '@/infrastructure/auth/current-user.decorator';
+import { SubscriptionPlan } from '@/domain/subscription.entity';
 
 @Controller('subscription')
 @UseGuards(JwtAuthGuard)
@@ -49,6 +50,15 @@ export class SubscriptionController {
     @Body('returnUrl') returnUrl: string,
   ) {
     return this.subscriptionService.createPortalSession(user.userId, returnUrl);
+  }
+
+  @Post('activate-mock')
+  @HttpCode(HttpStatus.OK)
+  async activateMockSubscription(
+    @CurrentUser() user: { userId: string },
+    @Body('plan') plan: SubscriptionPlan,
+  ) {
+    return this.subscriptionService.activateMockSubscription(user.userId, plan);
   }
 }
 

@@ -206,7 +206,7 @@ export function VideoGrid({
                             >
                               <Download className="w-4 h-4" /> Download
                             </Button>
-                            <Link href={`/dashboard/editor/${video.id}`}>
+                            <Link href={`/editor/${video.id}`}>
                               <Button variant="outline" size="sm" className="bg-transparent">
                                 Edit
                               </Button>
@@ -288,7 +288,7 @@ export function VideoGrid({
               // If showActions is false, wrap in Link to my-videos page
               if (!showActions) {
                 return (
-                  <Link key={video.id} href="/dashboard/my-videos">
+                  <Link key={video.id} href="/my-videos">
                     {videoCard}
                   </Link>
                 )
