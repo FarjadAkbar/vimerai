@@ -29,7 +29,7 @@ export default function HomePage() {
             mode={isLoggedIn ? "full" : "preview"}
             showPreviewOverlay={!isLoggedIn}
             showRecentVideos={!isLoggedIn}
-            showSubscriptionInfo={isLoggedIn}
+            showSubscriptionInfo={true}
           />
         </div>
       </div>

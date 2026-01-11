@@ -1,14 +1,20 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Check, ArrowRight } from "lucide-react"
 import { BorderBeam } from "@/components/ui/border-beam"
 import { subscriptionApi } from "@/lib/api/subscription.api"
+import { useActivateMockSubscription } from "@/lib/hooks/use-subscription"
+import { useUser } from "@/lib/hooks/use-user"
+import { toast } from "react-toastify"
 import Header from "@/components/header"
 
 export default function PricingPage() {
+  const router = useRouter()
+  const { data: userData } = useUser()
+  const activateMockSubscription = useActivateMockSubscription()
   const [plans, setPlans] = useState<Array<{
     id: string
     name: string
@@ -43,6 +49,39 @@ export default function PricingPage() {
     }
     
     return baseFeatures
+  }
+
+  const handleSubscribe = async (planId: string) => {
+    if (!userData?.user) {
+      router.push("/signup")
+      return
+    }
+
+    // Map plan ID to subscription plan type
+    const planMap: Record<string, 'starter' | 'creator' | 'pro'> = {
+      starter: 'starter',
+      creator: 'creator',
+      pro: 'pro',
+    }
+
+    const plan = planMap[planId] as 'starter' | 'creator' | 'pro'
+    if (!plan) return
+
+    activateMockSubscription.mutate(plan, {
+      onSuccess: (data) => {
+        toast.success(`Subscription activated! ${data.plan} plan is now active.`)
+        // Redirect to Generator (home page)
+        setTimeout(() => {
+          router.push("/")
+        }, 1000)
+      },
+      onError: (error: unknown) => {
+        const message =
+          (error as { response?: { data?: { message?: string } } })?.response
+            ?.data?.message || "Failed to activate subscription. Please try again."
+        toast.error(message)
+      },
+    })
   }
 
   return (
@@ -114,14 +153,17 @@ export default function PricingPage() {
                       </li>
                     ))}
                   </ul>
-                  <Link href="/signup" className="block">
-                    <Button
-                      className="w-full"
-                      variant={plan.popular ? "default" : "outline"}
-                    >
-                      Start Generating <ArrowRight className="w-4 h-4 ml-2" />
-                    </Button>
-                  </Link>
+                  <Button
+                    className="w-full"
+                    variant={plan.popular ? "default" : "outline"}
+                    onClick={() => handleSubscribe(plan.id)}
+                    disabled={activateMockSubscription.isPending}
+                  >
+                    {activateMockSubscription.isPending
+                      ? "Activating..."
+                      : "Start Generating"}{" "}
+                    <ArrowRight className="w-4 h-4 ml-2" />
+                  </Button>
                 </div>
               ))}
             </div>

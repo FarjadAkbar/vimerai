@@ -82,5 +82,15 @@ export const subscriptionApi = {
     );
     return response.data;
   },
+
+  activateMockSubscription: async (
+    plan: SubscriptionPlan,
+  ): Promise<{ message: string; plan: SubscriptionPlan }> => {
+    const response = await api.post<{ message: string; plan: SubscriptionPlan }>(
+      '/subscription/activate-mock',
+      { plan },
+    );
+    return response.data;
+  },
 };
 

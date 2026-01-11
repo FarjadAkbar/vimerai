@@ -348,15 +348,28 @@ export function Generator({
       <div className={className}>
         {header}
 
+        {/* Subscription Info - Simple text only */}
+        {showSubscriptionInfo && subscription && subscription.plan !== "free" && (
+          <div className="mb-6 p-3 rounded-lg border border-border bg-card/50">
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-muted-foreground">Plan:</span>
+              <span className="font-medium capitalize">
+                {subscription.plan === "creator" ? "AI Creator" : subscription.plan}
+              </span>
+            </div>
+            <div className="flex items-center justify-between text-sm mt-1">
+              <span className="text-muted-foreground">Videos remaining:</span>
+              <span className="font-medium">{subscription.videosRemaining}</span>
+            </div>
+          </div>
+        )}
+
         {hasReachedLimit && (
           <div className="mb-6 p-4 bg-destructive/10 border border-destructive/20 rounded-lg flex items-center gap-2">
             <AlertCircle className="w-5 h-5 text-destructive" />
             <div className="flex-1">
               <p className="text-sm font-medium text-destructive">
-                You&apos;ve reached your video generation limit
-              </p>
-              <p className="text-xs text-destructive/80 mt-1">
-                Please upgrade your plan to continue generating videos.
+                You&apos;ve reached your plan limit. Please upgrade to continue.
               </p>
             </div>
             <Link href="/pricing">
