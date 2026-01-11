@@ -5,10 +5,11 @@ import type {
   CreatePortalRequest,
 } from '@/lib/api/subscription.api';
 
-export const useCurrentSubscription = () => {
+export const useCurrentSubscription = (enabled = true) => {
   return useQuery({
     queryKey: ['subscription', 'current'],
     queryFn: () => subscriptionApi.getCurrentSubscription(),
+    enabled, // Only call API when enabled (user is logged in)
   });
 };
 

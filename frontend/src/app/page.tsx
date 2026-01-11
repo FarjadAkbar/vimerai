@@ -3,10 +3,17 @@
 import { Generator } from "@/components/generator";
 import Header from '@/components/header'
 import { useUser } from '@/lib/hooks/use-user'
+import { useCurrentSubscription } from '@/lib/hooks/use-subscription'
 
 export default function HomePage() {
   const { data: userData } = useUser()
   const isLoggedIn = !!userData?.user
+  const { data: subscription } = useCurrentSubscription(isLoggedIn)
+  
+  // Use "preview" mode if plan is "free", otherwise use "full" mode
+  const mode = isLoggedIn 
+    ? (subscription?.plan === "free" ? "preview" : "full")
+    : "preview"
 
   return (
     <>
@@ -26,8 +33,8 @@ export default function HomePage() {
           )}
 
           <Generator
-            mode={isLoggedIn ? "full" : "preview"}
-            showPreviewOverlay={!isLoggedIn}
+            mode={mode}
+            showPreviewOverlay={mode === "preview"}
             showRecentVideos={!isLoggedIn}
             showSubscriptionInfo={true}
           />

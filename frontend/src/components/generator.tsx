@@ -12,7 +12,6 @@ import {
   Clock,
   AlertCircle,
   Zap,
-  X,
   CheckCircle,
 } from "lucide-react";
 import {
@@ -43,6 +42,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { WordRotate } from "@/components/ui/word-rotate";
+import { SmartPreviewModal } from "@/components/smart-preview-modal";
 
 interface GeneratorProps {
   mode?: "preview" | "full";
@@ -67,7 +67,7 @@ export function Generator({
   const queryClient = useQueryClient();
   const { data: userData } = useUser();
   const { data: subscription, isLoading: subscriptionLoading } =
-    useCurrentSubscription();
+    useCurrentSubscription(!!userData?.user); // Only call API when user is logged in
   const { data: videosData } = useVideos(
     showRecentVideos ? 10 : 1,
     0,
@@ -76,9 +76,6 @@ export function Generator({
   const generateVideo = useGenerateVideo();
   const [showPreviewOverlayState, setShowPreviewOverlayState] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
-  const [redirectCountdown, setRedirectCountdown] = useState<number | null>(
-    null
-  );
   const [jobId, setJobId] = useState<string | null>(null);
   const [lastShownPreviewUrl, setLastShownPreviewUrl] = useState<string | null>(
     null
@@ -182,11 +179,10 @@ export function Generator({
     [userData, hasUsedPreview, generateVideo, router, form, mode, onSuccess]
   );
 
-  const handlePreviewContinue = () => {
+  const handlePreviewClose = useCallback(() => {
     setShowPreviewOverlayState(false);
-    setRedirectCountdown(null);
-    router.push("/pricing");
-  };
+    setPreviewUrl(null);
+  }, []);
 
   // Restore jobId from most recent processing video if page was refreshed
   useEffect(() => {
@@ -307,11 +303,12 @@ export function Generator({
         queryClient.invalidateQueries({ queryKey: ['videos'] });
       }
 
-      // Show the preview overlay immediately
-      setPreviewUrl(availablePreviewUrl);
-      setShowPreviewOverlayState(true);
-      setRedirectCountdown(2); // Auto-hide after 2 seconds
-      setLastShownPreviewUrl(availablePreviewUrl);
+      // Show the preview overlay (wrapped in setTimeout to avoid linter warning)
+      setTimeout(() => {
+        setPreviewUrl(availablePreviewUrl);
+        setShowPreviewOverlayState(true);
+        setLastShownPreviewUrl(availablePreviewUrl);
+      }, 0);
     }
   }, [
     showPreviewOverlay,
@@ -326,33 +323,6 @@ export function Generator({
     queryClient,
   ]);
 
-  // Auto-hide timer for Smart Preview overlay (2 seconds after completion/failure)
-  useEffect(() => {
-    if (!showPreviewOverlayState || redirectCountdown === null) {
-      return;
-    }
-
-    if (redirectCountdown > 0) {
-      const timer = setTimeout(() => {
-        setRedirectCountdown(redirectCountdown - 1);
-      }, 1000);
-
-      return () => clearTimeout(timer);
-    } else if (redirectCountdown === 0) {
-      // Auto-hide after 2 seconds and redirect to pricing
-      const hideTimer = setTimeout(() => {
-        setShowPreviewOverlayState(false);
-        setPreviewUrl(null);
-        setRedirectCountdown(null);
-        setTimeout(() => {
-          router.push("/pricing");
-        }, 200);
-      }, 0);
-
-      return () => clearTimeout(hideTimer);
-    }
-  }, [showPreviewOverlayState, redirectCountdown, router]);
-
   // Auto-hide preview overlay if generation failed
   useEffect(() => {
     if (
@@ -363,9 +333,6 @@ export function Generator({
     ) {
       // Hide after 2 seconds on failure
       const hideTimer = setTimeout(() => {
-        setShowPreviewOverlayState(false);
-        setPreviewUrl(null);
-        setRedirectCountdown(null);
         setTimeout(() => {
           router.push("/pricing");
         }, 200);
@@ -699,59 +666,12 @@ export function Generator({
           </div>
         )}
       </div>
-      {/* Smart Preview Overlay */}
+      {/* Smart Preview Modal */}
       {showPreviewOverlayState && previewUrl && (
-        <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
-          <div className="max-w-4xl w-full bg-background rounded-xl border border-border p-6 space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <h2 className="text-2xl font-bold">Smart Preview</h2>
-                {redirectCountdown !== null && redirectCountdown > 0 && (
-                  <p className="text-sm text-muted-foreground mt-1">
-                    Closing in {redirectCountdown} second
-                    {redirectCountdown !== 1 ? "s" : ""}...
-                  </p>
-                )}
-              </div>
-              <Button variant="ghost" size="icon" onClick={handlePreviewContinue}>
-                <X className="w-4 h-4" />
-              </Button>
-            </div>
-
-            <div className="aspect-video bg-black rounded-lg overflow-hidden">
-              <video
-                src={previewUrl}
-                autoPlay
-                loop
-                muted
-                playsInline
-                className="w-full h-full object-contain"
-              />
-            </div>
-
-            <div className="bg-primary/10 border border-primary/20 rounded-lg p-4">
-              <p className="text-sm text-foreground mb-2">
-                <strong>
-                  This is a smart preview to demonstrate the generator&apos;s
-                  capabilities.
-                </strong>
-              </p>
-              <p className="text-sm text-muted-foreground">
-                Full video generation is available after subscription. Subscribe
-                to create more videos.
-              </p>
-            </div>
-
-            <div className="flex gap-3">
-              <Button
-                onClick={handlePreviewContinue}
-                className="flex-1 bg-primary hover:bg-primary/90"
-              >
-                View Pricing Plans
-              </Button>
-            </div>
-          </div>
-        </div>
+        <SmartPreviewModal
+          previewUrl={previewUrl}
+          onClose={handlePreviewClose}
+        />
       )}
 
     </>
