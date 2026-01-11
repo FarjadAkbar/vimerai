@@ -35,13 +35,13 @@ import {
 } from "@/lib/hooks/use-generator";
 import { useVideos } from "@/lib/hooks/use-videos";
 import { useCurrentSubscription } from "@/lib/hooks/use-subscription";
-import { PricingModal } from "@/components/pricing-modal";
 import { VideoGrid } from "@/components/video-grid";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { WordRotate } from "@/components/ui/word-rotate";
 
 interface GeneratorProps {
   mode?: "preview" | "full";
@@ -81,7 +81,6 @@ export function Generator({
   const [lastShownPreviewUrl, setLastShownPreviewUrl] = useState<string | null>(
     null
   );
-  const [showPricingModal, setShowPricingModal] = useState(false);
 
   // Check if user has already used preview (only for preview mode)
   const hasUsedPreview =
@@ -132,10 +131,10 @@ export function Generator({
                 ?.data?.message || "";
             if (errorMessage.includes("already used")) {
               toast.error(
-                "Your free video limit reached. Please subscribe to continue."
+                "Preview already used. Please subscribe to continue."
               );
               setTimeout(() => {
-                setShowPricingModal(true);
+                router.push("/pricing");
               }, 1000);
             } else {
               form.setError("root", {
@@ -145,8 +144,8 @@ export function Generator({
             }
           }
         } else {
-          // Preview already used, show pricing modal
-          setShowPricingModal(true);
+          // Preview already used, redirect to pricing
+          router.push("/pricing");
         }
       } else {
         // Full video generation mode
@@ -169,9 +168,9 @@ export function Generator({
                   ?.data?.message ||
                 "Failed to generate video. Please try again.";
               form.setError("root", { message });
-              // If limit reached, show pricing modal
+              // If limit reached, redirect to pricing
               if (message.includes("limit reached") || message.includes("limit")) {
-                setShowPricingModal(true);
+                router.push("/pricing");
               }
             },
           }
@@ -184,7 +183,7 @@ export function Generator({
   const handlePreviewContinue = () => {
     setShowPreviewOverlayState(false);
     setRedirectCountdown(null);
-    setShowPricingModal(true);
+    router.push("/pricing");
   };
 
   // Restore jobId from most recent processing video if page was refreshed
@@ -272,13 +271,13 @@ export function Generator({
         setShowPreviewOverlayState(false);
         setRedirectCountdown(null);
         setTimeout(() => {
-          setShowPricingModal(true);
+          router.push("/pricing");
         }, 200);
       }, 0);
 
       return () => clearTimeout(redirectTimer);
     }
-  }, [showPreviewOverlayState, redirectCountdown]);
+  }, [showPreviewOverlayState, redirectCountdown, router]);
 
   const isGenerating =
     generateVideo.isPending ||
@@ -318,7 +317,7 @@ export function Generator({
     }
     if (mode === "preview") {
       if (hasUsedPreview) {
-        return "You've already used your free preview. Subscribe to generate more videos.";
+        return "You've already used your preview. Subscribe to generate more videos.";
       }
       if (!userData?.user) {
         return "Please sign up to generate a preview video.";
@@ -360,13 +359,14 @@ export function Generator({
                 Please upgrade your plan to continue generating videos.
               </p>
             </div>
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => setShowPricingModal(true)}
-            >
-              Upgrade
-            </Button>
+            <Link href="/pricing">
+              <Button
+                size="sm"
+                variant="outline"
+              >
+                Upgrade
+              </Button>
+            </Link>
           </div>
         )}
 
@@ -504,16 +504,20 @@ export function Generator({
                       : "Video Generation in Progress"}
                   </p>
                   <p className="text-sm text-muted-foreground">
-                    Status:{" "}
-                    {statusData.status === "processing"
-                      ? isPreviewGeneration
-                        ? "Processing your preview..."
-                        : "Processing your video..."
-                      : "Starting generation..."}
+                    <WordRotate
+                      words={[
+                        "Analyzing your prompt...",
+                        "Generating video content...",
+                        "Processing frames...",
+                        "Optimizing quality...",
+                        "Finalizing your video...",
+                      ]}
+                      duration={2000}
+                    />
                   </p>
                 </div>
                 {!isPreviewGeneration && (
-                  <Link href="/dashboard/my-videos">
+                  <Link href="/my-videos">
                     <Button size="sm" variant="outline">
                       View Status
                     </Button>
@@ -537,7 +541,7 @@ export function Generator({
               <p className="text-sm text-muted-foreground">
                 You can view and download it from the My Videos page.
               </p>
-              <Link href="/dashboard/my-videos">
+              <Link href="/my-videos">
                 <Button size="sm" variant="outline" className="mt-2">
                   View My Videos
                 </Button>
@@ -577,7 +581,7 @@ export function Generator({
           <div className="mt-16">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-2xl font-bold">Recent Videos</h2>
-              <Link href="/dashboard/my-videos">
+              <Link href="/my-videos">
                 <Button variant="ghost" size="sm">
                   View All →
                 </Button>
@@ -635,7 +639,7 @@ export function Generator({
               </p>
               <p className="text-sm text-muted-foreground">
                 Full video generation is available after subscription. Subscribe
-                to create unlimited videos.
+                to create more videos.
               </p>
             </div>
 
@@ -651,8 +655,6 @@ export function Generator({
         </div>
       )}
 
-      {/* Pricing Modal */}
-      <PricingModal open={showPricingModal} onOpenChange={setShowPricingModal} />
     </>
   );
 }
