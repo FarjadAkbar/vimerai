@@ -1,13 +1,13 @@
 "use client"
 
-import { useState } from "react"
+import { useState, Suspense } from "react"
 import Link from "next/link"
 import { useSearchParams } from "next/navigation"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Sparkles, AlertCircle, CheckCircle } from "lucide-react"
+import { Sparkles, AlertCircle, CheckCircle, Loader2 } from "lucide-react"
 import {
   passwordResetRequestSchema,
   passwordResetSchema,
@@ -20,7 +20,7 @@ import {
   usePasswordReset,
 } from "@/lib/hooks/use-auth"
 
-export default function PasswordResetPage() {
+function PasswordResetContent() {
   const searchParams = useSearchParams()
   const token = searchParams.get("token")
   const [emailSent, setEmailSent] = useState(false)
@@ -223,3 +223,26 @@ export default function PasswordResetPage() {
   )
 }
 
+export default function PasswordResetPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-background flex items-center justify-center p-4">
+          <div className="w-full max-w-md space-y-8">
+            <div className="text-center space-y-2">
+              <div className="flex items-center justify-center gap-2">
+                <Sparkles className="h-8 w-8 text-primary" />
+                <h1 className="text-3xl font-bold">Reset Password</h1>
+              </div>
+            </div>
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+            </div>
+          </div>
+        </div>
+      }
+    >
+      <PasswordResetContent />
+    </Suspense>
+  )
+}
