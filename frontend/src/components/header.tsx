@@ -57,19 +57,19 @@ const Header = () => {
                       Generator
                     </Button>
                   </Link>
+                  <Link href="/my-videos">
+                    <Button variant="ghost" size="sm">
+                      My Videos
+                    </Button>
+                  </Link>
                   <Link href="/prompt-studio">
                     <Button variant="ghost" size="sm">
                       Prompt Studio
                     </Button>
                   </Link>
                   <Link href="/pricing">
-                    <Button variant="ghost" size="sm">
+                    <Button variant="ghost" size="sm" className="text-muted-foreground">
                       Pricing
-                    </Button>
-                  </Link>
-                  <Link href="/my-videos">
-                    <Button variant="ghost" size="sm">
-                      My Videos
                     </Button>
                   </Link>
                 </div>

@@ -2,11 +2,12 @@
 
 import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
+import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Check, ArrowRight } from "lucide-react"
 import { BorderBeam } from "@/components/ui/border-beam"
 import { subscriptionApi } from "@/lib/api/subscription.api"
-import { useActivateMockSubscription } from "@/lib/hooks/use-subscription"
+import { useActivateMockSubscription, useCurrentSubscription } from "@/lib/hooks/use-subscription"
 import { useUser } from "@/lib/hooks/use-user"
 import { toast } from "react-toastify"
 import Header from "@/components/header"
@@ -14,6 +15,7 @@ import Header from "@/components/header"
 export default function PricingPage() {
   const router = useRouter()
   const { data: userData } = useUser()
+  const { data: currentSubscription } = useCurrentSubscription()
   const activateMockSubscription = useActivateMockSubscription()
   const [plans, setPlans] = useState<Array<{
     id: string
@@ -23,6 +25,7 @@ export default function PricingPage() {
     popular?: boolean
   }>>([])
   const [loading, setLoading] = useState(true)
+  const [activatingPlanId, setActivatingPlanId] = useState<string | null>(null)
 
   useEffect(() => {
     subscriptionApi.getPlans().then((response) => {
@@ -40,13 +43,13 @@ export default function PricingPage() {
       "Prompt Studio access",
     ]
     
-    if (planId === "pro") {
-      return [
-        ...baseFeatures,
-        "4K resolution",
-        "Priority support",
-      ]
-    }
+    // if (planId === "pro") {
+    //   return [
+    //     ...baseFeatures,
+    //     "4K resolution",
+    //     "Priority support",
+    //   ]
+    // }
     
     return baseFeatures
   }
@@ -67,6 +70,7 @@ export default function PricingPage() {
     const plan = planMap[planId] as 'starter' | 'creator' | 'pro'
     if (!plan) return
 
+    setActivatingPlanId(planId)
     activateMockSubscription.mutate(plan, {
       onSuccess: (data) => {
         toast.success(`Subscription activated! ${data.plan} plan is now active.`)
@@ -80,6 +84,7 @@ export default function PricingPage() {
           (error as { response?: { data?: { message?: string } } })?.response
             ?.data?.message || "Failed to activate subscription. Please try again."
         toast.error(message)
+        setActivatingPlanId(null)
       },
     })
   }
@@ -95,8 +100,18 @@ export default function PricingPage() {
               Simple, Transparent Pricing
             </h1>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Choose the plan that fits your needs.
+              {currentSubscription && currentSubscription.plan !== "free"
+                ? "Your current plan details and available options"
+                : "Choose the plan that fits your needs."}
             </p>
+            {currentSubscription && currentSubscription.plan !== "free" && (
+              <div className="mt-4 inline-block px-4 py-2 bg-primary/10 text-primary rounded-lg">
+                <span className="font-medium">Current Plan: </span>
+                <span className="capitalize">
+                  {currentSubscription.plan === "creator" ? "AI Creator" : currentSubscription.plan}
+                </span>
+              </div>
+            )}
           </div>
 
           {/* Pricing Plans */}
@@ -153,17 +168,35 @@ export default function PricingPage() {
                       </li>
                     ))}
                   </ul>
-                  <Button
-                    className="w-full"
-                    variant={plan.popular ? "default" : "outline"}
-                    onClick={() => handleSubscribe(plan.id)}
-                    disabled={activateMockSubscription.isPending}
-                  >
-                    {activateMockSubscription.isPending
-                      ? "Activating..."
-                      : "Start Generating"}{" "}
-                    <ArrowRight className="w-4 h-4 ml-2" />
-                  </Button>
+                  {currentSubscription && currentSubscription.plan !== "free" ? (
+                    <div className="w-full">
+                      {currentSubscription.plan === plan.id ? (
+                        <div className="w-full p-3 bg-primary/10 border border-primary/20 rounded-lg text-center">
+                          <span className="text-sm font-medium text-primary">Current Plan</span>
+                        </div>
+                      ) : (
+                        <Button
+                          className="w-full"
+                          variant="outline"
+                          disabled
+                        >
+                          Information Only
+                        </Button>
+                      )}
+                    </div>
+                  ) : (
+                    <Button
+                      className="w-full"
+                      variant={plan.popular ? "default" : "outline"}
+                      onClick={() => handleSubscribe(plan.id)}
+                      disabled={activatingPlanId !== null}
+                    >
+                      {activatingPlanId === plan.id
+                        ? "Activating..."
+                        : "Start Generating"}{" "}
+                      <ArrowRight className="w-4 h-4 ml-2" />
+                    </Button>
+                  )}
                 </div>
               ))}
             </div>
