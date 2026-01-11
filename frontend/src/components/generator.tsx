@@ -36,6 +36,7 @@ import {
 import { useVideos } from "@/lib/hooks/use-videos";
 import { useCurrentSubscription } from "@/lib/hooks/use-subscription";
 import { VideoGrid } from "@/components/video-grid";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   Tooltip,
   TooltipContent,
@@ -63,13 +64,14 @@ export function Generator({
   className = "",
 }: GeneratorProps) {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const { data: userData } = useUser();
   const { data: subscription, isLoading: subscriptionLoading } =
     useCurrentSubscription();
   const { data: videosData } = useVideos(
     showRecentVideos ? 10 : 1,
     0,
-    !!userData?.user
+    !!userData?.user // Only call videos API when user is logged in
   );
   const generateVideo = useGenerateVideo();
   const [showPreviewOverlayState, setShowPreviewOverlayState] = useState(false);
@@ -230,31 +232,101 @@ export function Generator({
     }
   }, [userData, form, mode, onSubmit]);
 
-  // Show preview overlay when preview is completed (preview mode only)
+  // Show preview overlay when preview is completed
   useEffect(() => {
-    if (
-      showPreviewOverlay &&
-      mode === "preview" &&
-      statusData?.status === "completed" &&
-      statusData?.previewUrl &&
-      statusData.previewUrl !== lastShownPreviewUrl
-    ) {
-      setTimeout(() => {
-        setPreviewUrl(statusData.previewUrl!);
-        setShowPreviewOverlayState(true);
-        setRedirectCountdown(10);
-        setLastShownPreviewUrl(statusData.previewUrl!);
-      }, 0);
+    if (!jobId) return;
+
+    // Only check for preview overlay if showPreviewOverlay is true or mode is preview
+    if (!showPreviewOverlay && mode !== "preview") return;
+
+    // Check statusData first (from polling) - this is the primary source
+    const statusIsCompleted = statusData?.status === "completed";
+    const previewUrlFromStatus = statusData?.previewUrl || null;
+    const videoUrlFromStatus = statusData?.videoUrl || null;
+
+    // Also check videosData for preview (only if user is logged in and data is available)
+    let previewUrlFromVideo = null;
+    let videoIsCompleted = false;
+    let hasVideoUrl = false;
+    
+    if (userData?.user && videosData?.videos) {
+      const previewVideo = videosData.videos.find(
+        (v) => v.jobId === jobId && v.previewUrl !== null
+      );
+      if (previewVideo) {
+        previewUrlFromVideo = previewVideo.previewUrl;
+        videoIsCompleted = previewVideo.status === "completed";
+        hasVideoUrl = previewVideo.videoUrl !== null && previewVideo.videoUrl !== undefined;
+      }
+    }
+
+    // Use whichever preview URL is available (prefer statusData as it's more up-to-date)
+    const availablePreviewUrl = previewUrlFromStatus || previewUrlFromVideo;
+    
+    // Debug logging (remove in production)
+    if (statusIsCompleted || videoIsCompleted) {
+      console.log('[Preview Overlay Debug]', {
+        jobId,
+        showPreviewOverlay,
+        mode,
+        statusIsCompleted,
+        videoIsCompleted,
+        previewUrlFromStatus,
+        previewUrlFromVideo,
+        availablePreviewUrl,
+        videoUrlFromStatus,
+        hasVideoUrl,
+        lastShownPreviewUrl,
+      });
+    }
+    
+    // Only show preview overlay if:
+    // 1. We have a previewUrl
+    // 2. Status is completed (from either source)
+    // 3. We haven't shown this preview before
+    // 4. There's no videoUrl (this is a preview, not a full video)
+    const shouldShowPreview = 
+      availablePreviewUrl &&
+      availablePreviewUrl !== lastShownPreviewUrl &&
+      (statusIsCompleted || videoIsCompleted) &&
+      !videoUrlFromStatus && // No videoUrl in status means it's a preview
+      !hasVideoUrl; // No videoUrl in video means it's a preview
+
+    console.log('[Preview Overlay] shouldShowPreview:', shouldShowPreview, {
+      hasUrl: !!availablePreviewUrl,
+      notShown: availablePreviewUrl !== lastShownPreviewUrl,
+      completed: statusIsCompleted || videoIsCompleted,
+      noVideoUrl: !videoUrlFromStatus && !hasVideoUrl,
+    });
+
+    if (shouldShowPreview) {
+      console.log('[Preview Overlay] Showing preview with URL:', availablePreviewUrl);
+      
+      // When preview completes, refetch videos to get the latest data (only if logged in)
+      if (userData?.user) {
+        queryClient.invalidateQueries({ queryKey: ['videos'] });
+      }
+
+      // Show the preview overlay immediately
+      setPreviewUrl(availablePreviewUrl);
+      setShowPreviewOverlayState(true);
+      setRedirectCountdown(2); // Auto-hide after 2 seconds
+      setLastShownPreviewUrl(availablePreviewUrl);
     }
   }, [
     showPreviewOverlay,
     mode,
     statusData?.status,
     statusData?.previewUrl,
+    statusData?.videoUrl,
+    videosData?.videos,
+    jobId,
     lastShownPreviewUrl,
+    userData?.user,
+    queryClient,
   ]);
 
-  // Auto-redirect timer for Smart Preview overlay
+  // Auto-hide timer for Smart Preview overlay (2 seconds after completion/failure)
   useEffect(() => {
     if (!showPreviewOverlayState || redirectCountdown === null) {
       return;
@@ -267,17 +339,41 @@ export function Generator({
 
       return () => clearTimeout(timer);
     } else if (redirectCountdown === 0) {
-      const redirectTimer = setTimeout(() => {
+      // Auto-hide after 2 seconds and redirect to pricing
+      const hideTimer = setTimeout(() => {
         setShowPreviewOverlayState(false);
+        setPreviewUrl(null);
         setRedirectCountdown(null);
         setTimeout(() => {
           router.push("/pricing");
         }, 200);
       }, 0);
 
-      return () => clearTimeout(redirectTimer);
+      return () => clearTimeout(hideTimer);
     }
   }, [showPreviewOverlayState, redirectCountdown, router]);
+
+  // Auto-hide preview overlay if generation failed
+  useEffect(() => {
+    if (
+      showPreviewOverlayState &&
+      (showPreviewOverlay || mode === "preview") &&
+      (statusData?.status === "failed" || 
+       videosData?.videos?.some((v) => v.jobId === jobId && v.status === "failed"))
+    ) {
+      // Hide after 2 seconds on failure
+      const hideTimer = setTimeout(() => {
+        setShowPreviewOverlayState(false);
+        setPreviewUrl(null);
+        setRedirectCountdown(null);
+        setTimeout(() => {
+          router.push("/pricing");
+        }, 200);
+      }, 2000);
+
+      return () => clearTimeout(hideTimer);
+    }
+  }, [showPreviewOverlayState, showPreviewOverlay, mode, statusData?.status, videosData?.videos, jobId, router]);
 
   const isGenerating =
     generateVideo.isPending ||
@@ -349,7 +445,7 @@ export function Generator({
         {header}
 
         {/* Subscription Info - Simple text only */}
-        {showSubscriptionInfo && subscription && subscription.plan !== "free" && (
+        {showSubscriptionInfo && !subscriptionLoading && subscription && subscription.plan !== "free" && (
           <div className="mb-6 p-3 rounded-lg border border-border bg-card/50">
             <div className="flex items-center justify-between text-sm">
               <span className="text-muted-foreground">Plan:</span>
@@ -579,15 +675,6 @@ export function Generator({
           </p>
         )}
 
-        {/* Subscription Info (full mode only) */}
-        {showSubscriptionInfo && subscription && (
-          <div className="mt-4 flex items-center gap-2 text-sm">
-            <span className="text-muted-foreground">Videos remaining:</span>
-            <span className="font-semibold text-primary">
-              {subscription.videosRemaining} / {subscription.limit}
-            </span>
-          </div>
-        )}
 
         {/* Recent Videos (preview mode only) */}
         {showRecentVideos && userData?.user && (
@@ -612,7 +699,6 @@ export function Generator({
           </div>
         )}
       </div>
-
       {/* Smart Preview Overlay */}
       {showPreviewOverlayState && previewUrl && (
         <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
@@ -622,7 +708,7 @@ export function Generator({
                 <h2 className="text-2xl font-bold">Smart Preview</h2>
                 {redirectCountdown !== null && redirectCountdown > 0 && (
                   <p className="text-sm text-muted-foreground mt-1">
-                    Redirecting to pricing in {redirectCountdown} second
+                    Closing in {redirectCountdown} second
                     {redirectCountdown !== 1 ? "s" : ""}...
                   </p>
                 )}
