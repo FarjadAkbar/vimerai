@@ -10,6 +10,7 @@ import { loginSchema, type LoginInput } from "@/lib/auth/schema"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 
 import { useLogin } from "@/lib/hooks/use-auth"
+import { Checkbox } from "@/components/ui/checkbox"
 
 export default function LoginPage() {
   const login = useLogin()
@@ -19,6 +20,7 @@ export default function LoginPage() {
     defaultValues: {
       email: "",
       password: "",
+      rememberMe: false
     },
   })
 
@@ -91,6 +93,25 @@ export default function LoginPage() {
                 </FormItem>
               )}
             />
+              {/* Remember Me Checkbox */}
+              <FormField
+                control={form.control}
+                name="rememberMe"
+                render={({ field }) => (
+                  <FormItem className="flex items-center space-x-2 space-y-0">
+                    <FormControl>
+                      <Checkbox
+                        checked={field.value ?? false}
+                        onCheckedChange={(checked) => field.onChange(checked === true)}
+                        disabled={login.isPending}
+                      />
+                    </FormControl>
+                    <FormLabel className="text-sm font-normal cursor-pointer">
+                      Remember me
+                    </FormLabel>
+                  </FormItem>
+                )}
+              />
 
             <div className="flex items-center justify-between">
               <Link
