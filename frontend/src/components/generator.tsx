@@ -7,13 +7,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
 import { toast } from "react-toastify";
-import {
-  Wand2,
-  Clock,
-  AlertCircle,
-  Zap,
-  CheckCircle,
-} from "lucide-react";
+import { Wand2, Clock, AlertCircle, Zap, CheckCircle } from "lucide-react";
 import {
   generateVideoSchema,
   type GenerateVideoInput,
@@ -43,6 +37,7 @@ import {
 } from "@/components/ui/tooltip";
 import { WordRotate } from "@/components/ui/word-rotate";
 import { SmartPreviewModal } from "@/components/smart-preview-modal";
+import { Spinner } from "./ui/spinner";
 
 interface GeneratorProps {
   mode?: "preview" | "full";
@@ -65,7 +60,7 @@ export function Generator({
 }: GeneratorProps) {
   const router = useRouter();
   const queryClient = useQueryClient();
-  const { data: userData } = useUser();
+  const { data: userData, isLoading: userloading } = useUser();
   const { data: subscription, isLoading: subscriptionLoading } =
     useCurrentSubscription(!!userData?.user); // Only call API when user is logged in
   const { data: videosData } = useVideos(
@@ -83,8 +78,8 @@ export function Generator({
 
   // Check if user has already used preview (only for preview mode)
   const hasUsedPreview =
-    mode === "preview" &&
-    (userData?.user &&
+    (mode === "preview" &&
+      userData?.user &&
       videosData?.videos?.some((v) => v.previewUrl !== null)) ||
     false;
 
@@ -104,6 +99,10 @@ export function Generator({
 
   const onSubmit = useCallback(
     async (data: GenerateVideoInput) => {
+      // setTimeout(()=>{
+
+      // },1000)
+
       // If user is not authenticated and preview mode, redirect to signup
       if (!userData?.user && mode === "preview") {
         sessionStorage.setItem("pendingPrompt", data.prompt);
@@ -124,10 +123,12 @@ export function Generator({
             });
             setJobId(result.jobId);
             onSuccess?.(result.jobId);
+            
+            
           } catch (error: unknown) {
             const errorMessage =
-              (error as { response?: { data?: { message?: string } } })?.response
-                ?.data?.message || "";
+              (error as { response?: { data?: { message?: string } } })
+                ?.response?.data?.message || "";
             if (errorMessage.includes("already used")) {
               toast.error(
                 "Preview already used. Please subscribe to continue."
@@ -138,7 +139,8 @@ export function Generator({
             } else {
               form.setError("root", {
                 message:
-                  errorMessage || "Failed to generate preview. Please try again.",
+                  errorMessage ||
+                  "Failed to generate preview. Please try again.",
               });
             }
           }
@@ -163,12 +165,15 @@ export function Generator({
             },
             onError: (error: unknown) => {
               const message =
-                (error as { response?: { data?: { message?: string } } })?.response
-                  ?.data?.message ||
+                (error as { response?: { data?: { message?: string } } })
+                  ?.response?.data?.message ||
                 "Failed to generate video. Please try again.";
               form.setError("root", { message });
               // If limit reached, redirect to pricing
-              if (message.includes("limit reached") || message.includes("limit")) {
+              if (
+                message.includes("limit reached") ||
+                message.includes("limit")
+              ) {
                 router.push("/pricing");
               }
             },
@@ -200,7 +205,8 @@ export function Generator({
         const currentVideo = videosData.videos.find((v) => v.jobId === jobId);
         if (
           currentVideo &&
-          (currentVideo.status === "completed" || currentVideo.status === "failed")
+          (currentVideo.status === "completed" ||
+            currentVideo.status === "failed")
         ) {
           setTimeout(() => {
             setJobId(null);
@@ -220,6 +226,7 @@ export function Generator({
 
         const submitTimer = setTimeout(() => {
           const formData = form.getValues();
+
           onSubmit(formData);
         }, 100);
 
@@ -244,7 +251,7 @@ export function Generator({
     let previewUrlFromVideo = null;
     let videoIsCompleted = false;
     let hasVideoUrl = false;
-    
+
     if (userData?.user && videosData?.videos) {
       const previewVideo = videosData.videos.find(
         (v) => v.jobId === jobId && v.previewUrl !== null
@@ -252,16 +259,17 @@ export function Generator({
       if (previewVideo) {
         previewUrlFromVideo = previewVideo.previewUrl;
         videoIsCompleted = previewVideo.status === "completed";
-        hasVideoUrl = previewVideo.videoUrl !== null && previewVideo.videoUrl !== undefined;
+        hasVideoUrl =
+          previewVideo.videoUrl !== null && previewVideo.videoUrl !== undefined;
       }
     }
 
     // Use whichever preview URL is available (prefer statusData as it's more up-to-date)
     const availablePreviewUrl = previewUrlFromStatus || previewUrlFromVideo;
-    
+
     // Debug logging (remove in production)
     if (statusIsCompleted || videoIsCompleted) {
-      console.log('[Preview Overlay Debug]', {
+      console.log("[Preview Overlay Debug]", {
         jobId,
         showPreviewOverlay,
         mode,
@@ -275,20 +283,20 @@ export function Generator({
         lastShownPreviewUrl,
       });
     }
-    
+
     // Only show preview overlay if:
     // 1. We have a previewUrl
     // 2. Status is completed (from either source)
     // 3. We haven't shown this preview before
     // 4. There's no videoUrl (this is a preview, not a full video)
-    const shouldShowPreview = 
+    const shouldShowPreview =
       availablePreviewUrl &&
       availablePreviewUrl !== lastShownPreviewUrl &&
       (statusIsCompleted || videoIsCompleted) &&
       !videoUrlFromStatus && // No videoUrl in status means it's a preview
       !hasVideoUrl; // No videoUrl in video means it's a preview
 
-    console.log('[Preview Overlay] shouldShowPreview:', shouldShowPreview, {
+    console.log("[Preview Overlay] shouldShowPreview:", shouldShowPreview, {
       hasUrl: !!availablePreviewUrl,
       notShown: availablePreviewUrl !== lastShownPreviewUrl,
       completed: statusIsCompleted || videoIsCompleted,
@@ -296,11 +304,14 @@ export function Generator({
     });
 
     if (shouldShowPreview) {
-      console.log('[Preview Overlay] Showing preview with URL:', availablePreviewUrl);
-      
+      console.log(
+        "[Preview Overlay] Showing preview with URL:",
+        availablePreviewUrl
+      );
+
       // When preview completes, refetch videos to get the latest data (only if logged in)
       if (userData?.user) {
-        queryClient.invalidateQueries({ queryKey: ['videos'] });
+        queryClient.invalidateQueries({ queryKey: ["videos"] });
       }
 
       // Show the preview overlay (wrapped in setTimeout to avoid linter warning)
@@ -328,8 +339,10 @@ export function Generator({
     if (
       showPreviewOverlayState &&
       (showPreviewOverlay || mode === "preview") &&
-      (statusData?.status === "failed" || 
-       videosData?.videos?.some((v) => v.jobId === jobId && v.status === "failed"))
+      (statusData?.status === "failed" ||
+        videosData?.videos?.some(
+          (v) => v.jobId === jobId && v.status === "failed"
+        ))
     ) {
       // Hide after 2 seconds on failure
       const hideTimer = setTimeout(() => {
@@ -340,16 +353,38 @@ export function Generator({
 
       return () => clearTimeout(hideTimer);
     }
-  }, [showPreviewOverlayState, showPreviewOverlay, mode, statusData?.status, videosData?.videos, jobId, router]);
+  }, [
+    showPreviewOverlayState,
+    showPreviewOverlay,
+    mode,
+    statusData?.status,
+    videosData?.videos,
+    jobId,
+    router,
+  ]);
 
   const isGenerating =
     generateVideo.isPending ||
     (jobId &&
       statusData?.status !== "completed" &&
       statusData?.status !== "failed");
+  useEffect(() => {
+    if (statusData?.status === "completed") {
+        queryClient.invalidateQueries({queryKey: ['subscription', 'current']});
+
+      setTimeout(() => {
+        form.reset({
+          prompt: "",
+          mode: "fast",
+        });
+      }, 1000);
+    }
+  },[statusData?.status]
+);
 
   const processingVideo = videosData?.videos?.find(
-    (v) => v.jobId === jobId && (v.status === "pending" || v.status === "processing")
+    (v) =>
+      v.jobId === jobId && (v.status === "pending" || v.status === "processing")
   );
 
   const isPreviewGeneration =
@@ -405,29 +440,39 @@ export function Generator({
 
   const disabledTooltipMessage = getDisabledTooltipMessage();
   const showTooltip = !canGenerate && disabledTooltipMessage;
-
+if(userloading){
+  return Spinner
+}
   return (
     <>
       <div className={className}>
         {header}
 
         {/* Subscription Info - Simple text only */}
-        {showSubscriptionInfo && !subscriptionLoading && subscription && subscription.plan !== "free" && (
-          <div className="mb-6 p-3 rounded-lg border border-border bg-card/50">
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-muted-foreground">Plan:</span>
-              <span className="font-medium capitalize">
-                {subscription.plan === "creator" ? "AI Creator" : subscription.plan}
-              </span>
+        {showSubscriptionInfo &&
+          !subscriptionLoading &&
+          subscription &&
+          subscription.plan !== "free" && (
+            <div className="mb-6 p-3 rounded-lg border border-border bg-card/50">
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-muted-foreground">Plan:</span>
+                <span className="font-medium capitalize">
+                  {subscription.plan === "creator"
+                    ? "AI Creator"
+                    : subscription.plan}
+                </span>
+              </div>
+              <div className="flex items-center justify-between text-sm mt-1">
+                <span className="text-muted-foreground">Videos remaining:</span>
+                
+                <span className="font-medium">
+                  {subscription.videosRemaining}
+                </span>
+              </div>
             </div>
-            <div className="flex items-center justify-between text-sm mt-1">
-              <span className="text-muted-foreground">Videos remaining:</span>
-              <span className="font-medium">{subscription.videosRemaining}</span>
-            </div>
-          </div>
-        )}
-
-        {hasReachedLimit && (
+          )}
+          
+        {!canGenerate && (
           <div className="mb-6 p-4 bg-destructive/10 border border-destructive/20 rounded-lg flex items-center gap-2">
             <AlertCircle className="w-5 h-5 text-destructive" />
             <div className="flex-1">
@@ -436,10 +481,7 @@ export function Generator({
               </p>
             </div>
             <Link href="/pricing">
-              <Button
-                size="sm"
-                variant="outline"
-              >
+              <Button size="sm" variant="outline">
                 Upgrade
               </Button>
             </Link>
@@ -466,12 +508,15 @@ export function Generator({
                       placeholder="E.g., A professional product launch video for a new smartphone showing features like camera, battery life, and design..."
                       className="min-h-32"
                       {...field}
-                      disabled={isGenerating || (mode === "full" && !canGenerate)}
+                      disabled={
+                        isGenerating || (mode === "full" && !canGenerate)
+                      }
                     />
                   </FormControl>
                   <FormMessage />
                   <p className="text-xs text-muted-foreground">
-                    Be as detailed as possible for best results (10-1000 characters)
+                    Be as detailed as possible for best results (10-1000
+                    characters)
                   </p>
                 </FormItem>
               )}
@@ -569,7 +614,8 @@ export function Generator({
         {jobId &&
           statusData &&
           processingVideo &&
-          (statusData.status === "pending" || statusData.status === "processing") && (
+          (statusData.status === "pending" ||
+            statusData.status === "processing") && (
             <div className="mt-6 p-4 rounded-xl border border-border bg-card">
               <div className="flex items-center gap-3">
                 <Clock className="w-5 h-5 animate-spin text-primary" />
@@ -642,7 +688,6 @@ export function Generator({
           </p>
         )}
 
-
         {/* Recent Videos (preview mode only) */}
         {showRecentVideos && userData?.user && (
           <div className="mt-16">
@@ -653,6 +698,7 @@ export function Generator({
                   View All →
                 </Button>
               </Link>
+              
             </div>
             <VideoGrid
               limit={3}
@@ -673,7 +719,6 @@ export function Generator({
           onClose={handlePreviewClose}
         />
       )}
-
     </>
   );
 }
