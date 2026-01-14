@@ -60,9 +60,10 @@ export function Generator({
 }: GeneratorProps) {
   const router = useRouter();
   const queryClient = useQueryClient();
-  const { data: userData, isLoading: userloading } = useUser();
+  const { data: userData, isLoading: userLoading } = useUser();
   const { data: subscription, isLoading: subscriptionLoading } =
     useCurrentSubscription(!!userData?.user); // Only call API when user is logged in
+  const isPageLoading = userLoading;
   const { data: videosData } = useVideos(
     showRecentVideos ? 10 : 1,
     0,
@@ -440,9 +441,11 @@ export function Generator({
 
   const disabledTooltipMessage = getDisabledTooltipMessage();
   const showTooltip = !canGenerate && disabledTooltipMessage;
-if(userloading){
-  return Spinner
-}
+if (isPageLoading) {
+    console.log('initial rnning')
+    return <Spinner />
+
+  }
   return (
     <>
       <div className={className}>
