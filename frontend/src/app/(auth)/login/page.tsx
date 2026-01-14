@@ -5,16 +5,17 @@ import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Sparkles, AlertCircle, ArrowLeft, ArrowLeftIcon } from "lucide-react"
+import { Sparkles, AlertCircle, Lock, Eye, EyeClosed, EyeOff} from "lucide-react"
 import { loginSchema, type LoginInput } from "@/lib/auth/schema"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
-
+import { useState } from "react"
 import { useLogin } from "@/lib/hooks/use-auth"
 import { Checkbox } from "@/components/ui/checkbox"
 
 export default function LoginPage() {
   const login = useLogin()
-
+  const [isVisible, setIsVisible] = useState(false)
+  
   const form = useForm<LoginInput>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
@@ -23,6 +24,7 @@ export default function LoginPage() {
       rememberMe: false
     },
   })
+  const togglePassword = () => setIsVisible(!isVisible)
 
   const onSubmit = async (data: LoginInput) => {
     login.mutate(data, {
@@ -76,23 +78,37 @@ export default function LoginPage() {
             />
 
             <FormField
-              control={form.control}
-              name="password"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Password</FormLabel>
-                  <FormControl>
-                    <Input
-                      type="password"
-                      placeholder="••••••••"
-                      {...field}
-                      disabled={login.isPending}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+  control={form.control}
+  name="password"
+  render={({ field }) => (
+    <FormItem>
+      <FormLabel>Password</FormLabel>
+
+      <FormControl>
+        <div className="relative">
+          <Input
+            type={isVisible ? "text" : "password"}
+            placeholder="••••••••"
+            {...field}
+            disabled={login.isPending}
+            className="pr-10"   // right side space for button
+          />
+
+          <button
+            type="button"
+            onClick={togglePassword}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-primary"
+          >
+            {isVisible ? <Eye size={20} /> : <EyeOff size={20} />}
+          </button>
+        </div>
+      </FormControl>
+
+      <FormMessage />
+    </FormItem>
+  )}
+/>
+
               {/* Remember Me Checkbox */}
               <FormField
                 control={form.control}
