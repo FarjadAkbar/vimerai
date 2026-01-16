@@ -38,9 +38,9 @@ class ApiClient {
           this.clearToken();
           // Only redirect to login if not on the root page (generator)
           // Root page allows unauthenticated access per Phase 1 requirements
-          if (typeof window !== 'undefined' && window.location.pathname !== '/') {
-            window.location.href = '/login';
-          }
+          // if (typeof window !== 'undefined' && window.location.pathname !== '/') {
+          //   window.location.href = '/login';
+          // }
         }
         return Promise.reject(error);
       },

@@ -9,35 +9,11 @@ import { Button } from './ui/button';
 const Header = () => {
     const logout = useLogout();
     const { data: userData } = useUser();
-    const [language, setLanguage] = useState('en');
-    const [showLanguageMenu, setShowLanguageMenu] = useState(false);
-    const languageMenuRef = useRef<HTMLDivElement>(null);
 
-    const languages = [
-      { code: 'en', name: 'English' },
-      { code: 'es', name: 'Español' },
-      { code: 'fr', name: 'Français' },
-      { code: 'de', name: 'Deutsch' },
-    ];
+    
 
-    const currentLanguage = languages.find(lang => lang.code === language) || languages[0];
 
     // Close language menu when clicking outside
-    useEffect(() => {
-      const handleClickOutside = (event: MouseEvent) => {
-        if (languageMenuRef.current && !languageMenuRef.current.contains(event.target as Node)) {
-          setShowLanguageMenu(false);
-        }
-      };
-
-      if (showLanguageMenu) {
-        document.addEventListener('mousedown', handleClickOutside);
-      }
-
-      return () => {
-        document.removeEventListener('mousedown', handleClickOutside);
-      };
-    }, [showLanguageMenu]);
 
   return (
       <nav className="sticky top-0 z-50 border-b border-border bg-background/95 backdrop-blur-md">
@@ -96,35 +72,7 @@ const Header = () => {
                     </Button>
                   </Link>
                 </div>
-                <div className="relative" ref={languageMenuRef}>
-                  <Button 
-                    variant="ghost" 
-                    size="sm"
-                    onClick={() => setShowLanguageMenu(!showLanguageMenu)}
-                    className="gap-2"
-                  >
-                    <Languages className="w-4 h-4" />
-                    <span>{currentLanguage.name}</span>
-                  </Button>
-                  {showLanguageMenu && (
-                    <div className="absolute right-0 mt-2 w-40 bg-card border border-border rounded-lg shadow-lg z-50">
-                      {languages.map((lang) => (
-                        <button
-                          key={lang.code}
-                          onClick={() => {
-                            setLanguage(lang.code);
-                            setShowLanguageMenu(false);
-                          }}
-                          className={`w-full text-left px-4 py-2 text-sm hover:bg-primary/10 transition-colors ${
-                            language === lang.code ? 'bg-primary/10 font-medium' : ''
-                          }`}
-                        >
-                          {lang.name}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </div>
+                
                 <Link href="/login">
                   <Button variant="outline" size="sm">
                     Sign In

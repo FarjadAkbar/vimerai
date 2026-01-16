@@ -1,0 +1,10 @@
+{
+  "Home": {
+    "title": "Willkommen",
+    "subtitle": "Dies ist eine mehrsprachige App"
+  },
+  "Navbar": {
+    "language": "Sprache",
+    "login": "Anmelden"
+  }
+}
