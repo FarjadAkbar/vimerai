@@ -8,19 +8,9 @@ import { Button } from './ui/button';
 
 export default function Header() {
   const logout = useLogout();
-  const { data: userData, isLoading } = useUser();
-
+  const { data: userData } = useUser();
   const isLoggedIn = !!userData?.user;
 
-    if (isLoading) {
-    return (
-      <nav className="sticky top-0 z-50 border-b border-border bg-background/95 backdrop-blur-md">
-        <div className="max-w-7xl mx-auto px-4 py-4">
-          <span className="text-xl font-bold">Vimerai</span>
-        </div>
-      </nav>
-    );
-  }
   return (
       <nav className="sticky top-0 z-50 border-b border-border bg-background/95 backdrop-blur-md">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
