@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback, useMemo } from "react";
+import { useEffect, useState, useCallback, useMemo, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useForm } from "react-hook-form";
@@ -51,6 +51,7 @@ export function Generator({
   const generateVideo = useGenerateVideo();
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [jobId, setJobId] = useState<string | null>(null);
+  const hasShownToastRef = useRef<string | null>(null);
 
   // Check if user has already used preview (only for preview mode)
   const hasUsedPreview = useMemo(
@@ -188,11 +189,14 @@ export function Generator({
     const isFailed = statusData.status === "failed";
 
     if (isCompleted) {
-      // Show success toast
-      if (mode === "preview") {
-        toast.success("Preview generated successfully!");
-      } else {
-        toast.success("Video generated successfully!");
+      // Show success toast only once per jobId
+      if (hasShownToastRef.current !== jobId) {
+        if (mode === "preview") {
+          toast.success("Preview generated successfully!");
+        } else {
+          toast.success("Video generated successfully!");
+        }
+        hasShownToastRef.current = jobId;
       }
 
       // For preview mode, wait for completion then refresh and show
@@ -227,8 +231,11 @@ export function Generator({
         }
       }
     } else if (isFailed) {
-      // Show error toast
-      toast.error("Video generation failed. Please try again.");
+      // Show error toast only once per jobId
+      if (hasShownToastRef.current !== `failed-${jobId}`) {
+        toast.error("Video generation failed. Please try again.");
+        hasShownToastRef.current = `failed-${jobId}`;
+      }
       
       // Auto-hide preview overlay if generation failed (preview mode only)
       if (previewUrl && mode === "preview") {
@@ -266,8 +273,9 @@ export function Generator({
           prompt: "",
           mode: "fast",
         });
-        // Clear jobId after form reset to allow new generation
+        // Clear jobId and toast ref after form reset to allow new generation
         setJobId(null);
+        hasShownToastRef.current = null;
       }, 1500); // Wait 1.5 seconds to ensure data is refreshed
       return () => clearTimeout(resetTimer);
     }
@@ -394,8 +402,29 @@ export function Generator({
         {/* Info Text (preview mode only) */}
         {mode === "preview" && (
           <p className="text-center text-sm text-muted-foreground mt-6">
-            Click &quot;Generate Video&quot; to see a smart preview. Full video
-            generation available after subscription.
+            {!isLoggedIn ? (
+              <>
+                Smart preview is available after{" "}
+                <Link href="/signup" className="text-primary hover:underline">
+                  signup
+                </Link>
+                . Full generation requires an active plan{" "}
+                <Link href="/pricing" className="text-primary hover:underline">
+                  subscribe
+                </Link>
+                .
+              </>
+            ) : subscription?.plan === "free" ? (
+              <>
+                Click &quot;Generate Video&quot; to see a smart preview. Full video generation available after{" "}
+                <Link href="/pricing" className="text-primary hover:underline">
+                  subscription
+                </Link>
+                .
+              </>
+            ) : (
+              "Click &quot;Generate Video&quot; to see a smart preview."
+            )}
           </p>
         )}
 
