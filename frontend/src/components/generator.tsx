@@ -6,7 +6,6 @@ import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
-import { toast } from "react-toastify";
 import { Clock } from "lucide-react";
 import {
   generateVideoSchema,
@@ -26,7 +25,8 @@ import { SmartPreviewModal } from "@/components/smart-preview-modal";
 import { SubscriptionInfo } from "@/components/subscription-info";
 import { BlockedStateAlert } from "@/components/blocked-state-alert";
 import { GeneratorForm } from "@/components/generator-form";
-import type { GeneratorProps } from "@/types/components.types";
+import { NotificationModal } from "@/components/notification-modal";
+import type { GeneratorProps, NotificationState } from "@/types/components.types";
 
 export function Generator({
   mode = "preview",
@@ -51,7 +51,7 @@ export function Generator({
   const generateVideo = useGenerateVideo();
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [jobId, setJobId] = useState<string | null>(null);
-  const hasShownToastRef = useRef<string | null>(null);
+  const [notification, setNotification] = useState<NotificationState | null>(null);
 
   // Check if user has already used preview (only for preview mode)
   const hasUsedPreview = useMemo(
@@ -105,17 +105,30 @@ export function Generator({
               (error as { response?: { data?: { message?: string } } })
                 ?.response?.data?.message || "";
             if (errorMessage.includes("already used")) {
-              toast.error(
-                "Preview already used. Please subscribe to continue."
-              );
-              setTimeout(() => {
-                router.push("/pricing");
-              }, 1000);
+              setNotification({
+                type: "warning",
+                title: "Preview Already Used",
+                message: "You've already used your smart preview. Subscribe to generate full videos.",
+                action: {
+                  label: "View Pricing",
+                  onClick: () => {
+                    setNotification(null);
+                    router.push("/pricing");
+                  },
+                },
+              });
             } else {
-              form.setError("root", {
-                message:
-                  errorMessage ||
-                  "Failed to generate preview. Please try again.",
+              setNotification({
+                type: "error",
+                title: "Preview Generation Failed",
+                message: errorMessage || "Failed to generate preview. Please try again.",
+                action: {
+                  label: "Try Again",
+                  onClick: () => {
+                    setNotification(null);
+                    form.reset();
+                  },
+                },
               });
             }
           }
@@ -143,13 +156,37 @@ export function Generator({
                 (error as { response?: { data?: { message?: string } } })
                   ?.response?.data?.message ||
                 "Failed to generate video. Please try again.";
-              form.setError("root", { message });
-              // If limit reached, redirect to pricing
+              
+              // If limit reached, show notification with pricing CTA
               if (
                 message.includes("limit reached") ||
                 message.includes("limit")
               ) {
-                router.push("/pricing");
+                setNotification({
+                  type: "warning",
+                  title: "Generation Limit Reached",
+                  message: "You've reached your video generation limit. Please upgrade your plan to continue.",
+                  action: {
+                    label: "View Pricing",
+                    onClick: () => {
+                      setNotification(null);
+                      router.push("/pricing");
+                    },
+                  },
+                });
+              } else {
+                setNotification({
+                  type: "error",
+                  title: "Video Generation Failed",
+                  message: message,
+                  action: {
+                    label: "Try Again",
+                    onClick: () => {
+                      setNotification(null);
+                      form.reset();
+                    },
+                  },
+                });
               }
             },
           }
@@ -189,16 +226,6 @@ export function Generator({
     const isFailed = statusData.status === "failed";
 
     if (isCompleted) {
-      // Show success toast only once per jobId
-      if (hasShownToastRef.current !== jobId) {
-        if (mode === "preview") {
-          toast.success("Preview generated successfully!");
-        } else {
-          toast.success("Video generated successfully!");
-        }
-        hasShownToastRef.current = jobId;
-      }
-
       // For preview mode, wait for completion then refresh and show
       if (mode === "preview") {
         const previewUrlFromStatus = statusData?.previewUrl || null;
@@ -228,15 +255,25 @@ export function Generator({
           queryClient.refetchQueries({ queryKey: ["videos"] });
           queryClient.refetchQueries({ queryKey: ["subscription", "current"] });
           queryClient.refetchQueries({ queryKey: ["generation-status", jobId] });
+
+          // Defer state update to avoid cascading renders
+          setTimeout(() => {
+            setNotification({
+              type: "success",
+              title: "Video Generated!",
+              message: "Your video has been generated successfully and is ready to view.",
+              action: {
+                label: "View My Videos",
+                onClick: () => {
+                  setNotification(null);
+                  router.push("/my-videos");
+                },
+              },
+            });
+          }, 0);
         }
       }
     } else if (isFailed) {
-      // Show error toast only once per jobId
-      if (hasShownToastRef.current !== `failed-${jobId}`) {
-        toast.error("Video generation failed. Please try again.");
-        hasShownToastRef.current = `failed-${jobId}`;
-      }
-      
       // Auto-hide preview overlay if generation failed (preview mode only)
       if (previewUrl && mode === "preview") {
         const hideTimer = setTimeout(() => {
@@ -275,37 +312,37 @@ export function Generator({
         });
         // Clear jobId and toast ref after form reset to allow new generation
         setJobId(null);
-        hasShownToastRef.current = null;
       }, 1500); // Wait 1.5 seconds to ensure data is refreshed
       return () => clearTimeout(resetTimer);
     }
-  }, [statusData?.status, form]);
+  }, [statusData?.status, form.reset]);
 
   const isPreviewGeneration = mode === "preview";
 
   // For full mode, check subscription limits
   const canGenerate = useMemo(() => {
     if (mode === "preview") {
-      return !hasUsedPreview;
+      // Preview mode: can generate if not logged in (will redirect) or if logged in and hasn't used preview
+      return !isLoggedIn || !hasUsedPreview;
     }
-    // Full mode
+    // Full mode: must be logged in and have subscription with remaining videos
+    if (!isLoggedIn) return false;
     if (subscriptionLoading) return true; // Allow while loading
     return subscription ? subscription.videosRemaining > 0 : false;
-  }, [mode, hasUsedPreview, subscriptionLoading, subscription]);
-
-  const hasReachedLimit = useMemo(
-    () =>
-      mode === "full" &&
-      !subscriptionLoading &&
-      subscription?.videosRemaining === 0,
-    [mode, subscriptionLoading, subscription?.videosRemaining]
-  );
+  }, [mode, hasUsedPreview, subscriptionLoading, subscription, isLoggedIn]);
 
   // Get blocked state message and CTA
   const getBlockedStateInfo = useMemo(() => {
     if (canGenerate) return null;
 
     if (mode === "preview") {
+      if (!isLoggedIn) {
+        return {
+          message: "Smart preview is available after signup. Full generation requires an active plan.",
+          cta: { text: "Sign Up", href: "/signup" },
+          variant: "default" as const,
+        };
+      }
       if (hasUsedPreview && !previewUrl) {
         return {
           message: "You've already used your smart preview. Subscribe to generate more videos.",
@@ -314,8 +351,16 @@ export function Generator({
         };
       }
     } else {
-      if(subscriptionLoading) return null;
-      if(!subscription) {
+      // Full mode
+      if (!isLoggedIn) {
+        return {
+          message: "Please sign up to generate videos. Full video generation requires an active subscription plan.",
+          cta: { text: "Sign Up", href: "/signup" },
+          variant: "default" as const,
+        };
+      }
+      if (subscriptionLoading) return null;
+      if (!subscription) {
         return {
           message: "Please subscribe to generate videos. Choose a plan to get started.",
           cta: { text: "Upgrade Plan", href: "/pricing" },
@@ -331,7 +376,7 @@ export function Generator({
       }
     }
     return null;
-  }, [canGenerate, mode, hasUsedPreview, previewUrl, subscriptionLoading, subscription]);
+  }, [canGenerate, mode, hasUsedPreview, previewUrl, subscriptionLoading, subscription, isLoggedIn]);
 
   return (
     <>
@@ -362,6 +407,11 @@ export function Generator({
           canGenerate={canGenerate}
           mode={mode}
           statusData={statusData}
+          blockedReason={getBlockedStateInfo ? {
+            message: getBlockedStateInfo.message,
+            cta: getBlockedStateInfo.cta || { text: "View Pricing", href: "/pricing" }
+          } : null}
+          isLoggedIn={isLoggedIn}
         />
 
         {/* Status Display for Processing Videos - Always show while generating */}
@@ -456,6 +506,18 @@ export function Generator({
         <SmartPreviewModal
           previewUrl={previewUrl}
           onClose={handlePreviewClose}
+        />
+      )}
+      {/* Notification Modal */}
+      {notification && (
+        <NotificationModal
+          open={!!notification}
+          onClose={() => setNotification(null)}
+          type={notification.type}
+          title={notification.title}
+          message={notification.message}
+          action={notification.action}
+          autoClose={notification.type === "success" ? 5000 : 0}
         />
       )}
     </>

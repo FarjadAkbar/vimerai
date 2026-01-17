@@ -6,14 +6,17 @@ import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Sparkles, AlertCircle, ArrowLeft } from "lucide-react"
+import { Sparkles, AlertCircle, ArrowLeft, Eye, EyeOff } from "lucide-react"
 import { signupSchema, type SignupInput } from "@/lib/auth/schema"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { useSignup } from "@/lib/hooks/use-auth"
+import { useState } from "react"
 
 export default function SignupPage() {
   const router = useRouter()
   const signup = useSignup()
+  const [isPasswordVisible, setIsPasswordVisible] = useState(false)
+  const [isConfirmPasswordVisible, setIsConfirmPasswordVisible] = useState(false)
 
   const form = useForm<SignupInput>({
     resolver: zodResolver(signupSchema),
@@ -111,12 +114,22 @@ export default function SignupPage() {
                 <FormItem>
                   <FormLabel>Password</FormLabel>
                   <FormControl>
-                    <Input
-                      type="password"
-                      placeholder="••••••••"
-                      {...field}
-                      disabled={signup.isPending}
-                    />
+                    <div className="relative">
+                      <Input
+                        type={isPasswordVisible ? "text" : "password"}
+                        placeholder="••••••••"
+                        {...field}
+                        disabled={signup.isPending}
+                        className="pr-10"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setIsPasswordVisible(!isPasswordVisible)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-primary"
+                      >
+                        {isPasswordVisible ? <Eye size={20} /> : <EyeOff size={20} />}
+                      </button>
+                    </div>
                   </FormControl>
                   <FormMessage />
                   <p className="text-xs text-muted-foreground">
@@ -133,12 +146,22 @@ export default function SignupPage() {
                 <FormItem>
                   <FormLabel>Confirm Password</FormLabel>
                   <FormControl>
-                    <Input
-                      type="password"
-                      placeholder="••••••••"
-                      {...field}
-                      disabled={signup.isPending}
-                    />
+                    <div className="relative">
+                      <Input
+                        type={isConfirmPasswordVisible ? "text" : "password"}
+                        placeholder="••••••••"
+                        {...field}
+                        disabled={signup.isPending}
+                        className="pr-10"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setIsConfirmPasswordVisible(!isConfirmPasswordVisible)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-primary"
+                      >
+                        {isConfirmPasswordVisible ? <Eye size={20} /> : <EyeOff size={20} />}
+                      </button>
+                    </div>
                   </FormControl>
                   <FormMessage />
                 </FormItem>

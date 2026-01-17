@@ -54,7 +54,7 @@ export default function LoginPage() {
             {form.formState.errors.root && (
               <div className="flex items-center gap-2 p-3 text-sm text-destructive bg-destructive/10 rounded-md">
                 <AlertCircle className="h-4 w-4" />
-                <span>{form.formState.errors.root.message}</span>
+                <span>Invalid credentials. Retry with corrected input.</span>
               </div>
             )}
 

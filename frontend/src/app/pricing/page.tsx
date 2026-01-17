@@ -9,9 +9,10 @@ import { BorderBeam } from "@/components/ui/border-beam"
 import { subscriptionApi } from "@/lib/api/subscription.api"
 import { useActivateMockSubscription, useCurrentSubscription } from "@/lib/hooks/use-subscription"
 import { useUser } from "@/lib/hooks/use-user"
-import { toast } from "react-toastify"
+import { NotificationModal } from "@/components/notification-modal"
 import Header from "@/components/header"
 import type { Plan, SubscriptionPlan, PlanMap } from "@/types/pricing.types"
+import type { NotificationState } from "@/types/components.types"
 
 export default function PricingPage() {
   const router = useRouter()
@@ -21,6 +22,7 @@ export default function PricingPage() {
   const [plans, setPlans] = useState<Plan[]>([])
   const [loading, setLoading] = useState(true)
   const [activatingPlanId, setActivatingPlanId] = useState<string | null>(null)
+  const [notification, setNotification] = useState<NotificationState | null>(null)
 
   useEffect(() => {
     subscriptionApi.getPlans().then((response) => {
@@ -68,17 +70,36 @@ export default function PricingPage() {
     setActivatingPlanId(planId)
     activateMockSubscription.mutate(plan, {
       onSuccess: (data) => {
-        toast.success(`Subscription activated! ${data.plan} plan is now active.`)
-        // Redirect to Generator (home page)
-        setTimeout(() => {
-          router.push("/")
-        }, 1000)
+        const planDisplayName = data.plan === "creator" ? "AI Creator" : data.plan.charAt(0).toUpperCase() + data.plan.slice(1)
+        setNotification({
+          type: "success",
+          title: "Subscription Activated!",
+          message: `${planDisplayName} plan is now active. You can now generate full videos.`,
+          action: {
+            label: "Start Generating",
+            onClick: () => {
+              setNotification(null)
+              router.push("/")
+            },
+          },
+        })
       },
       onError: (error: unknown) => {
         const message =
           (error as { response?: { data?: { message?: string } } })?.response
             ?.data?.message || "Failed to activate subscription. Please try again."
-        toast.error(message)
+        setNotification({
+          type: "error",
+          title: "Activation Failed",
+          message: message,
+          action: {
+            label: "Try Again",
+            onClick: () => {
+              setNotification(null)
+              setActivatingPlanId(null)
+            },
+          },
+        })
         setActivatingPlanId(null)
       },
     })
@@ -213,6 +234,18 @@ export default function PricingPage() {
           </div>
         </div>
       </div>
+      {/* Notification Modal */}
+      {notification && (
+        <NotificationModal
+          open={!!notification}
+          onClose={() => setNotification(null)}
+          type={notification.type}
+          title={notification.title}
+          message={notification.message}
+          action={notification.action}
+          autoClose={notification.type === "success" ? 3000 : 0}
+        />
+      )}
     </>
   )
 }

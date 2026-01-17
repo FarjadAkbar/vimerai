@@ -13,6 +13,7 @@ export const useSignup = () => {
     onSuccess: (response: AuthResponse) => {
       // Store token and user (default to rememberMe: true for signup)
       apiClient.setToken(response.token, true);
+      // Store user in localStorage for persistent sessions (signup defaults to rememberMe)
       localStorage.setItem('user', JSON.stringify(response.user));
       queryClient.setQueryData(['user'], { user: response.user });
       // Redirect to generator as per Phase 1 requirements
@@ -32,15 +33,18 @@ export const useLogin = () => {
       const rememberMe = variables.rememberMe ?? false;
       apiClient.setToken(response.token, rememberMe);
       
-      // Store user in appropriate storage
+      // Store user in the same storage as token for consistency
       if (rememberMe) {
         localStorage.setItem('user', JSON.stringify(response.user));
+        // Clear sessionStorage user if switching to localStorage
+        sessionStorage.removeItem('user');
       } else {
         sessionStorage.setItem('user', JSON.stringify(response.user));
-        // Clear any existing localStorage user
+        // Clear any existing localStorage user when using sessionStorage
         localStorage.removeItem('user');
       }
       
+      // Update React Query cache
       queryClient.setQueryData(['user'], { user: response.user });
       // Redirect to generator as per Phase 1 requirements
       router.push('/');

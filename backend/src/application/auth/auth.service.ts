@@ -86,7 +86,7 @@ export class AuthService implements IAuthService {
       user.passwordHash,
     );
     if (!isValid) {
-      throw new UnauthorizedException('Invalid credentials');
+      throw new UnauthorizedException('Invalid credentials. Retry with corrected input.');
     }
 
     // Generate token with rememberMe option
