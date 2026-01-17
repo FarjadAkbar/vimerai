@@ -6,8 +6,13 @@ export const useUser = () => {
   return useQuery({
     queryKey: ['user'],
     queryFn: async () => {
-      const res = await usersApi.getMe();
+      try{
+        const res = await usersApi.getMe();
       return res;
+      }catch(err){
+        console.log(err)
+        return null
+      }
     },
     retry: false,
     staleTime: 5 * 60 * 1000, // 5 minutes
