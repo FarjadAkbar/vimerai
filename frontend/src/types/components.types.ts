@@ -30,3 +30,27 @@ export interface BlockedStateInfo {
 export interface BlockedStateAlertProps {
   blockedStateInfo: BlockedStateInfo;
 }
+
+export type NotificationType = "success" | "error" | "warning" | "info";
+
+export interface NotificationAction {
+  label: string;
+  onClick: () => void;
+}
+
+export interface NotificationState {
+  type: NotificationType;
+  title: string;
+  message: string;
+  action?: NotificationAction;
+}
+
+export interface NotificationModalProps {
+  open: boolean;
+  onClose: () => void;
+  type: NotificationType;
+  title: string;
+  message: string;
+  action?: NotificationAction;
+  autoClose?: number; // milliseconds, 0 = don't auto-close
+}

@@ -52,9 +52,27 @@ export default function LoginPage() {
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             {form.formState.errors.root && (
-              <div className="flex items-center gap-2 p-3 text-sm text-destructive bg-destructive/10 rounded-md">
-                <AlertCircle className="h-4 w-4" />
-                <span>{form.formState.errors.root.message}</span>
+              <div className="p-4 text-sm bg-destructive/10 border border-destructive/20 rounded-lg space-y-3">
+                <div className="flex items-start gap-2">
+                  <AlertCircle className="h-4 w-4 mt-0.5 text-destructive flex-shrink-0" />
+                  <div className="flex-1">
+                    <p className="text-destructive font-medium">{form.formState.errors.root.message}</p>
+                    <div className="mt-3 space-y-2">
+                      <div className="flex flex-col sm:flex-row gap-2">
+                        <Link href="/signup" className="block">
+                          <Button type="button" variant="outline" size="sm" className="w-full sm:w-auto">
+                            Sign Up Instead
+                          </Button>
+                        </Link>
+                        <Link href="/password-reset" className="block">
+                          <Button type="button" variant="ghost" size="sm" className="w-full sm:w-auto">
+                            Forgot Password?
+                          </Button>
+                        </Link>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
             )}
 
