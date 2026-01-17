@@ -51,7 +51,6 @@ export function Generator({
   const generateVideo = useGenerateVideo();
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [jobId, setJobId] = useState<string | null>(null);
-  const hasShownToastRef = useRef<string | null>(null);
   const [notification, setNotification] = useState<NotificationState | null>(null);
 
   // Check if user has already used preview (only for preview mode)
@@ -227,33 +226,6 @@ export function Generator({
     const isFailed = statusData.status === "failed";
 
     if (isCompleted) {
-      // Show success notification only once per jobId
-      if (hasShownToastRef.current !== jobId) {
-        setNotification({
-          type: "success",
-          title: mode === "preview" ? "Preview Generated!" : "Video Generated!",
-          message: mode === "preview"
-            ? "Your preview video is ready. Subscribe to generate full videos."
-            : "Your video has been generated successfully and is ready to view.",
-          action: mode === "preview"
-            ? {
-                label: "View Pricing",
-                onClick: () => {
-                  setNotification(null);
-                  router.push("/pricing");
-                },
-              }
-            : {
-                label: "View My Videos",
-                onClick: () => {
-                  setNotification(null);
-                  router.push("/my-videos");
-                },
-              },
-        });
-        hasShownToastRef.current = jobId;
-      }
-
       // For preview mode, wait for completion then refresh and show
       if (mode === "preview") {
         const previewUrlFromStatus = statusData?.previewUrl || null;
@@ -283,27 +255,25 @@ export function Generator({
           queryClient.refetchQueries({ queryKey: ["videos"] });
           queryClient.refetchQueries({ queryKey: ["subscription", "current"] });
           queryClient.refetchQueries({ queryKey: ["generation-status", jobId] });
+
+          // Defer state update to avoid cascading renders
+          setTimeout(() => {
+            setNotification({
+              type: "success",
+              title: "Video Generated!",
+              message: "Your video has been generated successfully and is ready to view.",
+              action: {
+                label: "View My Videos",
+                onClick: () => {
+                  setNotification(null);
+                  router.push("/my-videos");
+                },
+              },
+            });
+          }, 0);
         }
       }
     } else if (isFailed) {
-      // Show error notification only once per jobId
-      if (hasShownToastRef.current !== `failed-${jobId}`) {
-        setNotification({
-          type: "error",
-          title: "Generation Failed",
-          message: "We encountered an issue while generating your video. Please try again or contact support if the problem persists.",
-          action: {
-            label: "Try Again",
-            onClick: () => {
-              setNotification(null);
-              form.reset();
-              setJobId(null);
-            },
-          },
-        });
-        hasShownToastRef.current = `failed-${jobId}`;
-      }
-      
       // Auto-hide preview overlay if generation failed (preview mode only)
       if (previewUrl && mode === "preview") {
         const hideTimer = setTimeout(() => {
@@ -342,7 +312,6 @@ export function Generator({
         });
         // Clear jobId and toast ref after form reset to allow new generation
         setJobId(null);
-        hasShownToastRef.current = null;
       }, 1500); // Wait 1.5 seconds to ensure data is refreshed
       return () => clearTimeout(resetTimer);
     }
@@ -540,7 +509,7 @@ export function Generator({
         />
       )}
       {/* Notification Modal */}
-      {(!previewUrl && notification) && (
+      {notification && (
         <NotificationModal
           open={!!notification}
           onClose={() => setNotification(null)}
