@@ -540,7 +540,7 @@ export function Generator({
         />
       )}
       {/* Notification Modal */}
-      {notification && (
+      {(!previewUrl && notification) && (
         <NotificationModal
           open={!!notification}
           onClose={() => setNotification(null)}

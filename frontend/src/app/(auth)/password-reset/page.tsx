@@ -7,7 +7,7 @@ import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Sparkles, AlertCircle, CheckCircle, Loader2 } from "lucide-react"
+import { Sparkles, AlertCircle, CheckCircle, Loader2, Eye, EyeOff } from "lucide-react"
 import {
   passwordResetRequestSchema,
   passwordResetSchema,
@@ -24,6 +24,7 @@ function PasswordResetContent() {
   const searchParams = useSearchParams()
   const token = searchParams.get("token")
   const [emailSent, setEmailSent] = useState(false)
+  const [isPasswordVisible, setIsPasswordVisible] = useState(false)
 
   const resetRequest = usePasswordResetRequest()
   const resetPassword = usePasswordReset()
@@ -104,12 +105,22 @@ function PasswordResetContent() {
                   <FormItem>
                     <FormLabel>New Password</FormLabel>
                     <FormControl>
-                      <Input
-                        type="password"
-                        placeholder="••••••••"
-                        {...field}
-                        disabled={resetPassword.isPending}
-                      />
+                      <div className="relative">
+                        <Input
+                          type={isPasswordVisible ? "text" : "password"}
+                          placeholder="••••••••"
+                          {...field}
+                          disabled={resetPassword.isPending}
+                          className="pr-10"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setIsPasswordVisible(!isPasswordVisible)}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-primary"
+                        >
+                          {isPasswordVisible ? <Eye size={20} /> : <EyeOff size={20} />}
+                        </button>
+                      </div>
                     </FormControl>
                     <FormMessage />
                     <p className="text-xs text-muted-foreground">
