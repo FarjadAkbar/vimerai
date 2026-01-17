@@ -4,17 +4,20 @@ import type { UpdateUserRequest } from '@/lib/api/users.api';
 
 export const useUser = () => {
   // Check if token exists to determine if query should be enabled
-  const hasToken = typeof window !== 'undefined' && !!localStorage.getItem('token');
-  
+  const hasToken =
+    typeof window !== 'undefined' &&
+    !!(localStorage.getItem('token') || sessionStorage.getItem('token'));
+
   return useQuery({
     queryKey: ['user'],
     queryFn: async () => {
       try {
         return await usersApi.getMe();
       } catch (error) {
-        // If API call fails, try to get from localStorage
+        // If API call fails, try to get from localStorage or sessionStorage
         if (typeof window !== 'undefined') {
-          const userData = localStorage.getItem('user');
+          const userData =
+            localStorage.getItem('user') || sessionStorage.getItem('user');
           if (userData) {
             try {
               const user = JSON.parse(userData);
@@ -31,9 +34,10 @@ export const useUser = () => {
     staleTime: 5 * 60 * 1000, // 5 minutes
     retry: false, // Don't retry on error to avoid redirect loops
     initialData: () => {
-      // Try to get from localStorage for initial render
+      // Try to get from localStorage or sessionStorage for initial render
       if (typeof window !== 'undefined') {
-        const userData = localStorage.getItem('user');
+        const userData =
+          localStorage.getItem('user') || sessionStorage.getItem('user');
         if (userData) {
           try {
             const user = JSON.parse(userData);

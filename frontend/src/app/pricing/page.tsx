@@ -11,19 +11,14 @@ import { useActivateMockSubscription, useCurrentSubscription } from "@/lib/hooks
 import { useUser } from "@/lib/hooks/use-user"
 import { toast } from "react-toastify"
 import Header from "@/components/header"
+import type { Plan, SubscriptionPlan, PlanMap } from "@/types/pricing.types"
 
 export default function PricingPage() {
   const router = useRouter()
   const { data: userData } = useUser()
   const { data: currentSubscription } = useCurrentSubscription()
   const activateMockSubscription = useActivateMockSubscription()
-  const [plans, setPlans] = useState<Array<{
-    id: string
-    name: string
-    price: number
-    videosPerMonth: number
-    popular?: boolean
-  }>>([])
+  const [plans, setPlans] = useState<Plan[]>([])
   const [loading, setLoading] = useState(true)
   const [activatingPlanId, setActivatingPlanId] = useState<string | null>(null)
 
@@ -61,13 +56,13 @@ export default function PricingPage() {
     }
 
     // Map plan ID to subscription plan type
-    const planMap: Record<string, 'starter' | 'creator' | 'pro'> = {
+    const planMap: PlanMap = {
       starter: 'starter',
       creator: 'creator',
       pro: 'pro',
     }
 
-    const plan = planMap[planId] as 'starter' | 'creator' | 'pro'
+    const plan = planMap[planId] as SubscriptionPlan
     if (!plan) return
 
     setActivatingPlanId(planId)

@@ -1,11 +1,10 @@
 "use client";
 
+import { useMemo } from "react";
 import { Generator } from "@/components/generator";
 import Header from "@/components/header";
 import { useUser } from "@/lib/hooks/use-user";
 import { useCurrentSubscription } from "@/lib/hooks/use-subscription";
-import { Clock } from "lucide-react";
-import { useState, useEffect } from "react";
 import { Spinner } from "@/components/ui/spinner";
 
 export default function HomePage() {
@@ -14,18 +13,16 @@ export default function HomePage() {
   const { data: subscription, isLoading: subscriptionLoading } =
     useCurrentSubscription(isLoggedIn);
   
-  const isPageLoading = userLoading || (isLoggedIn && subscriptionLoading);
-  
-  // Add state to ensure loader shows first and persists until loading is complete
-  const [showLoader, setShowLoader] = useState(true);
-  
-  useEffect(() => {
-    if (!isPageLoading) {
-      setShowLoader(false);
-    }
-  }, [isPageLoading]);
+  // Determine mode based on subscription plan
+  const mode = useMemo(() => {
+    if (!isLoggedIn) return "preview";
+    return subscription?.plan === "free" ? "preview" : "full";
+  }, [isLoggedIn, subscription?.plan]);
 
-  if (showLoader) {
+  // Show loading state only when necessary
+  const isLoading = userLoading || (isLoggedIn && subscriptionLoading);
+
+  if (isLoading) {
     return (
       <>
         <Header />
@@ -39,13 +36,6 @@ export default function HomePage() {
       </>
     );
   }
-
-  // Use "preview" mode if plan is "free", otherwise use "full" mode
-  const mode = isLoggedIn
-    ? subscription?.plan === "free"
-      ? "preview"
-      : "full"
-    : "preview";
 
   return (
     <>
@@ -67,7 +57,7 @@ export default function HomePage() {
           <Generator
             mode={mode}
             showPreviewOverlay={mode === "preview"}
-            showRecentVideos={!isLoggedIn}
+            showRecentVideos={isLoggedIn}
             showSubscriptionInfo={true}
           />
         </div>

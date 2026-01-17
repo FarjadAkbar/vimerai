@@ -11,8 +11,8 @@ export const useSignup = () => {
   return useMutation({
     mutationFn: (data: SignupInput) => authApi.signup(data),
     onSuccess: (response: AuthResponse) => {
-      // Store token and user
-      apiClient.setToken(response.token);
+      // Store token and user (default to rememberMe: true for signup)
+      apiClient.setToken(response.token, true);
       localStorage.setItem('user', JSON.stringify(response.user));
       queryClient.setQueryData(['user'], { user: response.user });
       // Redirect to generator as per Phase 1 requirements
@@ -27,10 +27,20 @@ export const useLogin = () => {
 
   return useMutation({
     mutationFn: (data: LoginInput) => authApi.login(data),
-    onSuccess: (response: AuthResponse) => {
-      // Store token and user
-      apiClient.setToken(response.token);
-      localStorage.setItem('user', JSON.stringify(response.user));
+    onSuccess: (response: AuthResponse, variables: LoginInput) => {
+      // Store token and user based on rememberMe preference
+      const rememberMe = variables.rememberMe ?? false;
+      apiClient.setToken(response.token, rememberMe);
+      
+      // Store user in appropriate storage
+      if (rememberMe) {
+        localStorage.setItem('user', JSON.stringify(response.user));
+      } else {
+        sessionStorage.setItem('user', JSON.stringify(response.user));
+        // Clear any existing localStorage user
+        localStorage.removeItem('user');
+      }
+      
       queryClient.setQueryData(['user'], { user: response.user });
       // Redirect to generator as per Phase 1 requirements
       router.push('/');
@@ -62,9 +72,11 @@ export const useLogout = () => {
   const router = useRouter();
 
   const logout = () => {
-    // Clear localStorage first
+    // Clear both localStorage and sessionStorage
     localStorage.removeItem('token');
     localStorage.removeItem('user');
+    sessionStorage.removeItem('token');
+    sessionStorage.removeItem('user');
     
     // Cancel any ongoing queries to prevent refetches
     queryClient.cancelQueries();

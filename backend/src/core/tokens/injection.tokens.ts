@@ -1,6 +1,7 @@
 export const USER_REPOSITORY_TOKEN = Symbol('IUserRepository');
 export const PASSWORD_HASHER_TOKEN = Symbol('IPasswordHasher');
 export const TOKEN_SERVICE_TOKEN = Symbol('ITokenService');
+export const EMAIL_SERVICE_TOKEN = Symbol('IEmailService');
 export const VIDEO_REPOSITORY_TOKEN = 'IVideoRepository';
 export const PROMPT_TEMPLATE_REPOSITORY_TOKEN = 'IPromptTemplateRepository';
 export const SUBSCRIPTION_REPOSITORY_TOKEN = 'ISubscriptionRepository';

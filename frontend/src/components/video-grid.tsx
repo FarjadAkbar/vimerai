@@ -78,11 +78,15 @@ export function VideoGrid({
   }
 
   const videos = videosData?.videos || []
+  // Filter out videos that are still generating (pending or processing)
+  const completedVideos = videos.filter(
+    (video) => video.status === "completed" || video.status === "failed"
+  )
   const filteredVideos = searchQuery
-    ? videos.filter((video) =>
+    ? completedVideos.filter((video) =>
         video.prompt.toLowerCase().includes(searchQuery.toLowerCase())
       )
-    : videos
+    : completedVideos
 
   const gridColsClass = gridCols === "2" ? "md:grid-cols-2" : "md:grid-cols-2 lg:grid-cols-3"
 

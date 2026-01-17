@@ -49,19 +49,30 @@ class ApiClient {
 
   private getToken(): string | null {
     if (typeof window === 'undefined') return null;
-    return localStorage.getItem('token');
+    // Check localStorage first (remember me), then sessionStorage
+    return localStorage.getItem('token') || sessionStorage.getItem('token');
   }
 
   private clearToken(): void {
     if (typeof window !== 'undefined') {
       localStorage.removeItem('token');
       localStorage.removeItem('user');
+      sessionStorage.removeItem('token');
+      sessionStorage.removeItem('user');
     }
   }
 
-  setToken(token: string): void {
+  setToken(token: string, rememberMe: boolean = false): void {
     if (typeof window !== 'undefined') {
-      localStorage.setItem('token', token);
+      if (rememberMe) {
+        // Store in localStorage for persistent sessions
+        localStorage.setItem('token', token);
+      } else {
+        // Store in sessionStorage for temporary sessions
+        sessionStorage.setItem('token', token);
+        // Clear any existing localStorage token
+        localStorage.removeItem('token');
+      }
     }
   }
 

@@ -109,6 +109,7 @@ export default function LoginPage() {
   )}
 />
 
+            <div className="flex items-center justify-between gap-4">
               {/* Remember Me Checkbox */}
               <FormField
                 control={form.control}
@@ -129,7 +130,6 @@ export default function LoginPage() {
                 )}
               />
 
-            <div className="flex items-center justify-between">
               <Link
                 href="/password-reset"
                 className="text-sm text-primary hover:underline"

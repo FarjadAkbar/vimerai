@@ -4,11 +4,7 @@ import { Button } from "@/components/ui/button"
 import { X } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
-
-interface SmartPreviewModalProps {
-  previewUrl: string
-  onClose: () => void
-}
+import type { SmartPreviewModalProps } from "@/types/components.types"
 
 export function SmartPreviewModal({
   previewUrl,
@@ -34,11 +30,11 @@ export function SmartPreviewModal({
   }, [redirectCountdown, router]);
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4">
-      <div className="max-w-4xl w-full bg-background rounded-xl border border-border p-6 space-y-4">
+    <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4 overflow-y-auto">
+      <div className="max-w-2xl w-full bg-background rounded-xl border border-border p-4 sm:p-6 space-y-4 my-auto max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-2xl font-bold">Smart Preview</h2>
+            <h2 className="text-xl sm:text-2xl font-bold">Smart Preview</h2>
             {redirectCountdown !== null && redirectCountdown > 0 && (
               <p className="text-sm text-muted-foreground mt-1">
                 Closing in {redirectCountdown} second
@@ -51,7 +47,7 @@ export function SmartPreviewModal({
           </Button>
         </div>
 
-        <div className="aspect-video bg-black rounded-lg overflow-hidden">
+        <div className="aspect-video bg-black rounded-lg overflow-hidden max-w-md mx-auto">
           <video
             src={previewUrl}
             autoPlay

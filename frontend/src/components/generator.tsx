@@ -1,26 +1,17 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
 import { toast } from "react-toastify";
-import { Wand2, Clock, AlertCircle, Zap, CheckCircle } from "lucide-react";
+import { Clock } from "lucide-react";
 import {
   generateVideoSchema,
   type GenerateVideoInput,
 } from "@/lib/auth/schema";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { Textarea } from "@/components/ui/textarea";
 import { useUser } from "@/lib/hooks/use-user";
 import {
   useGenerateVideo,
@@ -30,24 +21,12 @@ import { useVideos } from "@/lib/hooks/use-videos";
 import { useCurrentSubscription } from "@/lib/hooks/use-subscription";
 import { VideoGrid } from "@/components/video-grid";
 import { useQueryClient } from "@tanstack/react-query";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import { WordRotate } from "@/components/ui/word-rotate";
 import { SmartPreviewModal } from "@/components/smart-preview-modal";
-import { Spinner } from "./ui/spinner";
-
-interface GeneratorProps {
-  mode?: "preview" | "full";
-  showPreviewOverlay?: boolean;
-  header?: React.ReactNode;
-  showSubscriptionInfo?: boolean;
-  showRecentVideos?: boolean;
-  onSuccess?: (jobId: string) => void;
-  className?: string;
-}
+import { SubscriptionInfo } from "@/components/subscription-info";
+import { BlockedStateAlert } from "@/components/blocked-state-alert";
+import { GeneratorForm } from "@/components/generator-form";
+import type { GeneratorProps } from "@/types/components.types";
 
 export function Generator({
   mode = "preview",
@@ -60,34 +39,32 @@ export function Generator({
 }: GeneratorProps) {
   const router = useRouter();
   const queryClient = useQueryClient();
-  const { data: userData, isLoading: userLoading } = useUser();
+  const { data: userData } = useUser();
+  const isLoggedIn = !!userData?.user;
   const { data: subscription, isLoading: subscriptionLoading } =
-    useCurrentSubscription(!!userData?.user); // Only call API when user is logged in
-  const isPageLoading = userLoading;
+    useCurrentSubscription(isLoggedIn);
   const { data: videosData } = useVideos(
     showRecentVideos ? 10 : 1,
     0,
-    !!userData?.user // Only call videos API when user is logged in
+    isLoggedIn
   );
   const generateVideo = useGenerateVideo();
-  const [showPreviewOverlayState, setShowPreviewOverlayState] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [jobId, setJobId] = useState<string | null>(null);
-  const [lastShownPreviewUrl, setLastShownPreviewUrl] = useState<string | null>(
-    null
-  );
 
   // Check if user has already used preview (only for preview mode)
-  const hasUsedPreview =
-    (mode === "preview" &&
-      userData?.user &&
-      videosData?.videos?.some((v) => v.previewUrl !== null)) ||
-    false;
+  const hasUsedPreview = useMemo(
+    () =>
+      mode === "preview" &&
+      isLoggedIn &&
+      videosData?.videos?.some((v) => v.previewUrl !== null) === true,
+    [mode, isLoggedIn, videosData?.videos]
+  );
 
   // Poll for status if there's a jobId
   const { data: statusData } = useGenerationStatus(
     jobId,
-    !!jobId && !!userData?.user
+    !!jobId && isLoggedIn
   );
 
   const form = useForm<GenerateVideoInput>({
@@ -100,12 +77,8 @@ export function Generator({
 
   const onSubmit = useCallback(
     async (data: GenerateVideoInput) => {
-      // setTimeout(()=>{
-
-      // },1000)
-
       // If user is not authenticated and preview mode, redirect to signup
-      if (!userData?.user && mode === "preview") {
+      if (!isLoggedIn && mode === "preview") {
         sessionStorage.setItem("pendingPrompt", data.prompt);
         router.push("/signup");
         return;
@@ -182,504 +155,239 @@ export function Generator({
         );
       }
     },
-    [userData, hasUsedPreview, generateVideo, router, form, mode, onSuccess]
+    [isLoggedIn, hasUsedPreview, generateVideo, router, form, mode, onSuccess]
   );
 
   const handlePreviewClose = useCallback(() => {
-    setShowPreviewOverlayState(false);
     setPreviewUrl(null);
   }, []);
 
-  // Restore jobId from most recent processing video if page was refreshed
-  useEffect(() => {
-    if (userData?.user && videosData?.videos) {
-      const processingVideo = videosData.videos.find(
-        (v) => v.status === "pending" || v.status === "processing"
-      );
-      if (processingVideo) {
-        if (jobId !== processingVideo.jobId) {
-          setTimeout(() => {
-            setJobId(processingVideo.jobId);
-          }, 0);
-        }
-      } else if (jobId) {
-        const currentVideo = videosData.videos.find((v) => v.jobId === jobId);
-        if (
-          currentVideo &&
-          (currentVideo.status === "completed" ||
-            currentVideo.status === "failed")
-        ) {
-          setTimeout(() => {
-            setJobId(null);
-          }, 0);
-        }
-      }
-    }
-  }, [userData, videosData, jobId]);
 
   // Restore pending prompt after signup/login and auto-submit (preview mode only)
   useEffect(() => {
     if (mode === "preview") {
       const pendingPrompt = sessionStorage.getItem("pendingPrompt");
-      if (pendingPrompt && userData?.user) {
+      if (pendingPrompt && isLoggedIn) {
         form.setValue("prompt", pendingPrompt);
         sessionStorage.removeItem("pendingPrompt");
 
         const submitTimer = setTimeout(() => {
-          const formData = form.getValues();
-
-          onSubmit(formData);
+          onSubmit(form.getValues());
         }, 100);
 
         return () => clearTimeout(submitTimer);
       }
     }
-  }, [userData, form, mode, onSubmit]);
+  }, [isLoggedIn, form, mode, onSubmit]);
 
-  // Show preview overlay when preview is completed
+  // Handle completion/failure: refresh data, show toast, show preview/video
   useEffect(() => {
-    if (!jobId) return;
+    if (!jobId || !statusData?.status) return;
 
-    // Only check for preview overlay if showPreviewOverlay is true or mode is preview
-    if (!showPreviewOverlay && mode !== "preview") return;
+    const isCompleted = statusData.status === "completed";
+    const isFailed = statusData.status === "failed";
 
-    // Check statusData first (from polling) - this is the primary source
-    const statusIsCompleted = statusData?.status === "completed";
-    const previewUrlFromStatus = statusData?.previewUrl || null;
-    const videoUrlFromStatus = statusData?.videoUrl || null;
-
-    // Also check videosData for preview (only if user is logged in and data is available)
-    let previewUrlFromVideo = null;
-    let videoIsCompleted = false;
-    let hasVideoUrl = false;
-
-    if (userData?.user && videosData?.videos) {
-      const previewVideo = videosData.videos.find(
-        (v) => v.jobId === jobId && v.previewUrl !== null
-      );
-      if (previewVideo) {
-        previewUrlFromVideo = previewVideo.previewUrl;
-        videoIsCompleted = previewVideo.status === "completed";
-        hasVideoUrl =
-          previewVideo.videoUrl !== null && previewVideo.videoUrl !== undefined;
-      }
-    }
-
-    // Use whichever preview URL is available (prefer statusData as it's more up-to-date)
-    const availablePreviewUrl = previewUrlFromStatus || previewUrlFromVideo;
-
-    // Debug logging (remove in production)
-    if (statusIsCompleted || videoIsCompleted) {
-      console.log("[Preview Overlay Debug]", {
-        jobId,
-        showPreviewOverlay,
-        mode,
-        statusIsCompleted,
-        videoIsCompleted,
-        previewUrlFromStatus,
-        previewUrlFromVideo,
-        availablePreviewUrl,
-        videoUrlFromStatus,
-        hasVideoUrl,
-        lastShownPreviewUrl,
-      });
-    }
-
-    // Only show preview overlay if:
-    // 1. We have a previewUrl
-    // 2. Status is completed (from either source)
-    // 3. We haven't shown this preview before
-    // 4. There's no videoUrl (this is a preview, not a full video)
-    const shouldShowPreview =
-      availablePreviewUrl &&
-      availablePreviewUrl !== lastShownPreviewUrl &&
-      (statusIsCompleted || videoIsCompleted) &&
-      !videoUrlFromStatus && // No videoUrl in status means it's a preview
-      !hasVideoUrl; // No videoUrl in video means it's a preview
-
-    console.log("[Preview Overlay] shouldShowPreview:", shouldShowPreview, {
-      hasUrl: !!availablePreviewUrl,
-      notShown: availablePreviewUrl !== lastShownPreviewUrl,
-      completed: statusIsCompleted || videoIsCompleted,
-      noVideoUrl: !videoUrlFromStatus && !hasVideoUrl,
-    });
-
-    if (shouldShowPreview) {
-      console.log(
-        "[Preview Overlay] Showing preview with URL:",
-        availablePreviewUrl
-      );
-
-      // When preview completes, refetch videos to get the latest data (only if logged in)
-      if (userData?.user) {
-        queryClient.invalidateQueries({ queryKey: ["videos"] });
+    if (isCompleted) {
+      // Show success toast
+      if (mode === "preview") {
+        toast.success("Preview generated successfully!");
+      } else {
+        toast.success("Video generated successfully!");
       }
 
-      // Show the preview overlay (wrapped in setTimeout to avoid linter warning)
-      setTimeout(() => {
-        setPreviewUrl(availablePreviewUrl);
-        setShowPreviewOverlayState(true);
-        setLastShownPreviewUrl(availablePreviewUrl);
-      }, 0);
+      // For preview mode, wait for completion then refresh and show
+      if (mode === "preview") {
+        const previewUrlFromStatus = statusData?.previewUrl || null;
+        const videoUrlFromStatus = statusData?.videoUrl || null;
+
+        // Only show preview if there's a previewUrl and no videoUrl, and we haven't shown this preview yet
+        if (previewUrlFromStatus && !videoUrlFromStatus && previewUrlFromStatus !== previewUrl) {
+          // First, refresh all data and wait for it to complete
+          const refreshData = async () => {
+            if (isLoggedIn) {
+              await Promise.all([
+                queryClient.refetchQueries({ queryKey: ["videos"] }),
+                queryClient.refetchQueries({ queryKey: ["subscription", "current"] }),
+              ]);
+            }
+            
+            // After data refresh, show preview
+            setPreviewUrl(previewUrlFromStatus);
+          };
+
+          refreshData();
+        }
+      }
+      // For full mode, refresh data
+      else if (mode === "full") {
+        if (isLoggedIn) {
+          queryClient.refetchQueries({ queryKey: ["videos"] });
+          queryClient.refetchQueries({ queryKey: ["subscription", "current"] });
+          queryClient.refetchQueries({ queryKey: ["generation-status", jobId] });
+        }
+      }
+    } else if (isFailed) {
+      // Show error toast
+      toast.error("Video generation failed. Please try again.");
+      
+      // Auto-hide preview overlay if generation failed (preview mode only)
+      if (previewUrl && mode === "preview") {
+        const hideTimer = setTimeout(() => {
+          handlePreviewClose();
+          router.push("/pricing");
+        }, 2000);
+        return () => clearTimeout(hideTimer);
+      }
     }
   }, [
-    showPreviewOverlay,
-    mode,
+    jobId,
     statusData?.status,
     statusData?.previewUrl,
     statusData?.videoUrl,
-    videosData?.videos,
-    jobId,
-    lastShownPreviewUrl,
-    userData?.user,
-    queryClient,
-  ]);
-
-  // Auto-hide preview overlay if generation failed
-  useEffect(() => {
-    if (
-      showPreviewOverlayState &&
-      (showPreviewOverlay || mode === "preview") &&
-      (statusData?.status === "failed" ||
-        videosData?.videos?.some(
-          (v) => v.jobId === jobId && v.status === "failed"
-        ))
-    ) {
-      // Hide after 2 seconds on failure
-      const hideTimer = setTimeout(() => {
-        setTimeout(() => {
-          router.push("/pricing");
-        }, 200);
-      }, 2000);
-
-      return () => clearTimeout(hideTimer);
-    }
-  }, [
-    showPreviewOverlayState,
-    showPreviewOverlay,
     mode,
-    statusData?.status,
-    videosData?.videos,
-    jobId,
+    isLoggedIn,
+    queryClient,
+    previewUrl,
+    handlePreviewClose,
     router,
   ]);
 
   const isGenerating =
     generateVideo.isPending ||
-    (jobId &&
+    (!!jobId &&
       statusData?.status !== "completed" &&
       statusData?.status !== "failed");
+  // Reset form after successful generation and data refresh
   useEffect(() => {
     if (statusData?.status === "completed") {
-        queryClient.invalidateQueries({queryKey: ['subscription', 'current']});
-
-      setTimeout(() => {
+      // Wait a bit for data refresh to complete before resetting form
+      const resetTimer = setTimeout(() => {
         form.reset({
           prompt: "",
           mode: "fast",
         });
-      }, 1000);
+        // Clear jobId after form reset to allow new generation
+        setJobId(null);
+      }, 1500); // Wait 1.5 seconds to ensure data is refreshed
+      return () => clearTimeout(resetTimer);
     }
-  },[statusData?.status]
-);
+  }, [statusData?.status, form]);
 
-  const processingVideo = videosData?.videos?.find(
-    (v) =>
-      v.jobId === jobId && (v.status === "pending" || v.status === "processing")
-  );
-
-  const isPreviewGeneration =
-    mode === "preview" &&
-    (processingVideo?.previewUrl !== null ||
-      statusData?.previewUrl !== undefined);
+  const isPreviewGeneration = mode === "preview";
 
   // For full mode, check subscription limits
-  const canGenerate =
-    mode === "preview"
-      ? !hasUsedPreview
-      : subscriptionLoading
-      ? true
-      : subscription
-      ? subscription.videosRemaining > 0
-      : false;
-
-  const hasReachedLimit =
-    mode === "full" &&
-    !subscriptionLoading &&
-    subscription &&
-    subscription.videosRemaining === 0;
-
-  // Get tooltip message when generation is disabled
-  const getDisabledTooltipMessage = () => {
-    if (isGenerating) {
-      return "Generation in progress...";
-    }
+  const canGenerate = useMemo(() => {
     if (mode === "preview") {
-      if (hasUsedPreview) {
-        return "You've already used your preview. Subscribe to generate more videos.";
-      }
-      if (!userData?.user) {
-        return "Please sign up to generate a preview video.";
+      return !hasUsedPreview;
+    }
+    // Full mode
+    if (subscriptionLoading) return true; // Allow while loading
+    return subscription ? subscription.videosRemaining > 0 : false;
+  }, [mode, hasUsedPreview, subscriptionLoading, subscription]);
+
+  const hasReachedLimit = useMemo(
+    () =>
+      mode === "full" &&
+      !subscriptionLoading &&
+      subscription?.videosRemaining === 0,
+    [mode, subscriptionLoading, subscription?.videosRemaining]
+  );
+
+  // Get blocked state message and CTA
+  const getBlockedStateInfo = useMemo(() => {
+    if (canGenerate) return null;
+
+    if (mode === "preview") {
+      if (hasUsedPreview && !previewUrl) {
+        return {
+          message: "You've already used your smart preview. Subscribe to generate more videos.",
+          cta: { text: "Upgrade Plan", href: "/pricing" },
+          variant: "default" as const,
+        };
       }
     } else {
-      // Full mode
-      if (!userData?.user) {
-        return "Please sign up to generate videos.";
-      }
-      if (subscriptionLoading) {
-        return "Loading subscription information...";
-      }
-      if (!subscription) {
-        return "Please subscribe to generate videos.";
+      if(subscriptionLoading) return null;
+      if(!subscription) {
+        return {
+          message: "Please subscribe to generate videos. Choose a plan to get started.",
+          cta: { text: "Upgrade Plan", href: "/pricing" },
+          variant: "destructive" as const,
+        };
       }
       if (subscription.videosRemaining === 0) {
-        return "You've reached your video generation limit. Please upgrade your plan.";
+        return {
+          message: "You've reached your video generation limit. Please subscribe to generate more videos.",
+          cta: { text: "Upgrade Plan", href: "/pricing" },
+          variant: "destructive" as const,
+        };
       }
     }
-    return "";
-  };
+    return null;
+  }, [canGenerate, mode, hasUsedPreview, previewUrl, subscriptionLoading, subscription]);
 
-  const disabledTooltipMessage = getDisabledTooltipMessage();
-  const showTooltip = !canGenerate && disabledTooltipMessage;
-if (isPageLoading) {
-    console.log('initial rnning')
-    return <Spinner />
-
-  }
   return (
     <>
       <div className={className}>
         {header}
 
-        {/* Subscription Info - Simple text only */}
+        {/* Subscription Info */}
         {showSubscriptionInfo &&
           !subscriptionLoading &&
           subscription &&
           subscription.plan !== "free" && (
-            <div className="mb-6 p-3 rounded-lg border border-border bg-card/50">
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-muted-foreground">Plan:</span>
-                <span className="font-medium capitalize">
-                  {subscription.plan === "creator"
-                    ? "AI Creator"
-                    : subscription.plan}
-                </span>
-              </div>
-              <div className="flex items-center justify-between text-sm mt-1">
-                <span className="text-muted-foreground">Videos remaining:</span>
-                
-                <span className="font-medium">
-                  {subscription.videosRemaining}
-                </span>
-              </div>
-            </div>
+            <SubscriptionInfo
+              plan={subscription.plan}
+              videosRemaining={subscription.videosRemaining}
+            />
           )}
           
-        {!canGenerate && (
-          <div className="mb-6 p-4 bg-destructive/10 border border-destructive/20 rounded-lg flex items-center gap-2">
-            <AlertCircle className="w-5 h-5 text-destructive" />
-            <div className="flex-1">
-              <p className="text-sm font-medium text-destructive">
-                You&apos;ve reached your plan limit. Please upgrade to continue.
-              </p>
-            </div>
-            <Link href="/pricing">
-              <Button size="sm" variant="outline">
-                Upgrade
-              </Button>
-            </Link>
-          </div>
+        {/* Blocked State Alert */}
+        {getBlockedStateInfo && (
+          <BlockedStateAlert blockedStateInfo={getBlockedStateInfo} />
         )}
 
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            {form.formState.errors.root && (
-              <div className="flex items-center gap-2 p-3 text-sm text-destructive bg-destructive/10 rounded-md">
-                <AlertCircle className="h-4 w-4" />
-                <span>{form.formState.errors.root.message}</span>
+        {/* Generator Form */}
+        <GeneratorForm
+          form={form}
+          onSubmit={onSubmit}
+          isGenerating={isGenerating}
+          canGenerate={canGenerate}
+          mode={mode}
+          statusData={statusData}
+        />
+
+        {/* Status Display for Processing Videos - Always show while generating */}
+        {isGenerating && (
+          <div className="mt-6 p-4 rounded-xl border border-border bg-card">
+            <div className="flex items-center gap-3">
+              <Clock className="w-5 h-5 animate-spin text-primary" />
+              <div className="flex-1">
+                <p className="font-medium">
+                  {isPreviewGeneration
+                    ? "Preview Generation in Progress"
+                    : "Video Generation in Progress"}
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  <WordRotate
+                    words={[
+                      "Analyzing your prompt...",
+                      "Generating video content...",
+                      "Processing frames...",
+                      "Optimizing quality...",
+                      "Finalizing your video...",
+                    ]}
+                    duration={2000}
+                  />
+                </p>
               </div>
-            )}
-
-            <FormField
-              control={form.control}
-              name="prompt"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Video Description</FormLabel>
-                  <FormControl>
-                    <Textarea
-                      placeholder="E.g., A professional product launch video for a new smartphone showing features like camera, battery life, and design..."
-                      className="min-h-32"
-                      {...field}
-                      disabled={
-                        isGenerating || (mode === "full" && !canGenerate)
-                      }
-                    />
-                  </FormControl>
-                  <FormMessage />
-                  <p className="text-xs text-muted-foreground">
-                    Be as detailed as possible for best results (10-1000
-                    characters)
-                  </p>
-                </FormItem>
+              {!isPreviewGeneration && (
+                <Link href="/my-videos">
+                  <Button size="sm" variant="outline">
+                    View Status
+                  </Button>
+                </Link>
               )}
-            />
-
-            {/* Fast Mode Only - Hidden Cinematic/Avatar as per Phase 1 */}
-            <FormField
-              control={form.control}
-              name="mode"
-              render={() => (
-                <FormItem>
-                  <FormLabel>Generation Mode</FormLabel>
-                  <FormControl>
-                    <div className="p-4 rounded-xl border-2 border-primary bg-primary/5">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-yellow-500/10 rounded-lg flex items-center justify-center">
-                          <Zap className="w-5 h-5 text-yellow-500" />
-                        </div>
-                        <div>
-                          <h3 className="font-semibold">Fast Mode</h3>
-                          <p className="text-xs text-muted-foreground">
-                            Perfect for social media. 2-5 min generation.
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {showTooltip ? (
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <span className="w-full">
-                    <Button
-                      type="submit"
-                      size="lg"
-                      className="w-full bg-primary hover:bg-primary/90 gap-2"
-                      disabled={isGenerating || !canGenerate}
-                    >
-                      {isGenerating ? (
-                        <>
-                          <Clock className="w-5 h-5 animate-spin" />
-                          {mode === "preview"
-                            ? statusData?.status === "processing"
-                              ? "Processing Preview..."
-                              : statusData?.status === "pending"
-                              ? "Generating Preview..."
-                              : "Generating Preview..."
-                            : "Generating..."}
-                        </>
-                      ) : (
-                        <>
-                          <Wand2 className="w-5 h-5" /> Generate Video
-                        </>
-                      )}
-                    </Button>
-                  </span>
-                </TooltipTrigger>
-                <TooltipContent side="top" className="max-w-xs">
-                  <p>{disabledTooltipMessage}</p>
-                </TooltipContent>
-              </Tooltip>
-            ) : (
-              <Button
-                type="submit"
-                size="lg"
-                className="w-full bg-primary hover:bg-primary/90 gap-2"
-                disabled={isGenerating || !canGenerate}
-              >
-                {isGenerating ? (
-                  <>
-                    <Clock className="w-5 h-5 animate-spin" />
-                    {mode === "preview"
-                      ? statusData?.status === "processing"
-                        ? "Processing Preview..."
-                        : statusData?.status === "pending"
-                        ? "Generating Preview..."
-                        : "Generating Preview..."
-                      : "Generating..."}
-                  </>
-                ) : (
-                  <>
-                    <Wand2 className="w-5 h-5" /> Generate Video
-                  </>
-                )}
-              </Button>
-            )}
-          </form>
-        </Form>
-
-        {/* Status Display for Processing Videos */}
-        {jobId &&
-          statusData &&
-          processingVideo &&
-          (statusData.status === "pending" ||
-            statusData.status === "processing") && (
-            <div className="mt-6 p-4 rounded-xl border border-border bg-card">
-              <div className="flex items-center gap-3">
-                <Clock className="w-5 h-5 animate-spin text-primary" />
-                <div className="flex-1">
-                  <p className="font-medium">
-                    {isPreviewGeneration
-                      ? "Preview Generation in Progress"
-                      : "Video Generation in Progress"}
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    <WordRotate
-                      words={[
-                        "Analyzing your prompt...",
-                        "Generating video content...",
-                        "Processing frames...",
-                        "Optimizing quality...",
-                        "Finalizing your video...",
-                      ]}
-                      duration={2000}
-                    />
-                  </p>
-                </div>
-                {!isPreviewGeneration && (
-                  <Link href="/my-videos">
-                    <Button size="sm" variant="outline">
-                      View Status
-                    </Button>
-                  </Link>
-                )}
-              </div>
             </div>
-          )}
-
-        {/* Status Display for Completed Videos (full mode only) */}
-        {mode === "full" && statusData && statusData.status === "completed" && (
-          <div className="mt-6 p-4 bg-primary/5 border border-primary/20 rounded-lg">
-            <div className="flex items-center gap-2 mb-2">
-              <CheckCircle className="w-4 h-4 text-green-500" />
-              <span className="font-medium">Status: {statusData.status}</span>
-            </div>
-            <div className="space-y-2">
-              <p className="text-sm text-foreground font-medium">
-                ✅ Your video is ready!
-              </p>
-              <p className="text-sm text-muted-foreground">
-                You can view and download it from the My Videos page.
-              </p>
-              <Link href="/my-videos">
-                <Button size="sm" variant="outline" className="mt-2">
-                  View My Videos
-                </Button>
-              </Link>
-            </div>
-          </div>
-        )}
-
-        {mode === "full" && statusData && statusData.status === "failed" && (
-          <div className="mt-6 p-4 bg-destructive/10 border border-destructive/20 rounded-lg">
-            <p className="text-sm text-destructive">
-              Video generation failed. Please try again.
-            </p>
           </div>
         )}
 
@@ -691,8 +399,8 @@ if (isPageLoading) {
           </p>
         )}
 
-        {/* Recent Videos (preview mode only) */}
-        {showRecentVideos && userData?.user && (
+        {/* Recent Videos - Show for logged-in users */}
+        {showRecentVideos && isLoggedIn && videosData && videosData.videos && videosData.videos.length > 0 && (
           <div className="mt-16">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-2xl font-bold">Recent Videos</h2>
@@ -701,12 +409,11 @@ if (isPageLoading) {
                   View All →
                 </Button>
               </Link>
-              
             </div>
             <VideoGrid
               limit={3}
               offset={0}
-              enabled={!!userData?.user}
+              enabled={isLoggedIn}
               showSearch={false}
               showActions={false}
               showHeader={false}
@@ -716,7 +423,7 @@ if (isPageLoading) {
         )}
       </div>
       {/* Smart Preview Modal */}
-      {showPreviewOverlayState && previewUrl && (
+      {previewUrl && (
         <SmartPreviewModal
           previewUrl={previewUrl}
           onClose={handlePreviewClose}

@@ -1,19 +1,15 @@
 'use client'
-import { useState, useEffect, useRef } from 'react';
+
 import { useLogout } from '@/lib/hooks/use-auth';
 import { useUser } from '@/lib/hooks/use-user';
-import { LogOut, Settings, Sparkles, Languages } from 'lucide-react';
+import { LogOut, Settings, Sparkles } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from './ui/button';
 
-const Header = () => {
-    const logout = useLogout();
-    const { data: userData } = useUser();
-
-    
-
-
-    // Close language menu when clicking outside
+export default function Header() {
+  const logout = useLogout();
+  const { data: userData } = useUser();
+  const isLoggedIn = !!userData?.user;
 
   return (
       <nav className="sticky top-0 z-50 border-b border-border bg-background/95 backdrop-blur-md">
@@ -25,7 +21,7 @@ const Header = () => {
             <span className="text-xl font-bold">Vimerai</span>
           </Link>
           <div className="flex items-center gap-3">
-            {userData?.user ? (
+            {isLoggedIn ? (
               <>
                 <div className="hidden md:flex items-center gap-2">
                   <Link href="/">
@@ -72,7 +68,6 @@ const Header = () => {
                     </Button>
                   </Link>
                 </div>
-                
                 <Link href="/login">
                   <Button variant="outline" size="sm">
                     Sign In
@@ -88,8 +83,5 @@ const Header = () => {
           </div>
         </div>
       </nav>
-
   );
-};
-
-export default Header
+}

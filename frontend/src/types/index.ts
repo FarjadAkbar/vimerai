@@ -1,3 +1,8 @@
+// Re-export all types from feature-specific files
+export * from "./components.types";
+export * from "./pricing.types";
+export * from "./editor.types";
+
 // User types
 export type User = {
   email: string
@@ -38,13 +43,4 @@ export type AuthState = {
   user: User | null
   isLoading: boolean
   error: string | null
-}
-
-// Video editor state
-export type EditorState = {
-  video: Video | null
-  title: string
-  description: string
-  tags: string[]
-  isSaving: boolean
 }

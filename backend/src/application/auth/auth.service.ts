@@ -22,7 +22,10 @@ import {
   USER_REPOSITORY_TOKEN,
   PASSWORD_HASHER_TOKEN,
   TOKEN_SERVICE_TOKEN,
+  EMAIL_SERVICE_TOKEN,
 } from '@/core/tokens/injection.tokens';
+import type { IEmailService } from '@/core/ports/email.service';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class AuthService implements IAuthService {
@@ -33,6 +36,9 @@ export class AuthService implements IAuthService {
     private readonly passwordHasher: IPasswordHasher,
     @Inject(TOKEN_SERVICE_TOKEN)
     private readonly tokenService: ITokenService,
+    @Inject(EMAIL_SERVICE_TOKEN)
+    private readonly emailService: IEmailService,
+    private readonly configService: ConfigService,
   ) {}
 
   async signup(dto: SignupDto): Promise<AuthResult> {
@@ -49,11 +55,14 @@ export class AuthService implements IAuthService {
     const user = User.create(uuidv4(), dto.email, passwordHash);
     await this.userRepository.createUser(user);
 
-    // Generate token
-    const token = this.tokenService.generateToken({
-      userId: user.id,
-      email: user.email,
-    });
+    // Generate token (signup defaults to rememberMe: true for better UX)
+    const token = this.tokenService.generateToken(
+      {
+        userId: user.id,
+        email: user.email,
+      },
+      true, // Default to rememberMe for signup
+    );
 
     return {
       user: {
@@ -80,11 +89,14 @@ export class AuthService implements IAuthService {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    // Generate token
-    const token = this.tokenService.generateToken({
-      userId: user.id,
-      email: user.email,
-    });
+    // Generate token with rememberMe option
+    const token = this.tokenService.generateToken(
+      {
+        userId: user.id,
+        email: user.email,
+      },
+      dto.rememberMe,
+    );
 
     return {
       user: {
@@ -111,9 +123,14 @@ export class AuthService implements IAuthService {
     const updatedUser = user.updatePasswordResetToken(resetToken, resetExpires);
     await this.userRepository.updateUser(updatedUser);
 
-    // In a real application, you would send an email here with the reset token
-    // For Phase 1, we'll just log it (but per requirements, we shouldn't log user content)
-    // The token should be returned or sent via email in production
+    // Send password reset email
+    const frontendUrl = this.configService.get<string>('server.frontendUrl');
+    const resetUrl = `${frontendUrl}/password-reset?token=${resetToken}`;
+    await this.emailService.sendPasswordResetEmail(
+      user.email,
+      resetToken,
+      resetUrl,
+    );
   }
 
   async resetPassword(dto: PasswordResetDto): Promise<void> {

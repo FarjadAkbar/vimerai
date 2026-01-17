@@ -7,8 +7,13 @@ import * as crypto from 'crypto';
 export class JwtTokenService implements ITokenService {
   constructor(private readonly jwtService: JwtService) {}
 
-  generateToken(payload: { userId: string; email: string }): string {
-    return this.jwtService.sign(payload);
+  generateToken(
+    payload: { userId: string; email: string },
+    rememberMe?: boolean,
+  ): string {
+    // If rememberMe is true, use longer expiration (30 days), otherwise use shorter (7 days)
+    const expiresIn = rememberMe ? '30d' : '7d';
+    return this.jwtService.sign(payload, { expiresIn });
   }
 
   verifyToken(token: string): { userId: string; email: string } | null {

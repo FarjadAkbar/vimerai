@@ -27,10 +27,19 @@ export default function SignupPage() {
   const onSubmit = async (data: SignupInput) => {
     signup.mutate(data, {
       onError: (error: unknown) => {
-        const message =
-          (error as { response?: { data?: { message?: string } } })?.response
-            ?.data?.message || "Signup failed. Please try again."
-        form.setError("root", { message })
+        const errorResponse = error as { response?: { data?: { message?: string }; status?: number } }
+        const message = errorResponse?.response?.data?.message || "Signup failed. Please try again."
+        const status = errorResponse?.response?.status
+        
+        // Check if it's a conflict (user already exists)
+        if (status === 409 || message.toLowerCase().includes("already exists") || message.toLowerCase().includes("user with this email")) {
+          form.setError("root", { 
+            message: "This email already exists. Please sign in or reset your password.",
+            type: "conflict"
+          })
+        } else {
+          form.setError("root", { message })
+        }
       },
     })
   }
@@ -50,9 +59,29 @@ export default function SignupPage() {
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             {form.formState.errors.root && (
-              <div className="flex items-center gap-2 p-3 text-sm text-destructive bg-destructive/10 rounded-md">
-                <AlertCircle className="h-4 w-4" />
-                <span>{form.formState.errors.root.message}</span>
+              <div className="p-4 text-sm bg-destructive/10 border border-destructive/20 rounded-lg space-y-3">
+                <div className="flex items-start gap-2">
+                  <AlertCircle className="h-4 w-4 mt-0.5 text-destructive flex-shrink-0" />
+                  <div className="flex-1">
+                    <p className="text-destructive font-medium">{form.formState.errors.root.message}</p>
+                    {form.formState.errors.root.type === "conflict" && (
+                      <div className="mt-3 space-y-2">
+                        <div className="flex flex-col sm:flex-row gap-2">
+                          <Link href="/login" className="block">
+                            <Button type="button" variant="outline" size="sm" className="w-full sm:w-auto">
+                              Sign In Instead
+                            </Button>
+                          </Link>
+                          <Link href="/password-reset" className="block">
+                            <Button type="button" variant="ghost" size="sm" className="w-full sm:w-auto">
+                              Forgot Password?
+                            </Button>
+                          </Link>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
               </div>
             )}
 

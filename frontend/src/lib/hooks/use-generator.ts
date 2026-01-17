@@ -3,8 +3,6 @@ import { generatorApi } from '@/lib/api/generator.api';
 import type { GenerateVideoRequest } from '@/lib/api/generator.api';
 
 export const useGenerateVideo = () => {
-  const queryClient = useQueryClient();
-  
   return useMutation({
     mutationFn: ({
       data,
@@ -13,10 +11,8 @@ export const useGenerateVideo = () => {
       data: GenerateVideoRequest;
       type?: 'preview' | 'full';
     }) => generatorApi.generateVideo(data, type),
-    onSuccess: () => {
-      // Invalidate videos query so home page and other pages pick up the new video
-      queryClient.invalidateQueries({ queryKey: ['videos'] });
-    },
+    // Don't invalidate queries here - we'll refetch only once when generation completes
+    // This prevents videos from appearing in "My Videos" while still generating
   });
 };
 

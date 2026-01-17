@@ -9,6 +9,7 @@ import { TypeOrmUserRepository } from '@/infrastructure/persistence/typeorm/repo
 import { BcryptPasswordHasher } from '@/infrastructure/auth/bcrypt-password-hasher';
 import { JwtTokenService } from '@/infrastructure/auth/jwt-token-service';
 import { JwtStrategy } from '@/infrastructure/auth/jwt.strategy';
+import { EmailModule } from '@/infrastructure/email/email.module';
 import {
   USER_REPOSITORY_TOKEN,
   PASSWORD_HASHER_TOKEN,
@@ -19,12 +20,13 @@ import {
   imports: [
     DatabaseModule,
     PassportModule,
+    EmailModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => ({
         secret: configService.get<string>('jwt.secret'),
-        signOptions: { expiresIn: '7d' },
+        signOptions: { expiresIn: '7d' }, // Default, can be overridden per token
       }),
     }),
   ],

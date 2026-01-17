@@ -15,6 +15,7 @@ import jwtConfig from './infrastructure/config/jwt.config';
 import stripeConfig from './infrastructure/config/stripe.config';
 import videoGenerationConfig from './infrastructure/config/video-generation.config';
 import storageConfig from './infrastructure/config/storage.config';
+import emailConfig from './infrastructure/config/email.config';
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import storageConfig from './infrastructure/config/storage.config';
         stripeConfig,
         videoGenerationConfig,
         storageConfig,
+        emailConfig,
       ],
     }),
     DatabaseModule,
