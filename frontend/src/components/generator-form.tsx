@@ -2,7 +2,7 @@
 
 import { useForm, UseFormReturn } from "react-hook-form";
 import { Button } from "@/components/ui/button";
-import { Wand2, Clock, AlertCircle, Zap, Lock, ArrowRight } from "lucide-react";
+import { Wand2, Clock, AlertCircle, Zap } from "lucide-react";
 import type { GenerateVideoInput } from "@/lib/auth/schema";
 import {
   Form,
@@ -13,7 +13,6 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Textarea } from "@/components/ui/textarea";
-import Link from "next/link";
 
 interface GeneratorFormProps {
   form: UseFormReturn<GenerateVideoInput>;
@@ -29,6 +28,7 @@ interface GeneratorFormProps {
     cta: { text: string; href: string };
   } | null;
   isLoggedIn: boolean;
+  onBlockedClick?: () => void;
 }
 
 export function GeneratorForm({
@@ -40,6 +40,7 @@ export function GeneratorForm({
   statusData,
   blockedReason,
   isLoggedIn,
+  onBlockedClick,
 }: GeneratorFormProps) {
   return (
     <Form {...form}>
@@ -100,52 +101,35 @@ export function GeneratorForm({
           )}
         />
 
-        {!canGenerate && blockedReason ? (
-          <Link href={blockedReason.cta.href} className="block">
-            <Button
-              type="button"
-              size="lg"
-              className="w-full bg-amber-600 hover:bg-amber-700 gap-2"
-            >
-              <Lock className="w-5 h-5" />
-              {blockedReason.cta.text}
-              <ArrowRight className="w-5 h-5" />
-            </Button>
-          </Link>
-        ) : (
-          <Button
-            type="submit"
-            size="lg"
-            className="w-full bg-primary hover:bg-primary/90 gap-2"
-            disabled={isGenerating || !canGenerate}
-          >
-            {isGenerating ? (
-              <>
-                <Clock className="w-5 h-5 animate-spin" />
-                {mode === "preview"
-                  ? statusData?.status === "processing"
-                    ? "Processing Preview..."
-                    : statusData?.status === "pending"
-                    ? "Generating Preview..."
-                    : "Generating Preview..."
-                  : "Generating..."}
-              </>
-            ) : !canGenerate && !blockedReason ? (
-              <>
-                <Lock className="w-5 h-5" /> Cannot Generate
-              </>
-            ) : (
-              <>
-                <Wand2 className="w-5 h-5" /> Generate Video
-              </>
-            )}
-          </Button>
-        )}
-        {!canGenerate && blockedReason && (
-          <p className="text-sm text-center text-muted-foreground mt-2">
-            {blockedReason.message}
-          </p>
-        )}
+        <Button
+          type="submit"
+          size="lg"
+          className="w-full bg-primary hover:bg-primary/90 gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+          disabled={isGenerating || !canGenerate}
+          onClick={(e) => {
+            if (!canGenerate && blockedReason && onBlockedClick) {
+              e.preventDefault();
+              onBlockedClick();
+            }
+          }}
+        >
+          {isGenerating ? (
+            <>
+              <Clock className="w-5 h-5 animate-spin" />
+              {mode === "preview"
+                ? statusData?.status === "processing"
+                  ? "Processing Preview..."
+                  : statusData?.status === "pending"
+                  ? "Generating Preview..."
+                  : "Generating Preview..."
+                : "Generating..."}
+            </>
+          ) : (
+            <>
+              <Wand2 className="w-5 h-5" /> Generate Video
+            </>
+          )}
+        </Button>
       </form>
     </Form>
   );

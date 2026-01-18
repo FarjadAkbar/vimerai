@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback, useMemo, useRef } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useForm } from "react-hook-form";
@@ -23,7 +23,6 @@ import { useQueryClient } from "@tanstack/react-query";
 import { WordRotate } from "@/components/ui/word-rotate";
 import { SmartPreviewModal } from "@/components/smart-preview-modal";
 import { SubscriptionInfo } from "@/components/subscription-info";
-import { BlockedStateAlert } from "@/components/blocked-state-alert";
 import { GeneratorForm } from "@/components/generator-form";
 import { NotificationModal } from "@/components/notification-modal";
 import type { GeneratorProps, NotificationState } from "@/types/components.types";
@@ -52,11 +51,12 @@ export function Generator({
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [jobId, setJobId] = useState<string | null>(null);
   const [notification, setNotification] = useState<NotificationState | null>(null);
+  const [blockedModal, setBlockedModal] = useState<NotificationState | null>(null);
 
   // Check if user has already used preview (only for preview mode)
   const hasUsedPreview = useMemo(
     () =>
-      mode === "preview" &&
+    mode === "preview" &&
       isLoggedIn &&
       videosData?.videos?.some((v) => v.previewUrl !== null) === true,
     [mode, isLoggedIn, videosData?.videos]
@@ -257,7 +257,7 @@ export function Generator({
           queryClient.refetchQueries({ queryKey: ["generation-status", jobId] });
 
           // Defer state update to avoid cascading renders
-          setTimeout(() => {
+      setTimeout(() => {
             setNotification({
               type: "success",
               title: "Video Generated!",
@@ -270,7 +270,7 @@ export function Generator({
                 },
               },
             });
-          }, 0);
+      }, 0);
         }
       }
     } else if (isFailed) {
@@ -315,7 +315,7 @@ export function Generator({
       }, 1500); // Wait 1.5 seconds to ensure data is refreshed
       return () => clearTimeout(resetTimer);
     }
-  }, [statusData?.status, form.reset]);
+  }, [statusData?.status, form]);
 
   const isPreviewGeneration = mode === "preview";
 
@@ -394,11 +394,6 @@ export function Generator({
             />
           )}
           
-        {/* Blocked State Alert */}
-        {getBlockedStateInfo && (
-          <BlockedStateAlert blockedStateInfo={getBlockedStateInfo} />
-        )}
-
         {/* Generator Form */}
         <GeneratorForm
           form={form}
@@ -416,16 +411,16 @@ export function Generator({
 
         {/* Status Display for Processing Videos - Always show while generating */}
         {isGenerating && (
-          <div className="mt-6 p-4 rounded-xl border border-border bg-card">
-            <div className="flex items-center gap-3">
-              <Clock className="w-5 h-5 animate-spin text-primary" />
-              <div className="flex-1">
-                <p className="font-medium">
-                  {isPreviewGeneration
-                    ? "Preview Generation in Progress"
-                    : "Video Generation in Progress"}
-                </p>
-                <p className="text-sm text-muted-foreground">
+            <div className="mt-6 p-4 rounded-xl border border-border bg-card">
+              <div className="flex items-center gap-3">
+                <Clock className="w-5 h-5 animate-spin text-primary" />
+                <div className="flex-1">
+                  <p className="font-medium">
+                    {isPreviewGeneration
+                      ? "Preview Generation in Progress"
+                      : "Video Generation in Progress"}
+                  </p>
+                  <p className="text-sm text-muted-foreground">
                   <WordRotate
                     words={[
                       "Analyzing your prompt...",
@@ -436,16 +431,16 @@ export function Generator({
                     ]}
                     duration={2000}
                   />
-                </p>
-              </div>
-              {!isPreviewGeneration && (
+                  </p>
+                </div>
+                {!isPreviewGeneration && (
                 <Link href="/my-videos">
-                  <Button size="sm" variant="outline">
-                    View Status
-                  </Button>
-                </Link>
-              )}
-            </div>
+                    <Button size="sm" variant="outline">
+                      View Status
+                    </Button>
+                  </Link>
+                )}
+              </div>
           </div>
         )}
 
@@ -518,6 +513,18 @@ export function Generator({
           message={notification.message}
           action={notification.action}
           autoClose={notification.type === "success" ? 5000 : 0}
+        />
+      )}
+      {/* Blocked State Modal */}
+      {blockedModal && (
+        <NotificationModal
+          open={!!blockedModal}
+          onClose={() => setBlockedModal(null)}
+          type={blockedModal.type}
+          title={blockedModal.title}
+          message={blockedModal.message}
+          action={blockedModal.action}
+          autoClose={0}
         />
       )}
     </>
