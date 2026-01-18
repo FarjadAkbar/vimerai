@@ -406,7 +406,34 @@ export function Generator({
             message: getBlockedStateInfo.message,
             cta: getBlockedStateInfo.cta || { text: "View Pricing", href: "/pricing" }
           } : null}
-          isLoggedIn={isLoggedIn}
+          onBlockedClick={() => {
+            if (getBlockedStateInfo) {
+              // Determine appropriate title based on the blocked reason
+              let title = "Generation Blocked";
+              if (mode === "preview" && hasUsedPreview) {
+                title = "Smart Preview Already Used";
+              } else if (!isLoggedIn) {
+                title = "Sign Up Required";
+              } else if (!subscription || subscription.plan === "free") {
+                title = "Subscription Required";
+              } else if (subscription.videosRemaining === 0) {
+                title = "Generation Limit Reached";
+              }
+
+              setBlockedModal({
+                type: "warning",
+                title: title,
+                message: getBlockedStateInfo.message,
+                action: {
+                  label: getBlockedStateInfo.cta?.text || "Upgrade Plan",
+                  onClick: () => {
+                    setBlockedModal(null);
+                    router.push(getBlockedStateInfo.cta?.href || "/pricing");
+                  },
+                },
+              });
+            }
+          }}
         />
 
         {/* Status Display for Processing Videos - Always show while generating */}

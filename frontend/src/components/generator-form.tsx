@@ -1,6 +1,6 @@
 "use client";
 
-import { useForm, UseFormReturn } from "react-hook-form";
+import { UseFormReturn } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Wand2, Clock, AlertCircle, Zap } from "lucide-react";
 import type { GenerateVideoInput } from "@/lib/auth/schema";
@@ -27,7 +27,6 @@ interface GeneratorFormProps {
     message: string;
     cta: { text: string; href: string };
   } | null;
-  isLoggedIn: boolean;
   onBlockedClick?: () => void;
 }
 
@@ -39,12 +38,20 @@ export function GeneratorForm({
   mode,
   statusData,
   blockedReason,
-  isLoggedIn,
   onBlockedClick,
 }: GeneratorFormProps) {
+  const handleFormSubmit = (data: GenerateVideoInput) => {
+    // Prevent form submission if blocked
+    if (!canGenerate && blockedReason && onBlockedClick) {
+      onBlockedClick();
+      return;
+    }
+    onSubmit(data);
+  };
+
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+      <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-6">
         {form.formState.errors.root && (
           <div className="flex items-center gap-2 p-3 text-sm text-destructive bg-destructive/10 rounded-md">
             <AlertCircle className="h-4 w-4" />
@@ -104,11 +111,17 @@ export function GeneratorForm({
         <Button
           type="submit"
           size="lg"
-          className="w-full bg-primary hover:bg-primary/90 gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-          disabled={isGenerating || !canGenerate}
+          className={`w-full gap-2 ${
+            !canGenerate && blockedReason
+              ? "bg-primary/50 hover:bg-primary/60 cursor-pointer"
+              : "bg-primary hover:bg-primary/90"
+          } disabled:opacity-50 disabled:cursor-not-allowed`}
+          disabled={isGenerating}
           onClick={(e) => {
+            // If blocked, prevent form submission and show modal
             if (!canGenerate && blockedReason && onBlockedClick) {
               e.preventDefault();
+              e.stopPropagation();
               onBlockedClick();
             }
           }}
