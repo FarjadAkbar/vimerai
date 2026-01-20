@@ -5,6 +5,7 @@ import Header from "@/components/header";
 import { Generator } from "@/components/generator";
 import { Spinner } from "@/components/ui/spinner";
 import { useUser } from "@/lib/hooks/use-user";
+
 import { useCurrentSubscription } from "@/lib/hooks/use-subscription";
 
 export default function HomePage() {
