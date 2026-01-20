@@ -64,7 +64,7 @@ Vimerai is a modern SaaS platform that enables users to generate professional vi
 ### Core Features
 
 - **Text-to-Video Generation**: Transform prompts into videos
-- **Multiple Modes**: Fast (2-5 min), Cinematic (4K-8K), Avatar (coming soon)
+- **Modes**: Fast (2-5 min)
 - **Real-time Status**: Polling for generation progress
 - **Video Library**: Manage all generated videos
 - **Subscription Plans**: Starter, Creator, and Pro tiers
@@ -127,6 +127,13 @@ vimerai/
 ```
 
 ## 🚀 Quick Start
+
+
+Before starting the project, install all required dependencies by running:
+```bash
+npm install
+```
+
 
 ### Prerequisites
 
@@ -286,14 +293,12 @@ vercel deploy
 ### Phase 2 (Planned)
 
 - [ ] Payment integration
-- [ ] Cinematic mode
 - [ ] Advanced video editor
 - [ ] Prompt templates
 - [ ] Video analytics
 
 ### Phase 3 (Future)
 
-- [ ] Avatar mode
 - [ ] Collaboration features
 - [ ] API access
 - [ ] Mobile apps
