@@ -5,6 +5,11 @@
   <p>Transform text prompts into stunning videos with AI</p>
   
   ![Login Page](frontend/public/platform/login.png)
+  ![Generate Page](frontend/public/platform/screencapture-localhost-3000-2026-01-20-15_27_38.png)
+  ![Smart Preview](frontend/public/platform/smart_preview.png)
+  ![Pricing](frontend/public/platform/pricing.png)
+  ![Limit reach](frontend/public/platform/limit_error.png)
+  ![My videos](frontend/public/platform/my_videos.png)
 </div>
 
 ## 📋 Table of Contents
