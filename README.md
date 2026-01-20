@@ -4,7 +4,7 @@
   <h1>AI-Powered Video Generation Platform</h1>
   <p>Transform text prompts into stunning videos with AI</p>
   
-  ![Landing Page](frontend/public/platform/landing-page.png)
+  ![Landing Page](frontend/public/platform/login.png)
 </div>
 
 ## 📋 Table of Contents
