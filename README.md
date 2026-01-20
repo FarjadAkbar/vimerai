@@ -3,45 +3,45 @@
 <div align="center">
   <h1>AI-Powered Video Generation Platform</h1>
   <p>Transform text prompts into stunning videos with AI</p>
-### 🔐 Login Page
+🔐 Login Page
 This screen allows users to securely sign in to their account before accessing the platform.
 
 ![Login Page](frontend/public/platform/login.png)
 
 ---
 
-### 🎬 Generate Video Page
+🎬 Generate Video Page
 Users can create short AI-powered videos by entering a text prompt and selecting options.
 
-![Generate Page](platform/screencapture-localhost-3000-2026-01-20-15_27_38.png)
+![Generate Page](frontend/public/platform/screencapture-localhost-3000-2026-01-20-15_27_38.png)
 
 ---
 
-### 👁️ Smart Preview
+👁️ Smart Preview
 A smart preview modal shows a quick preview of the generated video and confirms processing.
 
-![Smart Preview](platform/smart_preview.png)
+![Smart Preview](frontend/public/platform/smart_preview.png)
 
 ---
 
-### 💳 Pricing Plans
+💳 Pricing Plans
 This section displays transparent pricing plans so users can choose what fits their needs.
 
-![Pricing](platform/pricing.png)
+![Pricing](frontend/public/platform/pricing.png)
 
 ---
 
-### ⚠️ Usage Limit Reached
+⚠️ Usage Limit Reached
 This screen informs users when they have reached their usage limit and need to upgrade.
 
 ![Limit Reach](platform/limit_error.png)
 
 ---
 
-### 📁 My Videos
+📁 My Videos
 All generated videos are listed here, allowing users to view, manage, and download them.
 
-![My Videos](platform/my_videos.png)
+![My Videos](frontend/public/platform/my_videos.png)
 
 </div>
 
