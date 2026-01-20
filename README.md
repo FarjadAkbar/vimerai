@@ -5,7 +5,7 @@
   <p>Transform text prompts into stunning videos with AI</p>
 <br />
 <img src="frontend/public/platform/screencapture-localhost-3000-2026-01-20-15_27_38.png" />
-
+</div>
 
 
 ## 📁 Project Structure
