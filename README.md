@@ -6,7 +6,7 @@
 ### 🔐 Login Page
 This screen allows users to securely sign in to their account before accessing the platform.
 
-![Login Page](platform/login.png)
+![Login Page](frontend/public/platform/login.png)
 
 ---
 
