@@ -279,30 +279,6 @@ vercel deploy
 3. Build: `pnpm build`
 4. Start: `pnpm start:prod`
 
-## 📊 Features by Phase
-
-### Phase 1 (Current) ✅
-
-- [x] User authentication
-- [x] Video generation (Fast mode)
-- [x] Video library
-- [x] Subscription management
-- [x] Real-time status polling
-- [x] Video download
-
-### Phase 2 (Planned)
-
-- [ ] Payment integration
-- [ ] Advanced video editor
-- [ ] Prompt templates
-- [ ] Video analytics
-
-### Phase 3 (Future)
-
-- [ ] Collaboration features
-- [ ] API access
-- [ ] Mobile apps
-- [ ] Advanced analytics
 
 ## 🔧 Configuration
 
