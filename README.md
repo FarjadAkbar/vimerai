@@ -3,9 +3,9 @@
 <div align="center">
   <h1>AI-Powered Video Generation Platform</h1>
   <p>Transform text prompts into stunning videos with AI</p>
-🔐 Login Page
+<h3>🔐 Login Page</h3>
 This screen allows users to securely sign in to their account before accessing the platform.
-
+<br>
 ![Login Page](frontend/public/platform/login.png)
 
 ---
