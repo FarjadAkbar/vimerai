@@ -541,20 +541,3 @@ curl -X POST http://localhost:3001/generator/generate \
 curl -X GET http://localhost:3001/generator/status/<jobId> \
   -H "Authorization: Bearer <token>"
 ```
-
-## Changelog
-
-### Version 1.0.0
-- Initial API release
-- Authentication endpoints
-- Video generation endpoints
-- Subscription management
-- User management
-
-## Support
-
-For API support:
-- Email: api@vimerai.com
-- Documentation: https://docs.vimerai.com
-- GitHub Issues: https://github.com/vimerai/api/issues
-

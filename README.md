@@ -3,103 +3,10 @@
 <div align="center">
   <h1>AI-Powered Video Generation Platform</h1>
   <p>Transform text prompts into stunning videos with AI</p>
-<h3>🔐 Login Page</h3>
-<p>This screen allows users to securely sign in to their account before accessing the platform.</p>
-<br />
-<img src="frontend/public/platform/login.png" />
-
-<h3>🎬 Generate Video Page</h3>
-<p>Users can create short AI-powered videos by entering a text prompt and selecting options.</p>
 <br />
 <img src="frontend/public/platform/screencapture-localhost-3000-2026-01-20-15_27_38.png" />
 
-<h3>👁️ Smart Preview</h3>
-<p>A smart preview modal shows a quick preview of the generated video and confirms processing.</p>
-<br />
-<img src="frontend/public/platform/smart_preview.png" />
 
-<h3>💳 Pricing Plans</h3>
-<p>This section displays transparent pricing plans so users can choose what fits their needs.</p>
-<br />
-<img src="frontend/public/platform/pricing.png" />
-
-<h3>⚠️ Usage Limit Reached</h3>
-<p>This screen informs users when they have reached their usage limit and need to upgrade.</p>
-<br />
-<img src="frontend/public/platform/limit_error.png" />
-
-<h3>📁 My Videos</h3>
-<p>All generated videos are listed here, allowing users to view, manage, and download them.</p>
-<br />
-<img src="frontend/public/platform/my_videos.png" />
-</div>
-
-## 📋 Table of Contents
-
-- [Overview](#overview)
-- [Features](#features)
-- [Tech Stack](#tech-stack)
-- [Project Structure](#project-structure)
-- [Quick Start](#quick-start)
-- [Documentation](#documentation)
-- [Architecture](#architecture)
-- [Development](#development)
-- [Deployment](#deployment)
-
-## 🎯 Overview
-
-Vimerai is a modern SaaS platform that enables users to generate professional videos from text descriptions using AI. The platform consists of a Next.js frontend and a NestJS backend, following clean architecture principles.
-
-### Key Highlights
-
-- ⚡ **Fast Generation**: Generate videos in 2-5 minutes
-- 🎨 **Modern UI**: Beautiful, responsive design with dark mode
-- 🔐 **Secure**: JWT authentication with password reset
-- 📊 **Real-time**: Live status updates for video generation
-- 🎬 **Management**: Complete video library with download
-- 💳 **Subscriptions**: Plan-based video generation limits
-
-## ✨ Features
-
-### Core Features
-
-- **Text-to-Video Generation**: Transform prompts into videos
-- **Modes**: Fast (2-5 min)
-- **Real-time Status**: Polling for generation progress
-- **Video Library**: Manage all generated videos
-- **Subscription Plans**: Starter, Creator, and Pro tiers
-- **Preview Generation**: One-time free preview per account
-
-### User Features
-
-- User authentication (signup, login, password reset)
-- Video generation with mode selection
-- Video download and management
-- Subscription management
-- Usage tracking
-- Profile settings
-
-## 🛠 Tech Stack
-
-### Frontend
-
-- **Framework**: Next.js 16 (App Router)
-- **Language**: TypeScript
-- **Styling**: Tailwind CSS 4
-- **UI**: Radix UI + shadcn/ui
-- **State**: TanStack Query (React Query)
-- **Forms**: React Hook Form + Zod
-- **Animations**: Framer Motion
-
-### Backend
-
-- **Framework**: NestJS 11
-- **Language**: TypeScript
-- **Database**: PostgreSQL with TypeORM
-- **Authentication**: JWT (Passport.js)
-- **Validation**: class-validator
-- **Payment**: Stripe integration
-- **Video API**: Sora API integration
 
 ## 📁 Project Structure
 
@@ -127,13 +34,6 @@ vimerai/
 ```
 
 ## 🚀 Quick Start
-
-
-Before starting the project, install all required dependencies by running:
-```bash
-npm install
-```
-
 
 ### Prerequisites
 
@@ -229,12 +129,6 @@ All screenshots are located in `frontend/public/platform/`:
 3. **Database**: Ensure PostgreSQL is running
 4. **Migrations**: Run migrations when schema changes
 
-### Code Style
-
-- **TypeScript**: Strict mode enabled
-- **ESLint**: Configured for both projects
-- **Prettier**: Code formatting
-- **Git Hooks**: Pre-commit hooks (optional)
 
 ### Testing
 
@@ -314,36 +208,3 @@ VIDEO_GENERATION_SORA_API_URL=https://api.sora.com/v1/videos
 # Stripe (optional)
 STRIPE_SECRET_KEY=your_key
 ```
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit changes (`git commit -m 'Add amazing feature'`)
-4. Push to branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-## 📝 License
-
-[Your License Here]
-
-## 🙏 Acknowledgments
-
-- [Next.js](https://nextjs.org/) - React framework
-- [NestJS](https://nestjs.com/) - Node.js framework
-- [shadcn/ui](https://ui.shadcn.com/) - UI components
-- [Sora](https://openai.com/sora) - Video generation API
-
-## 📞 Support
-
-- **Documentation**: See individual README files
-- **Issues**: GitHub Issues
-- **Email**: support@vimerai.com
-
----
-
-<div align="center">
-  <p>Built with ❤️ using Next.js and NestJS</p>
-  <p>© 2024 Vimerai. All rights reserved.</p>
-</div>
-

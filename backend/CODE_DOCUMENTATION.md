@@ -518,9 +518,4 @@ pnpm migration:revert  # Revert last migration
 3. Start the server
 4. Verify health endpoint
 
-## 📚 Additional Resources
-
-- [NestJS Documentation](https://docs.nestjs.com/)
-- [TypeORM Documentation](https://typeorm.io/)
-- [Clean Architecture](https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html)
 
