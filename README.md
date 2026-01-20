@@ -3,13 +3,11 @@
 <div align="center">
   <h1>AI-Powered Video Generation Platform</h1>
   <p>Transform text prompts into stunning videos with AI</p>
-<br />
-<img src="frontend/public/platform/screencapture-localhost-3000-2026-01-20-15_27_38.png" />
+  <br />
+  <img src="frontend/public/platform/screencapture-localhost-3000-2026-01-20-15_27_38.png" alt="Vimerai Platform Screenshot" />
 </div>
 
-
 ## 📁 Project Structure
-
 ```
 vimerai/
 ├── frontend/              # Next.js frontend application
@@ -18,19 +16,19 @@ vimerai/
 │   │   ├── components/   # React components
 │   │   └── lib/          # Utilities and hooks
 │   ├── public/           # Static assets
-│   │   └── platform/    # Platform screenshots
+│   │   └── platform/     # Platform screenshots
 │   └── README.md         # Frontend documentation
 │
 ├── backend/              # NestJS backend API
 │   ├── src/
-│   │   ├── application/ # Business logic
-│   │   ├── domain/      # Domain entities
+│   │   ├── application/  # Business logic
+│   │   ├── domain/       # Domain entities
 │   │   ├── infrastructure/ # External integrations
-│   │   └── core/        # Core abstractions
-│   └── README.md        # Backend documentation
+│   │   └── core/         # Core abstractions
+│   └── README.md         # Backend documentation
 │
 ├── API_DOCUMENTATION.md  # Complete API reference
-└── README.md            # This file
+└── README.md             # This file
 ```
 
 ## 🚀 Quick Start
@@ -129,9 +127,7 @@ All screenshots are located in `frontend/public/platform/`:
 3. **Database**: Ensure PostgreSQL is running
 4. **Migrations**: Run migrations when schema changes
 
-
 ### Testing
-
 ```bash
 # Backend tests
 cd backend
@@ -173,18 +169,15 @@ vercel deploy
 3. Build: `pnpm build`
 4. Start: `pnpm start:prod`
 
-
 ## 🔧 Configuration
 
 ### Frontend Environment Variables
-
 ```env
 NEXT_PUBLIC_API_URL=http://localhost:3001
 NEXT_PUBLIC_APP_URL=http://localhost:3000
 ```
 
 ### Backend Environment Variables
-
 ```env
 # Database
 DB_HOST=localhost
