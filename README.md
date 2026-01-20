@@ -3,25 +3,46 @@
 <div align="center">
   <h1>AI-Powered Video Generation Platform</h1>
   <p>Transform text prompts into stunning videos with AI</p>
+### 🔐 Login Page
+This screen allows users to securely sign in to their account before accessing the platform.
 
-  <h3>🔐 Login Page</h3>
-  <p>This screen allows users to securely sign in to their account before accessing the platform.</p>
-  ![Login Page](frontend/public/platform/login.png)
-  <h3>🎬 Generate Video Page</h3>
-  <p>Users can create short AI-powered videos by entering a text prompt and selecting options.</p>
-  ![Generate Page](frontend/public/platform/screencapture-localhost-3000-2026-01-20-15_27_38.png)
-  <h3>👁️ Smart Preview</h3>
-  <p>A smart preview modal shows a quick preview of the generated video and confirms processing.</p>
-  ![Smart Preview](frontend/public/platform/smart_preview.png)
-  <h3>💳 Pricing Plans</h3>
-  <p>This section displays transparent pricing plans so users can choose what fits their needs.</p>
-  ![Pricing](frontend/public/platform/pricing.png)
-  <h3>⚠️ Usage Limit Reached</h3>
-  <p>This screen informs users when they have reached their usage limit and need to upgrade.</p>
-  ![Limit reach](frontend/public/platform/limit_error.png)
-  <h3>📁 My Videos</h3>
-  <p>All generated videos are listed here, allowing users to view, manage, and download them.</p>
-  ![My videos](frontend/public/platform/my_videos.png)
+![Login Page](platform/login.png)
+
+---
+
+### 🎬 Generate Video Page
+Users can create short AI-powered videos by entering a text prompt and selecting options.
+
+![Generate Page](platform/screencapture-localhost-3000-2026-01-20-15_27_38.png)
+
+---
+
+### 👁️ Smart Preview
+A smart preview modal shows a quick preview of the generated video and confirms processing.
+
+![Smart Preview](platform/smart_preview.png)
+
+---
+
+### 💳 Pricing Plans
+This section displays transparent pricing plans so users can choose what fits their needs.
+
+![Pricing](platform/pricing.png)
+
+---
+
+### ⚠️ Usage Limit Reached
+This screen informs users when they have reached their usage limit and need to upgrade.
+
+![Limit Reach](platform/limit_error.png)
+
+---
+
+### 📁 My Videos
+All generated videos are listed here, allowing users to view, manage, and download them.
+
+![My Videos](platform/my_videos.png)
+
 </div>
 
 ## 📋 Table of Contents
