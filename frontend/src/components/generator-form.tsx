@@ -4,6 +4,7 @@ import { UseFormReturn } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { Wand2, Clock, AlertCircle, Zap } from "lucide-react";
 import type { GenerateVideoInput } from "@/lib/auth/schema";
+import { RainbowButton } from "@/components/ui/rainbow-button";
 import {
   Form,
   FormControl,
@@ -108,8 +109,10 @@ export function GeneratorForm({
           )}
         />
 
-        <Button
-          type="submit"
+        {/* <Button
+          
+        > */}
+          <RainbowButton type="submit"
           size="lg"
           className={`w-full gap-2 ${
             !canGenerate && blockedReason
@@ -124,8 +127,7 @@ export function GeneratorForm({
               e.stopPropagation();
               onBlockedClick();
             }
-          }}
-        >
+          }}>
           {isGenerating ? (
             <>
               <Clock className="w-5 h-5 animate-spin" />
@@ -139,10 +141,11 @@ export function GeneratorForm({
             </>
           ) : (
             <>
-              <Wand2 className="w-5 h-5" /> Generate Video
+              <Wand2 className="w-5 h-5 " /> Generate Video 
             </>
           )}
-        </Button>
+          </RainbowButton>
+        {/* </Button> */}
       </form>
     </Form>
   );
