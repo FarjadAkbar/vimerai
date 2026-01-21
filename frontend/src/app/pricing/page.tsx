@@ -219,7 +219,7 @@ export default function PricingPage() {
           )}
 
           {/* Single Shot Option (Secondary) */}
-          <div className="mt-16 text-center">
+          {/* <div className="mt-16 text-center">
             <div className="max-w-2xl mx-auto p-8 rounded-xl border border-border bg-card">
               <h3 className="text-2xl font-bold mb-2">Single Shot</h3>
               <p className="text-muted-foreground mb-6">
@@ -231,7 +231,7 @@ export default function PricingPage() {
                 </Button>
               </Link>
             </div>
-          </div>
+          </div> */}
         </div>
       </div>
       {/* Notification Modal */}
