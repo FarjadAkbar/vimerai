@@ -27,11 +27,6 @@ const Header = () => {
             {userData?.user ? (
               <>
                 <div className="hidden md:flex items-center gap-2">
-                  <Link href="/">
-                    <Button variant="ghost" size="sm">
-                      Generator
-                    </Button>
-                  </Link>
                   <Link href="/my-videos">
                     <Button variant="ghost" size="sm">
                       My Videos
@@ -60,11 +55,6 @@ const Header = () => {
             ) : (
               <>
                 <div className="hidden md:flex items-center gap-2">
-                  <Link href="/">
-                    <Button variant="ghost" size="sm">
-                      Generator
-                    </Button>
-                  </Link>
                   <Link href="/pricing">
                     <Button variant="ghost" size="sm">
                       Pricing
