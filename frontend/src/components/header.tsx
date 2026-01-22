@@ -21,7 +21,8 @@ const Header = () => {
   const { data: userData } = useUser();
 
   const isLoggedIn = !!userData?.user;
-  const { data: subscription, isLoading: subscriptionLoading } = useCurrentSubscription(isLoggedIn);
+  const { data: subscription, isLoading: subscriptionLoading } =
+    useCurrentSubscription(isLoggedIn);
   // Close language menu when clicking outside
 
   return (
@@ -67,20 +68,33 @@ const Header = () => {
               </Button>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="rounded-full bg-green-400 grascale">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="rounded-full bg-green-400 grascale"
+                  >
                     <Avatar>
-                      <AvatarImage
-                        src="https://github.com/shadcn.png"
-                        alt="shadcn"
-                      />
-                      <AvatarFallback>CN</AvatarFallback>
+                      <AvatarImage alt="shadcn" />
+                      <AvatarFallback>P</AvatarFallback>
                     </Avatar>
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent className="w-52 my-2"  >
+                <DropdownMenuContent className="w-64 my-3 mr-2">
                   <DropdownMenuGroup>
-                    <DropdownMenuItem><span className="font-bold">Current Plan: </span> {subscription?.plan?.charAt(0).toUpperCase() + subscription?.plan?.slice(1)}</DropdownMenuItem>
-                    <DropdownMenuItem><span className="font-bold">Videos Remaining: </span> {subscription?.videosRemaining}</DropdownMenuItem>
+                    <DropdownMenuItem>
+                      <span className="font-bold">Email: </span>{" "}
+                      {userData.user.email}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem>
+                      <span className="font-bold">Current Plan: </span>{" "}
+                      {subscription?.plan &&
+                        subscription.plan.charAt(0).toUpperCase() +
+                          subscription.plan.slice(1)}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem>
+                      <span className="font-bold">Videos Remaining: </span>{" "}
+                      {subscription?.videosRemaining}
+                    </DropdownMenuItem>
                   </DropdownMenuGroup>
                 </DropdownMenuContent>
               </DropdownMenu>
