@@ -61,7 +61,6 @@ export default function HomePage() {
             mode={mode}
             showPreviewOverlay={mode === "preview"}
             showRecentVideos={isLoggedIn}
-            showSubscriptionInfo={true}
           />
         </div>
       </div>
