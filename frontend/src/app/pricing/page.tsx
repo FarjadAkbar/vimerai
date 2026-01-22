@@ -23,6 +23,7 @@ export default function PricingPage() {
   const [loading, setLoading] = useState(true)
   const [activatingPlanId, setActivatingPlanId] = useState<string | null>(null)
   const [notification, setNotification] = useState<NotificationState | null>(null)
+  
 
   useEffect(() => {
     subscriptionApi.getPlans().then((response) => {
@@ -57,6 +58,45 @@ export default function PricingPage() {
       return
     }
 
+    // ✅ Check agar current subscription hai AUR videos remaining hain
+    if (
+      currentSubscription && 
+      currentSubscription.plan !== "free" && 
+      currentSubscription.plan !== planId &&
+      currentSubscription.videosRemaining > 0
+    ) {
+      const currentPlanName = currentSubscription.plan === "creator" 
+        ? "AI Creator" 
+        : currentSubscription.plan.charAt(0).toUpperCase() + currentSubscription.plan.slice(1)
+      
+      setNotification({
+        type: "warning",
+        title: "Active Subscription Found",
+        message: `You still have ${currentSubscription.videosRemaining} video${currentSubscription.videosRemaining > 1 ? 's' : ''} remaining in your ${currentPlanName} plan. Are you sure you want to switch plans? Your remaining videos will be lost.`,
+        action: {
+          label: "Keep Current Plan",
+          onClick: () => {
+            setNotification(null)
+          },
+        },
+        // ✅ Optional: Add secondary action for force switch
+        // secondaryAction: {
+        //   label: "Switch Anyway",
+        //   onClick: () => {
+        //     setNotification(null)
+        //     proceedWithSubscription(planId)
+        //   },
+        // },
+      })
+      return
+    }
+
+    // ✅ Proceed with subscription if no videos remaining or same plan
+    proceedWithSubscription(planId)
+  }
+
+  // ✅ Separate function for actual subscription activation
+  const proceedWithSubscription = (planId: string) => {
     // Map plan ID to subscription plan type
     const planMap: PlanMap = {
       starter: 'starter',
@@ -66,7 +106,7 @@ export default function PricingPage() {
 
     const plan = planMap[planId] as SubscriptionPlan
     if (!plan) return
-
+  
     setActivatingPlanId(planId)
     activateMockSubscription.mutate(plan, {
       onSuccess: (data) => {
@@ -83,6 +123,7 @@ export default function PricingPage() {
             },
           },
         })
+        setActivatingPlanId(null)
       },
       onError: (error: unknown) => {
         const message =
@@ -125,6 +166,10 @@ export default function PricingPage() {
                 <span className="font-medium">Current Plan: </span>
                 <span className="capitalize">
                   {currentSubscription.plan === "creator" ? "AI Creator" : currentSubscription.plan}
+                </span>
+                {/* ✅ Show remaining videos */}
+                <span className="ml-2 text-sm">
+                  ({currentSubscription.videosRemaining} video{currentSubscription.videosRemaining !== 1 ? 's' : ''} remaining)
                 </span>
               </div>
             )}
@@ -194,9 +239,10 @@ export default function PricingPage() {
                         <Button
                           className="w-full"
                           variant="outline"
-                          disabled
+                          onClick={() => handleSubscribe(plan.id)}
+                          disabled={activatingPlanId !== null}
                         >
-                          Information Only
+                          {activatingPlanId === plan.id ? "Switching..." : "Switch Plan"}
                         </Button>
                       )}
                     </div>
@@ -217,21 +263,9 @@ export default function PricingPage() {
               ))}
             </div>
           )}
+          
 
-          {/* Single Shot Option (Secondary) */}
-          {/* <div className="mt-16 text-center">
-            <div className="max-w-2xl mx-auto p-8 rounded-xl border border-border bg-card">
-              <h3 className="text-2xl font-bold mb-2">Single Shot</h3>
-              <p className="text-muted-foreground mb-6">
-                Need just one video? Try our single shot option.
-              </p>
-              <Link href="/signup">
-                <Button variant="outline">
-                  Learn More <ArrowRight className="w-4 h-4 ml-2" />
-                </Button>
-              </Link>
-            </div>
-          </div> */}
+          
         </div>
       </div>
       {/* Notification Modal */}

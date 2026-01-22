@@ -46,7 +46,6 @@ export default function HomePage() {
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
           
           {/* 🧠 Marketing content ONLY for logged out users */}
-          {!isLoggedIn && (
             <div className="mb-8 text-center">
               <h1 className="text-4xl md:text-5xl font-bold mb-4">
                 Create short videos for social media in seconds
@@ -56,7 +55,7 @@ export default function HomePage() {
                 Instagram, TikTok, and YouTube.
               </p>
             </div>
-          )}
+        
 
           <Generator
             mode={mode}
