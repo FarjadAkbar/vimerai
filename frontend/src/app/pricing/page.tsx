@@ -77,7 +77,6 @@ export default function PricingPage() {
           label: "Keep Current Plan",
           onClick: () => {
             setNotification(null)
-            router.push('/')
           },
         },
         // ✅ Optional: Add secondary action for force switch
