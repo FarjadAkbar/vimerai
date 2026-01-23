@@ -74,6 +74,7 @@ export function Generator({
       mode: "fast",
     },
   });
+  const delay = (ms: number) => new Promise(res => setTimeout(res, ms));
 
   const onSubmit = useCallback(
     async (data: GenerateVideoInput) => {
@@ -82,10 +83,9 @@ export function Generator({
       // For preview mode, check if user has already used preview
       if (mode === "preview") {
         if (!hasUsedPreview) {
-          setTimeout(() => {
-              setPreviewUrl("https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4");
-              storage.setUsedPreview(true);
-            }, 3000);
+            await delay(3000);
+            setPreviewUrl("https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4");
+            storage.setUsedPreview(true);
         } else {
           // Preview already used, redirect to pricing
           
