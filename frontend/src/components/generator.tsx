@@ -83,7 +83,7 @@ export function Generator({
       if (mode === "preview") {
         if (!hasUsedPreview) {
           setTimeout(() => {
-              setPreviewUrl("https://video.cm");
+              setPreviewUrl("https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4");
               storage.setUsedPreview(true);
             }, 3000);
         } else {
