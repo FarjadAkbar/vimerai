@@ -1,17 +1,14 @@
 "use client";
 import { useLogout } from "@/lib/hooks/use-auth";
+import { Progress } from "@/components/ui/progress";
 import { useUser } from "@/lib/hooks/use-user";
-import { LogOut, Settings, Sparkles } from "lucide-react";
+import { Crown, LogOut, Mail, Settings, Sparkles, Video } from "lucide-react";
 import Link from "next/link";
-// import { Button } from "./ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuGroup,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useCurrentSubscription } from "@/lib/hooks/use-subscription";
@@ -23,8 +20,12 @@ const Header = () => {
   const isLoggedIn = !!userData?.user;
   const { data: subscription, isLoading: subscriptionLoading } =
     useCurrentSubscription(isLoggedIn);
-  // Close language menu when clicking outside
-
+  const usedVideos = subscription
+    ? subscription.limit - subscription.videosRemaining
+    : 0;
+  const progressValue = subscription
+    ? (usedVideos / subscription.limit) * 100
+    : 0;
   return (
     <nav className="sticky top-0 z-50 border-b border-border bg-background/95 backdrop-blur-md">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
@@ -63,39 +64,80 @@ const Header = () => {
                   <Settings className="w-5 h-5" />
                 </Button>
               </Link>
-              <Button variant="ghost" size="icon" onClick={logout}>
-                <LogOut className="w-5 h-5" />
-              </Button>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="rounded-full bg-green-400 grascale"
+                    className="rounded-full bg-green-400 grayscale"
                   >
                     <Avatar>
                       <AvatarImage alt="shadcn" />
-                      <AvatarFallback>P</AvatarFallback>
+                      <AvatarFallback>
+                        {userData.user.email.charAt(0).toUpperCase()}
+                      </AvatarFallback>
                     </Avatar>
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent className="w-64 my-3 mr-2">
-                  <DropdownMenuGroup>
-                    <DropdownMenuItem>
-                      <span className="font-bold">Email: </span>{" "}
-                      {userData.user.email}
-                    </DropdownMenuItem>
-                    <DropdownMenuItem>
-                      <span className="font-bold">Current Plan: </span>{" "}
-                      {subscription?.plan &&
-                        subscription.plan.charAt(0).toUpperCase() +
-                          subscription.plan.slice(1)}
-                    </DropdownMenuItem>
-                    <DropdownMenuItem>
-                      <span className="font-bold">Videos Remaining: </span>{" "}
-                      {subscription?.videosRemaining}
-                    </DropdownMenuItem>
-                  </DropdownMenuGroup>
+
+                <DropdownMenuContent className="w-80 p-0 mr-20 my-3 rounded-2xl border border-border overflow-hidden">
+                  {/* Email Section */}
+                  <div className="p-4 border-b border-border">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center">
+                        <Mail className="w-5 h-5 text-muted-foreground" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-foreground truncate">
+                          {userData.user.email}
+                        </p>
+                      
+                      <span className="text-sm font-semibold text-yellow-600">
+                        {subscription?.plan &&
+                          subscription.plan.charAt(0).toUpperCase() +
+                            subscription.plan.slice(1)}
+                      </span>
+                        
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Usage Stats */}
+                  <div className="p-4 space-y-2 border-b border-border">
+                    <div className="flex items-center justify-between">
+                      {/* <div className="flex items-center gap-2">
+                        <Video className="w-4 h-4 text-muted-foreground" />
+                        <span className="text-sm text-muted-foreground">
+                          Videos Remaining
+                        </span>
+                      </div> */}
+                    </div>
+                    <div className="flex items-center">
+                    <p className="text-lg font-semibold">
+                      {subscription?.videosRemaining}/{subscription?.limit}
+                    </p>
+                    <span className="text-sm text-muted-foreground mx-4">Videos Remaining</span>
+                    </div>
+                    <Progress
+                      className="bg-gray-400 [&>div]:bg-green-600"
+                      value={progressValue}
+                    />
+                  </div>
+
+                 
+
+                  {/* Menu Actions */}
+                  <div className="p-2">
+                    <button
+                      className="w-full flex items-center gap-3 justify-center px-3 py-2.5 rounded-xl hover:bg-red-800 transition-colors text-left cursor-pointer"
+                      onClick={logout}
+                    >
+                      <LogOut className="w-5 h-5 text-muted-foreground" />
+                      <span className="text-sm font-medium text-foreground">
+                        Log Out
+                      </span>
+                    </button>
+                  </div>
                 </DropdownMenuContent>
               </DropdownMenu>
             </>
