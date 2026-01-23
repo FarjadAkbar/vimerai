@@ -82,7 +82,7 @@ export function Generator({
       // For preview mode, check if user has already used preview
       if (mode === "preview") {
         if (!hasUsedPreview) {
-          setPreviewUrl("https://video.cm");
+          setPreviewUrl("https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4");
           localStorage.setItem('used_preview', 'true');
         } else {
           // Preview already used, redirect to pricing
