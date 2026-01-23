@@ -74,9 +74,14 @@ export default function PricingPage() {
         title: "Active Subscription Found",
         message: `You still have ${currentSubscription.videosRemaining} video${currentSubscription.videosRemaining > 1 ? 's' : ''} remaining in your ${currentPlanName} plan. Are you sure you want to switch plans? Your remaining videos will be lost.`,
         action: {
-          label: "Keep Current Plan",
+          // label: "Keep Current Plan",
+          // onClick: () => {
+          //   setNotification(null)
+          // },
+          label: "Switch Anyway",
           onClick: () => {
             setNotification(null)
+            proceedWithSubscription(planId)
           },
         },
         // ✅ Optional: Add secondary action for force switch
