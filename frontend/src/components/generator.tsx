@@ -57,9 +57,8 @@ export function Generator({
   const hasUsedPreview = useMemo(
     () =>
     mode === "preview" &&
-      isLoggedIn &&
-      videosData?.videos?.some((v) => v.previewUrl !== null) === true,
-    [mode, isLoggedIn, videosData?.videos]
+      localStorage.getItem('used_preview'),
+    [mode]
   );
 
   // Poll for status if there's a jobId
@@ -79,62 +78,15 @@ export function Generator({
   const onSubmit = useCallback(
     async (data: GenerateVideoInput) => {
       // If user is not authenticated and preview mode, redirect to signup
-      if (!isLoggedIn && mode === "preview") {
-        sessionStorage.setItem("pendingPrompt", data.prompt);
-        router.push("/signup");
-        return;
-      }
 
       // For preview mode, check if user has already used preview
       if (mode === "preview") {
         if (!hasUsedPreview) {
-          try {
-            const result = await generateVideo.mutateAsync({
-              data: {
-                prompt: data.prompt,
-                mode: data.mode,
-              },
-              type: "preview",
-            });
-            setJobId(result.jobId);
-            onSuccess?.(result.jobId);
-            
-            
-          } catch (error: unknown) {
-            const errorMessage =
-              (error as { response?: { data?: { message?: string } } })
-                ?.response?.data?.message || "";
-            if (errorMessage.includes("already used")) {
-              setNotification({
-                type: "warning",
-                title: "Preview Already Used",
-                message: "You've already used your smart preview. Subscribe to generate full videos.",
-                action: {
-                  label: "View Pricing",
-                  onClick: () => {
-                    setNotification(null);
-                    router.push("/pricing");
-                  },
-                },
-              });
-            } else {
-              setNotification({
-                type: "error",
-                title: "Preview Generation Failed",
-                message: errorMessage || "Failed to generate preview. Please try again.",
-                action: {
-                  label: "Try Again",
-                  onClick: () => {
-                    setNotification(null);
-                    form.reset();
-                  },
-                },
-              });
-            }
-          }
+          setPreviewUrl("https://video.cm");
+          localStorage.setItem('used_preview', 'true');
         } else {
           // Preview already used, redirect to pricing
-          router.push("/pricing");
+          
         }
       } else {
         // Full video generation mode
@@ -323,7 +275,7 @@ export function Generator({
   const canGenerate = useMemo(() => {
     if (mode === "preview") {
       // Preview mode: can generate if not logged in (will redirect) or if logged in and hasn't used preview
-      return !isLoggedIn || !hasUsedPreview;
+      return !hasUsedPreview;
     }
     // Full mode: must be logged in and have subscription with remaining videos
     if (!isLoggedIn) return false;
@@ -333,23 +285,23 @@ export function Generator({
 
   // Get blocked state message and CTA
   const getBlockedStateInfo = useMemo(() => {
-    if (canGenerate) return null;
+    // if (canGenerate) return null;
 
     if (mode === "preview") {
-      if (!isLoggedIn) {
-        return {
-          message: "Smart preview is available after signup. Full generation requires an active plan.",
-          cta: { text: "Sign Up", href: "/signup" },
-          variant: "default" as const,
-        };
-      }
-      if (hasUsedPreview && !previewUrl) {
+      // if (!isLoggedIn) {
+      //   return {
+      //     message: "Smart preview is available after signup. Full generation requires an active plan.",
+      //     cta: { text: "Sign Up", href: "/signup" },
+      //     variant: "default" as const,
+      //   };
+      // }
+      // if (hasUsedPreview && !previewUrl) {
         return {
           message: "You've already used your smart preview. Subscribe to generate more videos.",
           cta: { text: "Upgrade Plan", href: "/pricing" },
           variant: "default" as const,
         };
-      }
+      // }
     } else {
       // Full mode
       if (!isLoggedIn) {
