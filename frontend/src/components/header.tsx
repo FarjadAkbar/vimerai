@@ -59,11 +59,11 @@ const Header = () => {
                   </Button>
                 </Link>
               </div>
-              <Link href="/settings">
+              {/* <Link href="/settings">
                 <Button variant="ghost" size="icon">
                   <Settings className="w-5 h-5" />
                 </Button>
-              </Link>
+              </Link> */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button
