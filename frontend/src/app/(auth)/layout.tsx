@@ -1,6 +1,3 @@
-import Header from '@/components/header'
-
-
 export default function DashboardLayout({
   children,
 }: {
@@ -8,7 +5,6 @@ export default function DashboardLayout({
 }) {
   return (
     <div className="min-h-screen bg-background">
-      <Header />
       {/* Main Content */}
       <main>{children}</main>
     </div>

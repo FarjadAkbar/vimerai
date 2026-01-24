@@ -4,12 +4,10 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Plus } from "lucide-react"
 import { VideoGrid } from "@/components/video-grid"
-import Header from "@/components/header"
 
 export default function MyVideosPage() {
   return (
     <>
-      <Header />
       <div className="min-h-screen bg-background">
         <div className="w-full">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">

@@ -10,7 +10,6 @@ import { subscriptionApi } from "@/lib/api/subscription.api"
 import { useActivateMockSubscription, useCurrentSubscription } from "@/lib/hooks/use-subscription"
 import { useUser } from "@/lib/hooks/use-user"
 import { NotificationModal } from "@/components/notification-modal"
-import Header from "@/components/header"
 import type { Plan, SubscriptionPlan, PlanMap } from "@/types/pricing.types"
 import type { NotificationState } from "@/types/components.types"
 
@@ -84,14 +83,6 @@ export default function PricingPage() {
             proceedWithSubscription(planId)
           },
         },
-        // ✅ Optional: Add secondary action for force switch
-        // secondaryAction: {
-        //   label: "Switch Anyway",
-        //   onClick: () => {
-        //     setNotification(null)
-        //     proceedWithSubscription(planId)
-        //   },
-        // },
       })
       return
     }
@@ -153,7 +144,6 @@ export default function PricingPage() {
 
   return (
     <>
-      <Header />
       <div className="min-h-screen bg-background">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
           {/* Header */}
@@ -238,7 +228,9 @@ export default function PricingPage() {
                     <div className="w-full">
                       {currentSubscription.plan === plan.id ? (
                         <div className="w-full p-3 bg-primary/10 border border-primary/20 rounded-lg text-center">
+                          <Link href={'/'}>
                           <span className="text-sm font-medium text-primary">Current Plan</span>
+                          </Link>
                         </div>
                       ) : (
                         <Button
