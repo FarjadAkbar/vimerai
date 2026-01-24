@@ -124,22 +124,23 @@ const Header = () => {
                         </span>
                       </div> */}
                     </div>
-                    <div className="flex items-center">
                       {
                           subscription?.plan !== 'free' && (
-                    <p className="text-lg font-semibold">
-                      {subscription?.videosRemaining}/{subscription?.limit}
-                    </p>
+                            <>
+                                <div className="flex items-center">
+                                  <p className="text-lg font-semibold">
+                                    {subscription?.videosRemaining}/{subscription?.limit}
+                                  </p>
+                                  <span className="text-sm text-muted-foreground mx-4">Videos Remaining</span>
+                                </div>
+                                <Progress
+                                  className="bg-gray-400 [&>div]:bg-green-600"
+                                  value={progressValue}
+                                />
+                              </>
                             )
                       }
-                    <span className="text-sm text-muted-foreground mx-4">Videos Remaining</span>
-                    </div>
-                    <Progress
-                      className="bg-gray-400 [&>div]:bg-green-600"
-                      value={progressValue}
-                    />
                   </div>
-
                  
 
                   {/* Menu Actions */}
