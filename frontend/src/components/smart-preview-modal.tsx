@@ -11,23 +11,11 @@ export function SmartPreviewModal({
   onClose,
 }: SmartPreviewModalProps) {
   const router = useRouter()
-  const [redirectCountdown, setRedirectCountdown] = useState<number>(5);
   const handleContinue = () => {
     onClose()
-    setTimeout(() => {
-      router.push("/pricing")
-    }, 5000)
+    router.push("/pricing")
   }
 
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setRedirectCountdown(redirectCountdown - 1);
-      if (redirectCountdown === 0) {
-        router.push("/pricing")
-      }
-    }, 1000);
-    return () => clearTimeout(timer);
-  }, [redirectCountdown, router]);
 
   return (
     <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4 overflow-y-auto">
@@ -35,14 +23,8 @@ export function SmartPreviewModal({
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-xl sm:text-2xl font-bold">Smart Preview</h2>
-            {redirectCountdown !== null && redirectCountdown > 0 && (
-              <p className="text-sm text-muted-foreground mt-1">
-                Closing in {redirectCountdown} second
-                {redirectCountdown !== 1 ? "s" : ""}...
-              </p>
-            )}
           </div>
-          <Button variant="ghost" size="icon" onClick={handleContinue}>
+          <Button variant="ghost" size="icon" onClick={onClose()}>
             <X className="w-4 h-4" />
           </Button>
         </div>
