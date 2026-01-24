@@ -8,7 +8,6 @@ import { Save, Download, X, Loader2, Video as VideoIcon, FileText, Tag } from "l
 import { useVideos } from "@/lib/hooks/use-videos"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
-import Header from "@/components/header"
 import type { EditorFormState } from "@/types/editor.types"
 
 export default function EditorPage() {
@@ -56,7 +55,6 @@ export default function EditorPage() {
   if (!video) {
     return (
       <>
-        <Header />
         <div className="min-h-screen bg-background">
           <div className="w-full flex items-center justify-center py-12">
             <div className="text-center">
@@ -71,7 +69,6 @@ export default function EditorPage() {
 
   return (
     <>
-      <Header />
       <div className="min-h-screen bg-background">
         <div className="w-full">
           <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
