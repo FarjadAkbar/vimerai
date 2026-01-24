@@ -228,9 +228,7 @@ export default function PricingPage() {
                     <div className="w-full">
                       {currentSubscription.plan === plan.id ? (
                         <div className="w-full p-3 bg-primary/10 border border-primary/20 rounded-lg text-center">
-                          <Link href={'/'}>
                           <span className="text-sm font-medium text-primary">Current Plan</span>
-                          </Link>
                         </div>
                       ) : (
                         <Button
