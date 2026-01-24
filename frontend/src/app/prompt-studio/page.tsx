@@ -1,14 +1,9 @@
-"use client"
-
-import Header from "@/components/header"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
-import { ArrowLeft } from "lucide-react"
 
 export default function PromptStudioPage() {
   return (
     <>
-      <Header />
       <div className="min-h-screen bg-background">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
           <div className="mb-8">
