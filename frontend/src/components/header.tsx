@@ -101,13 +101,15 @@ const Header = () => {
                         <p className="text-sm font-medium text-foreground truncate">
                           {userData.user.email}
                         </p>
-                      
+                        {
+                          subscription?.plan !== 'free' && (
                       <span className="text-sm font-semibold text-yellow-600">
                         {subscription?.plan &&
                           subscription.plan.charAt(0).toUpperCase() +
                             subscription.plan.slice(1)}
                       </span>
-                        
+                        )
+                        }
                       </div>
                     </div>
                   </div>
@@ -123,9 +125,13 @@ const Header = () => {
                       </div> */}
                     </div>
                     <div className="flex items-center">
+                      {
+                          subscription?.plan !== 'free' && (
                     <p className="text-lg font-semibold">
                       {subscription?.videosRemaining}/{subscription?.limit}
                     </p>
+                            )
+                      }
                     <span className="text-sm text-muted-foreground mx-4">Videos Remaining</span>
                     </div>
                     <Progress
