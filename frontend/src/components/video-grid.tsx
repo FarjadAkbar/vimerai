@@ -71,7 +71,12 @@ export function VideoGrid({
     downloadVideo.mutate(id, {
       onSuccess: (data) => {
         if (data.downloadUrl && typeof window !== "undefined") {
-          window.open(data.downloadUrl, "_blank")
+          const link = document.createElement("a")
+          link.href = data.downloadUrl
+          link.download = "" // optional: set filename here
+          document.body.appendChild(link)
+          link.click()
+          document.body.removeChild(link)
         }
       },
     })
