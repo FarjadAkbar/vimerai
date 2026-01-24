@@ -2,7 +2,6 @@
 
 export interface GeneratorProps {
   mode?: "preview" | "full";
-  showPreviewOverlay?: boolean;
   header?: React.ReactNode;
   showSubscriptionInfo?: boolean;
   showRecentVideos?: boolean;
