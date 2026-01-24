@@ -11,8 +11,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { useState, useEffect } from "react"
 import { useLogin } from "@/lib/hooks/use-auth"
 import { Checkbox } from "@/components/ui/checkbox"
-
-const REMEMBERED_EMAIL_KEY = "rememberedEmail"
+import { storage } from "@/lib/utils/storage"
 
 export default function LoginPage() {
   const login = useLogin()
@@ -20,12 +19,10 @@ export default function LoginPage() {
   
   // Load remembered email on mount
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      const rememberedEmail = localStorage.getItem(REMEMBERED_EMAIL_KEY)
-      if (rememberedEmail) {
-        form.setValue("email", rememberedEmail)
-        form.setValue("rememberMe", true)
-      }
+    const rememberedEmail = storage.getRememberedEmail()
+    if (rememberedEmail) {
+      form.setValue("email", rememberedEmail)
+      form.setValue("rememberMe", true)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
@@ -42,11 +39,11 @@ export default function LoginPage() {
 
   const onSubmit = async (data: LoginInput) => {
     // Store email if rememberMe is checked
-    if (data.rememberMe && typeof window !== "undefined") {
-      localStorage.setItem(REMEMBERED_EMAIL_KEY, data.email)
-    } else if (typeof window !== "undefined") {
+    if (data.rememberMe) {
+      storage.setRememberedEmail(data.email)
+    } else {
       // Clear remembered email if rememberMe is unchecked
-      localStorage.removeItem(REMEMBERED_EMAIL_KEY)
+      storage.clearRememberedEmail()
     }
     
     login.mutate(data, {
