@@ -26,10 +26,10 @@ import { SubscriptionInfo } from "@/components/subscription-info";
 import { GeneratorForm } from "@/components/generator-form";
 import { NotificationModal } from "@/components/notification-modal";
 import type { GeneratorProps, NotificationState } from "@/types/components.types";
+import { storage } from "@/lib/utils/storage";
 
 export function Generator({
   mode = "preview",
-  showPreviewOverlay = false,
   header,
   showSubscriptionInfo = false,
   showRecentVideos = false,
@@ -55,9 +55,7 @@ export function Generator({
 
   // Check if user has already used preview (only for preview mode)
   const hasUsedPreview = useMemo(
-    () =>
-    mode === "preview" &&
-      localStorage.getItem('used_preview'),
+    () => mode === "preview" && storage.getUsedPreview(),
     [mode]
   );
 
@@ -85,7 +83,7 @@ export function Generator({
         if (!hasUsedPreview) {
             await delay(1000);
             setPreviewUrl("https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4");
-            localStorage.setItem('used_preview', 'true');
+            storage.setUsedPreview(true);
         }
       } else {
         // Full video generation mode
@@ -153,13 +151,13 @@ export function Generator({
 
 
     useEffect(() => {
-      const savedPrompt = sessionStorage.getItem("generator_prompt");
+      const savedPrompt = storage.getGeneratorPrompt();
       if (savedPrompt) {
         form.setValue("prompt", savedPrompt);
       }
     
       const subscription = form.watch((value) => {
-        sessionStorage.setItem("generator_prompt", value.prompt ?? "");
+        storage.setGeneratorPrompt(value.prompt ?? "");
       });
     
       return () => subscription.unsubscribe();
@@ -168,10 +166,10 @@ export function Generator({
   // Restore pending prompt after signup/login and auto-submit (preview mode only)
   useEffect(() => {
     if (mode === "preview") {
-      const pendingPrompt = sessionStorage.getItem("pendingPrompt");
+      const pendingPrompt = storage.getPendingPrompt();
       if (pendingPrompt && isLoggedIn) {
         form.setValue("prompt", pendingPrompt);
-        sessionStorage.removeItem("pendingPrompt");
+        storage.clearPendingPrompt();
 
         const submitTimer = setTimeout(() => {
           onSubmit(form.getValues());
