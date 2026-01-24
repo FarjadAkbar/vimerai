@@ -66,7 +66,7 @@ export function SmartPreviewModal({
 
           <Button
             onClick={handleContinue}
-            className="flex-1 bg-primary hover:bg-primary/90"
+            variant="outline"
           >
             View Pricing Plans
           </Button>
