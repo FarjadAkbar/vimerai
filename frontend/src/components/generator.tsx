@@ -452,7 +452,7 @@ export function Generator({
         )}
 
         {/* Recent Videos - Show for logged-in users */}
-        {showRecentVideos && isLoggedIn && videosData && videosData.videos && videosData.videos.length > 0 && (
+        /* {showRecentVideos && isLoggedIn && videosData && videosData.videos && videosData.videos.length > 0 && (
           <div className="mt-16">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-2xl font-bold">Recent Videos</h2>
@@ -472,7 +472,7 @@ export function Generator({
               gridCols="3"
             />
           </div>
-        )}
+        )} */
       </div>
       {/* Smart Preview Modal */}
       {previewUrl && (
