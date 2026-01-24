@@ -24,7 +24,7 @@ export function SmartPreviewModal({
           <div>
             <h2 className="text-xl sm:text-2xl font-bold">Smart Preview</h2>
           </div>
-          <Button variant="ghost" size="icon" onClick={onClose()}>
+          <Button variant="ghost" size="icon" onClick={() => { onClose() }}>
             <X className="w-4 h-4" />
           </Button>
         </div>
