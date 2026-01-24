@@ -91,9 +91,6 @@ export const useLogout = () => {
     
     // Clear all cached data
     queryClient.clear();
-    
-    // Redirect to login
-    router.push('/login');
   };
 
   return logout;
