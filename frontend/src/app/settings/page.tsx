@@ -24,18 +24,18 @@ export default function SettingsPage() {
   })
 
   const onSubmit = async (data: UpdateUserInput) => {
-    updateUser.mutate(data, {
-      onSuccess: () => {
-        setSuccessMessage("Profile updated successfully!")
-        setTimeout(() => setSuccessMessage(""), 3000)
-      },
-      onError: (error: unknown) => {
-        const message =
-          (error as { response?: { data?: { message?: string } } })?.response?.data?.message ||
-          "Failed to update profile. Please try again."
-        form.setError("root", { message })
-      },
-    })
+    // updateUser.mutate(data, {
+    //   onSuccess: () => {
+    //     setSuccessMessage("Profile updated successfully!")
+    //     setTimeout(() => setSuccessMessage(""), 3000)
+    //   },
+    //   onError: (error: unknown) => {
+    //     const message =
+    //       (error as { response?: { data?: { message?: string } } })?.response?.data?.message ||
+    //       "Failed to update profile. Please try again."
+    //     form.setError("root", { message })
+    //   },
+    // })
   }
 
   return (
@@ -92,7 +92,7 @@ export default function SettingsPage() {
                     )}
                   />
 
-                  <Button
+                  {/* <Button
                     type="submit"
                     size="lg"
                     className="bg-primary hover:bg-primary/90 gap-2"
@@ -100,7 +100,7 @@ export default function SettingsPage() {
                   >
                     <Save className="w-5 h-5" />
                     {updateUser.isPending ? "Saving..." : "Save Changes"}
-                  </Button>
+                  </Button> */}
                 </div>
 
                 {/* Account Section */}
