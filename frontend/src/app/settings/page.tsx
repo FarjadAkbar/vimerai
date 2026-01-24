@@ -9,7 +9,6 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { useUser, useUpdateUser } from "@/lib/hooks/use-user"
 import { useState } from "react"
 import { updateUserSchema, type UpdateUserInput } from "@/lib/auth/schema"
-import Header from "@/components/header"
 
 export default function SettingsPage() {
   const { data: userData } = useUser()
@@ -24,23 +23,22 @@ export default function SettingsPage() {
   })
 
   const onSubmit = async (data: UpdateUserInput) => {
-    // updateUser.mutate(data, {
-    //   onSuccess: () => {
-    //     setSuccessMessage("Profile updated successfully!")
-    //     setTimeout(() => setSuccessMessage(""), 3000)
-    //   },
-    //   onError: (error: unknown) => {
-    //     const message =
-    //       (error as { response?: { data?: { message?: string } } })?.response?.data?.message ||
-    //       "Failed to update profile. Please try again."
-    //     form.setError("root", { message })
-    //   },
-    // })
+    updateUser.mutate(data, {
+      onSuccess: () => {
+        setSuccessMessage("Profile updated successfully!")
+        setTimeout(() => setSuccessMessage(""), 3000)
+      },
+      onError: (error: unknown) => {
+        const message =
+          (error as { response?: { data?: { message?: string } } })?.response?.data?.message ||
+          "Failed to update profile. Please try again."
+        form.setError("root", { message })
+      },
+    })
   }
 
   return (
     <>
-      <Header />
       <div className="min-h-screen bg-background">
         <div className="w-full">
           <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -92,7 +90,7 @@ export default function SettingsPage() {
                     )}
                   />
 
-                  {/* <Button
+                  <Button
                     type="submit"
                     size="lg"
                     className="bg-primary hover:bg-primary/90 gap-2"
@@ -100,7 +98,7 @@ export default function SettingsPage() {
                   >
                     <Save className="w-5 h-5" />
                     {updateUser.isPending ? "Saving..." : "Save Changes"}
-                  </Button> */}
+                  </Button>
                 </div>
 
                 {/* Account Section */}
