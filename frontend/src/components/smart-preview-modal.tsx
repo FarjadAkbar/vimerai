@@ -15,6 +15,10 @@ export function SmartPreviewModal({
     onClose()
     router.push("/pricing")
   }
+ const handleSignup = () => {
+    onClose()
+    router.push("/signup")
+  }
 
 
   return (
@@ -54,6 +58,12 @@ export function SmartPreviewModal({
         </div>
 
         <div className="flex gap-3">
+          <Button
+            onClick={handleSignup}
+          >
+            Signup
+          </Button>
+
           <Button
             onClick={handleContinue}
             className="flex-1 bg-primary hover:bg-primary/90"
