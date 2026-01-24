@@ -152,6 +152,19 @@ export function Generator({
   }, []);
 
 
+    useEffect(() => {
+      const savedPrompt = sessionStorage.getItem("generator_prompt");
+      if (savedPrompt) {
+        form.setValue("prompt", savedPrompt);
+      }
+    
+      const subscription = form.watch((value) => {
+        sessionStorage.setItem("generator_prompt", value.prompt ?? "");
+      });
+    
+      return () => subscription.unsubscribe();
+    }, [form]);
+
   // Restore pending prompt after signup/login and auto-submit (preview mode only)
   useEffect(() => {
     if (mode === "preview") {
