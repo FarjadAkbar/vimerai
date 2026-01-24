@@ -83,7 +83,7 @@ export function Generator({
       // For preview mode, check if user has already used preview
       if (mode === "preview") {
         if (!hasUsedPreview) {
-            await delay(3000);
+            await delay(1000);
             setPreviewUrl("https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4");
             localStorage.setItem('used_preview', 'true');
         }
