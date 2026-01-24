@@ -71,12 +71,20 @@ export function VideoGrid({
     downloadVideo.mutate(id, {
       onSuccess: (data) => {
         if (data.downloadUrl && typeof window !== "undefined") {
-          const link = document.createElement("a")
-          link.href = data.downloadUrl
-          link.download = "" // optional: set filename here
-          document.body.appendChild(link)
-          link.click()
-          document.body.removeChild(link)
+          if (!data.downloadUrl) return;
+
+          const res = await fetch(data.downloadUrl);
+          const blob = await res.blob();
+          const url = URL.createObjectURL(blob);
+    
+          const link = document.createElement("a");
+          link.href = url;
+          link.download = "video.mp4";
+          document.body.appendChild(link);
+          link.click();
+          link.remove();
+          URL.revokeObjectURL(url);
+
         }
       },
     })
