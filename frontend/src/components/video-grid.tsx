@@ -69,7 +69,7 @@ export function VideoGrid({
 
   const handleDownload = async (id: string) => {
     downloadVideo.mutate(id, {
-      onSuccess: (data) => {
+      onSuccess: async (data) => {
         if (data.downloadUrl && typeof window !== "undefined") {
           if (!data.downloadUrl) return;
 
