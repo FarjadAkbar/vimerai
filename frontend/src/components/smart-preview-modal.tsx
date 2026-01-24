@@ -12,11 +12,11 @@ export function SmartPreviewModal({
 }: SmartPreviewModalProps) {
   const router = useRouter()
   const handleContinue = () => {
-    onClose()
+    // onClose()
     router.push("/pricing")
   }
  const handleSignup = () => {
-    onClose()
+    // onClose()
     router.push("/signup")
   }
 
@@ -33,7 +33,7 @@ export function SmartPreviewModal({
           </Button>
         </div>
 
-        <div className="aspect-video bg-black rounded-lg overflow-hidden max-w-md mx-auto">
+        <div className="aspect-video bg-black rounded-lg overflow-hidden mx-auto">
           <video
             src={previewUrl}
             autoPlay
@@ -55,9 +55,9 @@ export function SmartPreviewModal({
             Full video generation is available after subscription. Subscribe
             to create more videos.
           </p>
-        </div>
 
-        <div className="flex gap-3">
+          
+        <div className="flex gap-3 mt-6">
           <Button
             onClick={handleSignup}
           >
@@ -71,6 +71,8 @@ export function SmartPreviewModal({
             View Pricing Plans
           </Button>
         </div>
+        </div>
+
       </div>
     </div>
   )
