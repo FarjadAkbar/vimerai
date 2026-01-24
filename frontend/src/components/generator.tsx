@@ -85,10 +85,7 @@ export function Generator({
         if (!hasUsedPreview) {
             await delay(3000);
             setPreviewUrl("https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4");
-            storage.setUsedPreview(true);
-        } else {
-          // Preview already used, redirect to pricing
-          
+            localStorage.setItem('used_preview', 'true');
         }
       } else {
         // Full video generation mode
