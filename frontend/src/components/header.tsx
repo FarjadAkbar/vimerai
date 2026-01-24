@@ -12,10 +12,13 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useCurrentSubscription } from "@/lib/hooks/use-subscription";
+import { usePathname } from "next/navigation";
+
 
 const Header = () => {
   const logout = useLogout();
   const { data: userData } = useUser();
+  const pathname = usePathname();
 
   const isLoggedIn = !!userData?.user;
   const { data: subscription, isLoading: subscriptionLoading } =
@@ -39,6 +42,13 @@ const Header = () => {
           {userData?.user ? (
             <>
               <div className="hidden md:flex items-center gap-2">
+                {pathname !== "/" && (
+                  <Link href="/">
+                    <Button variant="ghost" size="sm">
+                      Generator
+                    </Button>
+                  </Link>
+                )}
                 <Link href="/my-videos">
                   <Button variant="ghost" size="sm">
                     My Videos
@@ -144,6 +154,13 @@ const Header = () => {
           ) : (
             <>
               <div className="hidden md:flex items-center gap-2">
+              {pathname !== "/" && (
+                  <Link href="/">
+                    <Button variant="ghost" size="sm">
+                      Generator
+                    </Button>
+                  </Link>
+                )}
                 <Link href="/pricing">
                   <Button variant="ghost" size="sm">
                     Pricing
