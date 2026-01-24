@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/form";
 import { useSignup } from "@/lib/hooks/use-auth";
 import { useState } from "react";
-const REMEMBERED_EMAIL_KEY = "rememberedEmail";
+import { storage } from "@/lib/utils/storage";
 export default function SignupPage() {
   const router = useRouter();
   const signup = useSignup();
@@ -38,7 +38,7 @@ export default function SignupPage() {
   const onSubmit = async (data: SignupInput) => {
     signup.mutate(data, {
       onSuccess: () => {
-        localStorage.setItem(REMEMBERED_EMAIL_KEY, data.email);
+        storage.setRememberedEmail(data.email);
       },
       onError: (error: unknown) => {
         const errorResponse = error as {
