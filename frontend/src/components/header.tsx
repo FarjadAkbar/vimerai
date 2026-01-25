@@ -12,12 +12,13 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useCurrentSubscription } from "@/lib/hooks/use-subscription";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 
 const Header = () => {
   const logout = useLogout();
   const { data: userData } = useUser();
   const pathname = usePathname();
+  const router = useRouter();
 
   const isLoggedIn = !!userData?.user;
   const { data: subscription, isLoading: subscriptionLoading } =
@@ -38,6 +39,8 @@ const Header = () => {
       window.location.href = href;
       return;
     }
+
+    router.push(href);
   }
   return (
     <nav className="sticky top-0 z-50 border-b border-border bg-background/95 backdrop-blur-md">
@@ -52,30 +55,25 @@ const Header = () => {
           {userData?.user ? (
             <>
               <div className="hidden md:flex items-center gap-2">
-                <Link href="/" onClick={(e) => handleNavigation("/", e)}>
-                  <Button variant="ghost" size="sm">
-                    Generator
-                  </Button>
-                </Link>
-                <Link href="/my-videos" onClick={(e) => handleNavigation("/my-videos", e)}>
-                  <Button variant="ghost" size="sm">
-                    My Videos
-                  </Button>
-                </Link>
+                <Button variant="ghost" size="sm" onClick={(e) => handleNavigation("/", e)}>
+                  Generator
+                </Button>
+                <Button variant="ghost" size="sm" onClick={(e) => handleNavigation("/my-videos", e)}>
+                  My Videos
+                </Button>
                 {/* <Link href="/prompt-studio" onClick={(e) => handleNavigation}>
                   <Button variant="ghost" size="sm">
                     Prompt Studio
                   </Button>
                 </Link> */}
-                <Link href="/pricing" onClick={(e) => handleNavigation("/pricing", e)}>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="text-muted-foreground"
-                  >
-                    Pricing
-                  </Button>
-                </Link>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-muted-foreground"
+                  onClick={(e) => handleNavigation("/pricing", e)}
+                >
+                  Pricing
+                </Button>
               </div>
               {/* <Link href="/settings">
                 <Button variant="ghost" size="icon">
@@ -110,37 +108,37 @@ const Header = () => {
                           {userData.user.email}
                         </p>
                       
-                      <span className="text-sm font-semibold text-yellow-600">
-                        {subscription?.plan &&
-                          subscription.plan.charAt(0).toUpperCase() +
-                            subscription.plan.slice(1)}
-                      </span>
+                       {
+                          subscription?.plan !== 'free' && (
+                            <span className="text-sm font-semibold text-yellow-600">
+                              {subscription?.plan &&
+                                subscription.plan.charAt(0).toUpperCase() +
+                                  subscription.plan.slice(1)}
+                            </span>
+                          )
+                        }
                         
                       </div>
                     </div>
                   </div>
 
                   {/* Usage Stats */}
-                  <div className="p-4 space-y-2 border-b border-border">
-                    <div className="flex items-center justify-between">
-                      {/* <div className="flex items-center gap-2">
-                        <Video className="w-4 h-4 text-muted-foreground" />
-                        <span className="text-sm text-muted-foreground">
-                          Videos Remaining
-                        </span>
-                      </div> */}
-                    </div>
-                    <div className="flex items-center">
-                    <p className="text-lg font-semibold">
-                      {subscription?.videosRemaining}/{subscription?.limit}
-                    </p>
-                    <span className="text-sm text-muted-foreground mx-4">Videos Remaining</span>
-                    </div>
-                    <Progress
-                      className="bg-gray-400 [&>div]:bg-green-600"
-                      value={progressValue}
-                    />
-                  </div>
+                  {
+                    subscription?.plan !== 'free' && (
+                      <div className="p-4 space-y-2 border-b border-border">
+                        <div className="flex items-center">
+                          <p className="text-lg font-semibold">
+                            {subscription?.videosRemaining}/{subscription?.limit}
+                          </p>
+                          <span className="text-sm text-muted-foreground mx-4">Videos Remaining</span>
+                        </div>
+                        <Progress
+                          className="bg-gray-400 [&>div]:bg-green-600"
+                          value={progressValue}
+                        />
+                      </div>
+                   )
+                  }
 
                  
 
@@ -162,28 +160,20 @@ const Header = () => {
           ) : (
             <>
               <div className="hidden md:flex items-center gap-2">
-                <Link href="/" onClick={(e) => handleNavigation("/", e)}>
-                  <Button variant="ghost" size="sm">
-                    Generator
-                  </Button>
-                </Link>
-                <Link href="/pricing" onClick={(e) => handleNavigation("/pricing", e)}>
-                  <Button variant="ghost" size="sm">
-                    Pricing
-                  </Button>
-                </Link>
+                <Button variant="ghost" size="sm" onClick={(e) => handleNavigation("/", e)}>
+                  Generator
+                </Button>
+                <Button variant="ghost" size="sm"  onClick={(e) => handleNavigation("/pricing", e)}>
+                  Pricing
+                </Button>
               </div>
 
-              <Link href="/login">
-                <Button variant="outline" size="sm">
-                  Sign In
-                </Button>
-              </Link>
-              <Link href="/signup">
-                <Button size="sm" className="bg-primary hover:bg-primary/90">
-                  Create Account
-                </Button>
-              </Link>
+              <Button variant="outline" size="sm" onClick={(e) => handleNavigation("/login", e)}>
+                Sign In
+              </Button>
+              <Button size="sm" onClick={(e) => handleNavigation("/signup", e)} className="bg-primary hover:bg-primary/90">
+                Create Account
+              </Button>
             </>
           )}
         </div>
