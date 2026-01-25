@@ -203,8 +203,12 @@ export class SubscriptionService implements ISubscriptionService {
       await this.subscriptionRepository.createSubscription(newSubscription);
     } else {
       // Update existing subscription to new plan
+      const currentRemaining = subscription.getRemaining();
+      const newPlanVideos = this.PLAN_LIMITS[plan];
+      const totalVideos = currentRemaining + newPlanVideos;
+
       const updated = subscription
-        .updatePlan(plan, this.PLAN_LIMITS[plan])
+        .updatePlan(plan, totalVideos)
         .updateActiveStatus(true);
       await this.subscriptionRepository.updateSubscription(updated);
     }
