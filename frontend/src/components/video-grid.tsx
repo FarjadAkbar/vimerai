@@ -167,7 +167,7 @@ export function VideoGrid({
                       <video
                         src={video.videoUrl || video.previewUrl || undefined}
                         className="w-full h-full object-cover"
-                        controls={false}
+                        controls={true}
                       />
                     ) : (
                       <Play className="w-12 h-12 text-primary/50 group-hover:text-primary transition-colors" />
