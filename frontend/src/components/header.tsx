@@ -14,7 +14,6 @@ import {
 import { useCurrentSubscription } from "@/lib/hooks/use-subscription";
 import { usePathname } from "next/navigation";
 
-
 const Header = () => {
   const logout = useLogout();
   const { data: userData } = useUser();
@@ -26,9 +25,20 @@ const Header = () => {
   const usedVideos = subscription
     ? subscription.limit - subscription.videosRemaining
     : 0;
+
   const progressValue = subscription
     ? (usedVideos / subscription.limit) * 100
     : 0;
+
+  const handleNavigation = (href: string, e: React.MouseEvent) => {
+    e.preventDefault();
+    
+    // If clicking on current page, force reload
+    if (pathname === href) {
+      window.location.href = href;
+      return;
+    }
+  }
   return (
     <nav className="sticky top-0 z-50 border-b border-border bg-background/95 backdrop-blur-md">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
@@ -42,24 +52,22 @@ const Header = () => {
           {userData?.user ? (
             <>
               <div className="hidden md:flex items-center gap-2">
-                {pathname !== "/" && (
-                  <Link href="/">
-                    <Button variant="ghost" size="sm">
-                      Generator
-                    </Button>
-                  </Link>
-                )}
-                <Link href="/my-videos">
+                <Link href="/" onClick={(e) => handleNavigation("/", e)}>
+                  <Button variant="ghost" size="sm">
+                    Generator
+                  </Button>
+                </Link>
+                <Link href="/my-videos" onClick={(e) => handleNavigation("/my-videos", e)}>
                   <Button variant="ghost" size="sm">
                     My Videos
                   </Button>
                 </Link>
-                <Link href="/prompt-studio">
+                {/* <Link href="/prompt-studio" onClick={(e) => handleNavigation}>
                   <Button variant="ghost" size="sm">
                     Prompt Studio
                   </Button>
-                </Link>
-                <Link href="/pricing">
+                </Link> */}
+                <Link href="/pricing" onClick={(e) => handleNavigation("/pricing", e)}>
                   <Button
                     variant="ghost"
                     size="sm"
@@ -101,15 +109,13 @@ const Header = () => {
                         <p className="text-sm font-medium text-foreground truncate">
                           {userData.user.email}
                         </p>
-                        {
-                          subscription?.plan !== 'free' && (
+                      
                       <span className="text-sm font-semibold text-yellow-600">
                         {subscription?.plan &&
                           subscription.plan.charAt(0).toUpperCase() +
                             subscription.plan.slice(1)}
                       </span>
-                        )
-                        }
+                        
                       </div>
                     </div>
                   </div>
@@ -124,23 +130,18 @@ const Header = () => {
                         </span>
                       </div> */}
                     </div>
-                      {
-                          subscription?.plan !== 'free' && (
-                            <>
-                                <div className="flex items-center">
-                                  <p className="text-lg font-semibold">
-                                    {subscription?.videosRemaining}/{subscription?.limit}
-                                  </p>
-                                  <span className="text-sm text-muted-foreground mx-4">Videos Remaining</span>
-                                </div>
-                                <Progress
-                                  className="bg-gray-400 [&>div]:bg-green-600"
-                                  value={progressValue}
-                                />
-                              </>
-                            )
-                      }
+                    <div className="flex items-center">
+                    <p className="text-lg font-semibold">
+                      {subscription?.videosRemaining}/{subscription?.limit}
+                    </p>
+                    <span className="text-sm text-muted-foreground mx-4">Videos Remaining</span>
+                    </div>
+                    <Progress
+                      className="bg-gray-400 [&>div]:bg-green-600"
+                      value={progressValue}
+                    />
                   </div>
+
                  
 
                   {/* Menu Actions */}
@@ -161,14 +162,12 @@ const Header = () => {
           ) : (
             <>
               <div className="hidden md:flex items-center gap-2">
-              {pathname !== "/" && (
-                  <Link href="/">
-                    <Button variant="ghost" size="sm">
-                      Generator
-                    </Button>
-                  </Link>
-                )}
-                <Link href="/pricing">
+                <Link href="/" onClick={(e) => handleNavigation("/", e)}>
+                  <Button variant="ghost" size="sm">
+                    Generator
+                  </Button>
+                </Link>
+                <Link href="/pricing" onClick={(e) => handleNavigation("/pricing", e)}>
                   <Button variant="ghost" size="sm">
                     Pricing
                   </Button>
