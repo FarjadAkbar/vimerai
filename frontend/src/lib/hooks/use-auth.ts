@@ -81,6 +81,8 @@ export const useLogout = () => {
     localStorage.removeItem('user');
     sessionStorage.removeItem('token');
     sessionStorage.removeItem('user');
+     // Redirect to login
+    router.push('/');
     
     // Cancel any ongoing queries to prevent refetches
     queryClient.cancelQueries();
