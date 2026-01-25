@@ -40,14 +40,6 @@ export default function PricingPage() {
       "Prompt Studio access",
     ]
     
-    // if (planId === "pro") {
-    //   return [
-    //     ...baseFeatures,
-    //     "4K resolution",
-    //     "Priority support",
-    //   ]
-    // }
-    
     return baseFeatures
   }
 
@@ -57,27 +49,33 @@ export default function PricingPage() {
       return
     }
 
-    // ✅ Check agar current subscription hai AUR videos remaining hain
+    // Get the plan details to show video count
+    const selectedPlan = plans.find(p => p.id === planId)
+    if (!selectedPlan) return
+
+    // ✅ Check if user has an active subscription with remaining videos
     if (
       currentSubscription && 
       currentSubscription.plan !== "free" && 
-      currentSubscription.plan !== planId &&
       currentSubscription.videosRemaining > 0
     ) {
       const currentPlanName = currentSubscription.plan === "creator" 
         ? "AI Creator" 
         : currentSubscription.plan.charAt(0).toUpperCase() + currentSubscription.plan.slice(1)
       
+      const newPlanName = planId === "creator"
+        ? "AI Creator"
+        : planId.charAt(0).toUpperCase() + planId.slice(1)
+
+      // Calculate total videos after stacking
+      const totalVideos = currentSubscription.videosRemaining + selectedPlan.videosPerMonth
+
       setNotification({
-        type: "warning",
-        title: "Active Subscription Found",
-        message: `You still have ${currentSubscription.videosRemaining} video${currentSubscription.videosRemaining > 1 ? 's' : ''} remaining in your ${currentPlanName} plan. Are you sure you want to switch plans? Your remaining videos will be lost.`,
+        type: "info",
+        title: "Add Plan on Top",
+        message: `You currently have ${currentSubscription.videosRemaining} video${currentSubscription.videosRemaining > 1 ? 's' : ''} remaining in your ${currentPlanName} plan. If you proceed, ${selectedPlan.videosPerMonth} videos from the ${newPlanName} plan will be added, giving you a total of ${totalVideos} videos.`,
         action: {
-          // label: "Keep Current Plan",
-          // onClick: () => {
-          //   setNotification(null)
-          // },
-          label: "Switch Anyway",
+          label: "Add Plan",
           onClick: () => {
             setNotification(null)
             proceedWithSubscription(planId)
@@ -87,7 +85,7 @@ export default function PricingPage() {
       return
     }
 
-    // ✅ Proceed with subscription if no videos remaining or same plan
+    // ✅ Proceed with subscription if no active plan or no videos remaining
     proceedWithSubscription(planId)
   }
 
@@ -102,15 +100,25 @@ export default function PricingPage() {
 
     const plan = planMap[planId] as SubscriptionPlan
     if (!plan) return
+
+    const selectedPlan = plans.find(p => p.id === planId)
+    if (!selectedPlan) return
   
     setActivatingPlanId(planId)
     activateMockSubscription.mutate(plan, {
       onSuccess: (data) => {
         const planDisplayName = data.plan === "creator" ? "AI Creator" : data.plan.charAt(0).toUpperCase() + data.plan.slice(1)
+        
+        // Calculate success message based on whether it was stacked
+        const wasStacked = currentSubscription && currentSubscription.plan !== "free" && currentSubscription.videosRemaining > 0
+        const message = wasStacked
+          ? `${selectedPlan.videosPerMonth} videos from ${planDisplayName} plan have been added to your account. You can now generate full videos.`
+          : `${planDisplayName} plan is now active. You can now generate full videos.`
+
         setNotification({
           type: "success",
           title: "Subscription Activated!",
-          message: `${planDisplayName} plan is now active. You can now generate full videos.`,
+          message: message,
           action: {
             label: "Start Generating",
             onClick: () => {
@@ -153,7 +161,7 @@ export default function PricingPage() {
             </h1>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
               {currentSubscription && currentSubscription.plan !== "free"
-                ? "Your current plan details and available options"
+                ? "Stack plans to add more videos to your account"
                 : "Choose the plan that fits your needs."}
             </p>
             {currentSubscription && currentSubscription.plan !== "free" && (
@@ -177,90 +185,82 @@ export default function PricingPage() {
             </div>
           ) : (
             <div className="grid md:grid-cols-3 gap-6 max-w-6xl mx-auto">
-              {plans.map((plan) => (
-                <div
-                  key={plan.id}
-                  className={`relative rounded-xl border-2 p-8 w-full ${
-                    plan.popular
-                      ? "border-primary bg-primary/5 ring-2 ring-primary"
-                      : "border-border bg-card"
-                  }`}
-                >
-                  {plan.popular && (
-                    <>
-                      <BorderBeam
-                        size={100}
-                        duration={6}
-                        colorFrom="#ffaa40"
-                        colorTo="#9c40ff"
-                        borderWidth={2}
-                      />
-                      <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1 bg-primary text-primary-foreground text-sm font-medium rounded-full z-10">
-                        Most Popular
-                      </div>
-                    </>
-                  )}
-                  <h3 className="text-2xl font-bold mb-2">{plan.name}</h3>
-                  <p className="text-muted-foreground text-sm mb-6">
-                    {plan.id === "starter"
-                      ? "Perfect for getting started"
-                      : plan.id === "creator"
-                      ? "For content creators and marketers"
-                      : "For professional creators"}
-                  </p>
-                  <div className="mb-6">
-                    <span className="text-4xl font-bold">${plan.price}</span>
-                    <span className="text-muted-foreground">/month</span>
-                  </div>
-                  <ul className="space-y-3 mb-8">
-                    <li className="flex items-start gap-3">
-                      <Check className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
-                      <span className="text-sm">{plan.videosPerMonth} video generations/month</span>
-                    </li>
-                    {getFeatures(plan.id).map((feature, fIdx) => (
-                      <li key={fIdx} className="flex items-start gap-3">
-                        <Check className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
-                        <span className="text-sm">{feature}</span>
-                      </li>
-                    ))}
-                  </ul>
-                  {currentSubscription && currentSubscription.plan !== "free" ? (
-                    <div className="w-full">
-                      {currentSubscription.plan === plan.id ? (
-                        <div className="w-full p-3 bg-primary/10 border border-primary/20 rounded-lg text-center">
-                          <span className="text-sm font-medium text-primary">Current Plan</span>
+              {plans.map((plan) => {
+                // Check if this is the current active plan
+                const isCurrentPlan = currentSubscription && currentSubscription.plan === plan.id
+                
+                return (
+                  <div
+                    key={plan.id}
+                    className={`relative rounded-xl border-2 p-8 w-full ${
+                      plan.popular
+                        ? "border-primary bg-primary/5 ring-2 ring-primary"
+                        : "border-border bg-card"
+                    }`}
+                  >
+                    {plan.popular && (
+                      <>
+                        <BorderBeam
+                          size={100}
+                          duration={6}
+                          colorFrom="#ffaa40"
+                          colorTo="#9c40ff"
+                          borderWidth={2}
+                        />
+                        <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1 bg-primary text-primary-foreground text-sm font-medium rounded-full z-10">
+                          Most Popular
                         </div>
-                      ) : (
-                        <Button
-                          className="w-full"
-                          variant="outline"
-                          onClick={() => handleSubscribe(plan.id)}
-                          disabled={activatingPlanId !== null}
-                        >
-                          {activatingPlanId === plan.id ? "Switching..." : "Switch Plan"}
-                        </Button>
-                      )}
+                      </>
+                    )}
+                    {isCurrentPlan && (
+                      <div className="absolute -top-4 right-4 px-3 py-1 bg-green-500 text-white text-xs font-medium rounded-full z-10">
+                        Active
+                      </div>
+                    )}
+                    <h3 className="text-2xl font-bold mb-2">{plan.name}</h3>
+                    <p className="text-muted-foreground text-sm mb-6">
+                      {plan.id === "starter"
+                        ? "Perfect for getting started"
+                        : plan.id === "creator"
+                        ? "For content creators and marketers"
+                        : "For professional creators"}
+                    </p>
+                    <div className="mb-6">
+                      <span className="text-4xl font-bold">${plan.price}</span>
+                      <span className="text-muted-foreground">/month</span>
                     </div>
-                  ) : (
+                    <ul className="space-y-3 mb-8">
+                      <li className="flex items-start gap-3">
+                        <Check className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
+                        <span className="text-sm">{plan.videosPerMonth} video generations/month</span>
+                      </li>
+                      {getFeatures(plan.id).map((feature, fIdx) => (
+                        <li key={fIdx} className="flex items-start gap-3">
+                          <Check className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
+                          <span className="text-sm">{feature}</span>
+                        </li>
+                      ))}
+                    </ul>
+                    
                     <Button
                       className="w-full"
                       variant={plan.popular ? "default" : "outline"}
                       onClick={() => handleSubscribe(plan.id)}
-                      disabled={activatingPlanId !== null}
+                      disabled={activatingPlanId !== null || isCurrentPlan}
                     >
                       {activatingPlanId === plan.id
                         ? "Activating..."
+                        : isCurrentPlan
+                        ? "Current Plan"
+                        : currentSubscription && currentSubscription.plan !== "free"
+                        ? "Stack Plan"
                         : "Start Generating"}{" "}
-                      <ArrowRight className="w-4 h-4 ml-2" />
                     </Button>
-                  )}
-                </div>
-              ))}
+                  </div>
+                )
+              })}
             </div>
           )}
-          
-
-          
         </div>
       </div>
       {/* Notification Modal */}
