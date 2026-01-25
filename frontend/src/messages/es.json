@@ -1,0 +1,10 @@
+{
+  "Home": {
+    "title": "Bienvenido",
+    "subtitle": "Esta es una aplicación multilingüe"
+  },
+  "Navbar": {
+    "language": "Idioma",
+    "login": "Iniciar sesión"
+  }
+}
