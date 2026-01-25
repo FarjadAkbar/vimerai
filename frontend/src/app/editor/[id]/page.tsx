@@ -204,7 +204,7 @@ export default function EditorPage() {
               <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4 pt-4 border-t border-border">
                 <Link href="/my-videos" className="block">
                   <Button type="button" variant="outline" className="w-full sm:w-auto">
-                    Cancel
+                    Back
                   </Button>
                 </Link>
                 <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
