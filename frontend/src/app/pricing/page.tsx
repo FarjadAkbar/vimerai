@@ -1,119 +1,183 @@
-"use client"
+"use client";
 
-import { useEffect, useState } from "react"
-import { useRouter } from "next/navigation"
-import Link from "next/link"
-import { Button } from "@/components/ui/button"
-import { Check, ArrowRight } from "lucide-react"
-import { BorderBeam } from "@/components/ui/border-beam"
-import { subscriptionApi } from "@/lib/api/subscription.api"
-import { useActivateMockSubscription, useCurrentSubscription } from "@/lib/hooks/use-subscription"
-import { useUser } from "@/lib/hooks/use-user"
-import { NotificationModal } from "@/components/notification-modal"
-import type { Plan, SubscriptionPlan, PlanMap } from "@/types/pricing.types"
-import type { NotificationState } from "@/types/components.types"
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { Check, ArrowRight } from "lucide-react";
+import { BorderBeam } from "@/components/ui/border-beam";
+import { subscriptionApi } from "@/lib/api/subscription.api";
+import {
+  useActivateMockSubscription,
+  useCurrentSubscription,
+} from "@/lib/hooks/use-subscription";
+import { useUser } from "@/lib/hooks/use-user";
+import { NotificationModal } from "@/components/notification-modal";
+import type { Plan, SubscriptionPlan, PlanMap } from "@/types/pricing.types";
+import type { NotificationState } from "@/types/components.types";
+
+// Define the type for plan IDs
+type PlanId = 'starter' | 'creator' | 'pro' | 'singleShot';
+
+// Features object outside component
+const subscriptionFeatures: Record<PlanId, string[]> = {
+  starter: [
+    "Create short-form videos optimized for social media",
+    "Video length up to 5 seconds",
+    "HD output (up to 720p)",
+    "Standard processing speed",
+    "Access to basic AI styles",
+    "One retry per video (technical failure only)",
+    "Watermark-free videos",
+    "Social media usage rights",
+    "Simple monthly quota",
+  ],
+  creator: [
+    "Create short-form videos optimized for social media",
+    "Video length up to 10 seconds",
+    "Full HD output (up to 1080p)",
+    "Faster processing speed",
+    "Access to premium AI styles",
+    "Two retries per video",
+    "Watermark-free videos",
+    "Commercial usage rights",
+    "Priority support",
+  ],
+  pro: [
+    "Create professional videos for any platform",
+    "Video length up to 30 seconds",
+    "4K output (up to 2160p)",
+    "Ultra-fast processing",
+    "Access to all AI styles",
+    "Unlimited retries",
+    "Watermark-free videos",
+    "Full commercial license",
+    "24/7 priority support",
+    "Custom branding options",
+  ],
+  singleShot: [
+    "One-time video generation",
+    "Video length up to 5 seconds",
+    "HD output (up to 720p)",
+    "Standard processing speed",
+    "Access to basic AI styles",
+    "No retries",
+    "Watermark-free video",
+    "Personal usage rights",
+  ],
+};
 
 export default function PricingPage() {
-  const router = useRouter()
-  const { data: userData } = useUser()
-  const { data: currentSubscription } = useCurrentSubscription()
-  const activateMockSubscription = useActivateMockSubscription()
-  const [plans, setPlans] = useState<Plan[]>([])
-  const [loading, setLoading] = useState(true)
-  const [activatingPlanId, setActivatingPlanId] = useState<string | null>(null)
-  const [notification, setNotification] = useState<NotificationState | null>(null)
-  
+  const router = useRouter();
+  const { data: userData } = useUser();
+  const { data: currentSubscription } = useCurrentSubscription();
+  const activateMockSubscription = useActivateMockSubscription();
+  const [plans, setPlans] = useState<Plan[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [activatingPlanId, setActivatingPlanId] = useState<string | null>(null);
+  const [notification, setNotification] = useState<NotificationState | null>(
+    null,
+  );
 
   useEffect(() => {
-    subscriptionApi.getPlans().then((response) => {
-      setPlans(response.plans)
-      setLoading(false)
-    }).catch(() => {
-      setLoading(false)
-    })
-  }, [])
+    subscriptionApi
+      .getPlans()
+      .then((response) => {
+        setPlans(response.plans);
+        setLoading(false);
+      })
+      .catch(() => {
+        setLoading(false);
+      });
+  }, []);
 
-  const getFeatures = (planId: string) => {
-    const baseFeatures = [
-      "Fast Mode generation",
-      "Smart Preview (one-time)",
-      "Prompt Studio access",
-    ]
-    
-    return baseFeatures
-  }
+  const getFeatures = (planId: string): string[] => {
+    // Convert planId to lowercase and handle variations
+    const normalizedPlanId = planId.toLowerCase() as PlanId;
+    return subscriptionFeatures[normalizedPlanId] || [];
+  };
 
   const handleSubscribe = async (planId: string) => {
     if (!userData?.user) {
-      router.push("/signup")
-      return
+      router.push("/signup");
+      return;
     }
 
     // Get the plan details to show video count
-    const selectedPlan = plans.find(p => p.id === planId)
-    if (!selectedPlan) return
+    const selectedPlan = plans.find((p) => p.id === planId);
+    if (!selectedPlan) return;
 
     // ✅ Check if user has an active subscription with remaining videos
     if (
-      currentSubscription && 
-      currentSubscription.plan !== "free" && 
+      currentSubscription &&
+      currentSubscription.plan !== "free" &&
       currentSubscription.videosRemaining > 0
     ) {
-      const currentPlanName = currentSubscription.plan === "creator" 
-        ? "AI Creator" 
-        : currentSubscription.plan.charAt(0).toUpperCase() + currentSubscription.plan.slice(1)
-      
-      const newPlanName = planId === "creator"
-        ? "AI Creator"
-        : planId.charAt(0).toUpperCase() + planId.slice(1)
+      const currentPlanName =
+        currentSubscription.plan === "creator"
+          ? "AI Creator"
+          : currentSubscription.plan.charAt(0).toUpperCase() +
+            currentSubscription.plan.slice(1);
+
+      const newPlanName =
+        planId === "creator"
+          ? "AI Creator"
+          : planId.charAt(0).toUpperCase() + planId.slice(1);
 
       // Calculate total videos after stacking
-      const totalVideos = currentSubscription.videosRemaining + selectedPlan.videosPerMonth
+      const totalVideos =
+        currentSubscription.videosRemaining + selectedPlan.videosPerMonth;
 
       setNotification({
         type: "info",
         title: "Add Plan on Top",
-        message: `You currently have ${currentSubscription.videosRemaining} video${currentSubscription.videosRemaining > 1 ? 's' : ''} remaining in your ${currentPlanName} plan. If you proceed, ${selectedPlan.videosPerMonth} videos from the ${newPlanName} plan will be added, giving you a total of ${totalVideos} videos.`,
+        message: `You currently have ${currentSubscription.videosRemaining} video${currentSubscription.videosRemaining > 1 ? "s" : ""} remaining in your ${currentPlanName} plan. If you proceed, ${selectedPlan.videosPerMonth} videos from the ${newPlanName} plan will be added, giving you a total of ${totalVideos} videos.`,
         action: {
           label: "Add Plan",
           onClick: () => {
-            setNotification(null)
-            proceedWithSubscription(planId)
+            setNotification(null);
+            proceedWithSubscription(planId);
           },
         },
-      })
-      return
+      });
+      return;
     }
 
     // ✅ Proceed with subscription if no active plan or no videos remaining
-    proceedWithSubscription(planId)
-  }
+    proceedWithSubscription(planId);
+  };
 
   // ✅ Separate function for actual subscription activation
   const proceedWithSubscription = (planId: string) => {
     // Map plan ID to subscription plan type
     const planMap: PlanMap = {
-      starter: 'starter',
-      creator: 'creator',
-      pro: 'pro',
-    }
+      starter: "starter",
+      creator: "creator",
+      pro: "pro",
+    };
 
-    const plan = planMap[planId] as SubscriptionPlan
-    if (!plan) return
+    const plan = planMap[planId] as SubscriptionPlan;
+    if (!plan) return;
 
-    const selectedPlan = plans.find(p => p.id === planId)
-    if (!selectedPlan) return
-  
-    setActivatingPlanId(planId)
+    const selectedPlan = plans.find((p) => p.id === planId);
+    if (!selectedPlan) return;
+
+    setActivatingPlanId(planId);
     activateMockSubscription.mutate(plan, {
       onSuccess: (data) => {
-        const planDisplayName = data.plan === "creator" ? "AI Creator" : data.plan.charAt(0).toUpperCase() + data.plan.slice(1)
-        
+        const planDisplayName =
+          data.plan === "creator"
+            ? "AI Creator"
+            : data.plan.charAt(0).toUpperCase() + data.plan.slice(1);
+
         // Calculate success message based on whether it was stacked
-        const wasStacked = currentSubscription && currentSubscription.plan !== "free" && currentSubscription.videosRemaining > 0
+        const wasStacked =
+          currentSubscription &&
+          currentSubscription.plan !== "free" &&
+          currentSubscription.videosRemaining > 0;
         const message = wasStacked
           ? `${selectedPlan.videosPerMonth} videos from ${planDisplayName} plan have been added to your account. You can now generate full videos.`
-          : `${planDisplayName} plan is now active. You can now generate full videos.`
+          : `${planDisplayName} plan is now active. You can now generate full videos.`;
 
         setNotification({
           type: "success",
@@ -122,17 +186,18 @@ export default function PricingPage() {
           action: {
             label: "Start Generating",
             onClick: () => {
-              setNotification(null)
-              router.push("/")
+              setNotification(null);
+              router.push("/");
             },
           },
-        })
-        setActivatingPlanId(null)
+        });
+        setActivatingPlanId(null);
       },
       onError: (error: unknown) => {
         const message =
           (error as { response?: { data?: { message?: string } } })?.response
-            ?.data?.message || "Failed to activate subscription. Please try again."
+            ?.data?.message ||
+          "Failed to activate subscription. Please try again.";
         setNotification({
           type: "error",
           title: "Activation Failed",
@@ -140,15 +205,15 @@ export default function PricingPage() {
           action: {
             label: "Try Again",
             onClick: () => {
-              setNotification(null)
-              setActivatingPlanId(null)
+              setNotification(null);
+              setActivatingPlanId(null);
             },
           },
-        })
-        setActivatingPlanId(null)
+        });
+        setActivatingPlanId(null);
       },
-    })
-  }
+    });
+  };
 
   return (
     <>
@@ -168,11 +233,15 @@ export default function PricingPage() {
               <div className="mt-4 inline-block px-4 py-2 bg-primary/10 text-primary rounded-lg">
                 <span className="font-medium">Current Plan: </span>
                 <span className="capitalize">
-                  {currentSubscription.plan === "creator" ? "AI Creator" : currentSubscription.plan}
+                  {currentSubscription.plan === "creator"
+                    ? "AI Creator"
+                    : currentSubscription.plan}
                 </span>
                 {/* ✅ Show remaining videos */}
                 <span className="ml-2 text-sm">
-                  ({currentSubscription.videosRemaining} video{currentSubscription.videosRemaining !== 1 ? 's' : ''} remaining)
+                  ({currentSubscription.videosRemaining} video
+                  {currentSubscription.videosRemaining !== 1 ? "s" : ""}{" "}
+                  remaining)
                 </span>
               </div>
             )}
@@ -187,8 +256,9 @@ export default function PricingPage() {
             <div className="grid md:grid-cols-3 gap-6 max-w-6xl mx-auto">
               {plans.map((plan) => {
                 // Check if this is the current active plan
-                const isCurrentPlan = currentSubscription && currentSubscription.plan === plan.id
-                
+                const isCurrentPlan =
+                  currentSubscription && currentSubscription.plan === plan.id;
+
                 return (
                   <div
                     key={plan.id}
@@ -222,8 +292,8 @@ export default function PricingPage() {
                       {plan.id === "starter"
                         ? "Perfect for getting started"
                         : plan.id === "creator"
-                        ? "For content creators and marketers"
-                        : "For professional creators"}
+                          ? "For content creators and marketers"
+                          : "For professional creators"}
                     </p>
                     <div className="mb-6">
                       <span className="text-4xl font-bold">${plan.price}</span>
@@ -232,7 +302,9 @@ export default function PricingPage() {
                     <ul className="space-y-3 mb-8">
                       <li className="flex items-start gap-3">
                         <Check className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
-                        <span className="text-sm">{plan.videosPerMonth} video generations/month</span>
+                        <span className="text-sm">
+                          {plan.videosPerMonth} video generations/month
+                        </span>
                       </li>
                       {getFeatures(plan.id).map((feature, fIdx) => (
                         <li key={fIdx} className="flex items-start gap-3">
@@ -241,7 +313,7 @@ export default function PricingPage() {
                         </li>
                       ))}
                     </ul>
-                    
+
                     <Button
                       className="w-full"
                       variant={plan.popular ? "default" : "outline"}
@@ -251,13 +323,14 @@ export default function PricingPage() {
                       {activatingPlanId === plan.id
                         ? "Activating..."
                         : isCurrentPlan
-                        ? "Current Plan"
-                        : currentSubscription && currentSubscription.plan !== "free"
-                        ? "Stack Plan"
-                        : "Start Generating"}{" "}
+                          ? "Current Plan"
+                          : currentSubscription &&
+                              currentSubscription.plan !== "free"
+                            ? "Stack Plan"
+                            : "Start Generating"}{" "}
                     </Button>
                   </div>
-                )
+                );
               })}
             </div>
           )}
@@ -276,5 +349,5 @@ export default function PricingPage() {
         />
       )}
     </>
-  )
+  );
 }

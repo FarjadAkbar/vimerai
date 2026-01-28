@@ -1,8 +1,7 @@
 "use client";
 
 import { UseFormReturn } from "react-hook-form";
-import { Button } from "@/components/ui/button";
-import { Wand2, Clock, AlertCircle, Zap } from "lucide-react";
+import { Clock, AlertCircle, Zap, Send } from "lucide-react";
 import type { GenerateVideoInput } from "@/lib/auth/schema";
 import { RainbowButton } from "@/components/ui/rainbow-button";
 import {
@@ -42,7 +41,6 @@ export function GeneratorForm({
   onBlockedClick,
 }: GeneratorFormProps) {
   const handleFormSubmit = (data: GenerateVideoInput) => {
-    // Prevent form submission if blocked
     if (!canGenerate && blockedReason && onBlockedClick) {
       onBlockedClick();
       return;
@@ -53,6 +51,7 @@ export function GeneratorForm({
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-6">
+        {/* Root Error */}
         {form.formState.errors.root && (
           <div className="flex items-center gap-2 p-3 text-sm text-destructive bg-destructive/10 rounded-md">
             <AlertCircle className="h-4 w-4" />
@@ -60,35 +59,68 @@ export function GeneratorForm({
           </div>
         )}
 
+        {/* Prompt Field */}
         <FormField
           control={form.control}
           name="prompt"
-          render={({ field }) => (
+          render={({ field, fieldState }) => (
             <FormItem>
               <FormLabel>Video Description</FormLabel>
+
               <FormControl>
-                <Textarea
-                  placeholder="E.g., A professional product launch video for a new smartphone showing features like camera, battery life, and design..."
-                  className="min-h-32"
-                  {...field}
-                  disabled={isGenerating || (mode === "full" && !canGenerate)}
-                />
+                <div className="relative">
+                  <Textarea
+                    {...field}
+                    placeholder="E.g., A professional product launch video for a new smartphone showing features like camera, battery life, and design."
+                    disabled={isGenerating || (mode === "full" && !canGenerate)}
+                    className={`min-h-32 pr-24 pb-14 ${
+                      fieldState.error
+                        ? "border-destructive focus-visible:ring-destructive"
+                        : ""
+                    }`}
+                  />
+
+                  {/* Generate Button inside input */}
+                  <RainbowButton
+                    type="submit"
+                    size="icon"
+                    className={`absolute rounded-4xl bottom-3 right-3 h-10 w-10 ${
+                      !canGenerate && blockedReason
+                        ? "bg-primary/50 hover:bg-primary/60"
+                        : "bg-primary hover:bg-primary/90"
+                    }`}
+                    disabled={isGenerating}
+                    onClick={(e) => {
+                      if (!canGenerate && blockedReason && onBlockedClick) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        onBlockedClick();
+                      }
+                    }}
+                  >
+                    {isGenerating ? (
+                      <Clock className="w-5 h-5 animate-spin" />
+                    ) : (
+                      <Send className="w-5 h-5" />
+                    )}
+                  </RainbowButton>
+                </div>
               </FormControl>
+
               <FormMessage />
               <p className="text-xs text-muted-foreground">
-                Be as detailed as possible for best results (10-1000 characters)
+                Be as detailed as possible for best results (10–1000 characters)
               </p>
             </FormItem>
           )}
         />
 
-        {/* Fast Mode Only - Hidden Cinematic/Avatar as per Phase 1 */}
+        {/* Fast Mode – Locked (Phase 1) */}
         <FormField
           control={form.control}
           name="mode"
           render={() => (
             <FormItem>
-              <FormLabel>Generation Mode</FormLabel>
               <FormControl>
                 <div className="p-4 rounded-xl border-2 border-primary bg-primary/5">
                   <div className="flex items-center gap-3">
@@ -98,54 +130,15 @@ export function GeneratorForm({
                     <div>
                       <h3 className="font-semibold">Fast Mode</h3>
                       <p className="text-xs text-muted-foreground">
-                        Perfect for social media. 2-5 min generation.
+                        Perfect for social media. 2–5 min generation.
                       </p>
                     </div>
                   </div>
                 </div>
               </FormControl>
-              <FormMessage />
             </FormItem>
           )}
         />
-
-        {/* <Button
-          
-        > */}
-          <RainbowButton type="submit"
-          size="lg"
-          className={`w-full gap-2 ${
-            !canGenerate && blockedReason
-              ? "bg-primary/50 hover:bg-primary/60 cursor-pointer"
-              : "bg-primary hover:bg-primary/90"
-          } disabled:opacity-50 disabled:cursor-not-allowed`}
-          disabled={isGenerating}
-          onClick={(e) => {
-            // If blocked, prevent form submission and show modal
-            if (!canGenerate && blockedReason && onBlockedClick) {
-              e.preventDefault();
-              e.stopPropagation();
-              onBlockedClick();
-            }
-          }}>
-          {isGenerating ? (
-            <>
-              <Clock className="w-5 h-5 animate-spin" />
-              {mode === "preview"
-                ? statusData?.status === "processing"
-                  ? "Processing Preview..."
-                  : statusData?.status === "pending"
-                  ? "Generating Preview..."
-                  : "Generating Preview..."
-                : "Generating..."}
-            </>
-          ) : (
-            <>
-              <Wand2 className="w-5 h-5 " /> Generate Video 
-            </>
-          )}
-          </RainbowButton>
-        {/* </Button> */}
       </form>
     </Form>
   );
