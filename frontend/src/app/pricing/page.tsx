@@ -12,9 +12,11 @@ import {
   useCurrentSubscription,
 } from "@/lib/hooks/use-subscription";
 import { useUser } from "@/lib/hooks/use-user";
+
 import { NotificationModal } from "@/components/notification-modal";
 import type { Plan, SubscriptionPlan, PlanMap } from "@/types/pricing.types";
 import type { NotificationState } from "@/types/components.types";
+import { Switch } from "@/components/ui/switch";
 
 // Define the type for plan IDs
 type PlanId = 'starter' | 'creator' | 'pro' | 'singleShot';
@@ -55,7 +57,7 @@ const subscriptionFeatures: Record<PlanId, string[]> = {
     "24/7 priority support",
     "Custom branding options",
   ],
-  singleShot: [
+  single: [
     "One-time video generation",
     "Video length up to 5 seconds",
     "HD output (up to 720p)",
@@ -73,6 +75,8 @@ export default function PricingPage() {
   const { data: currentSubscription } = useCurrentSubscription();
   const activateMockSubscription = useActivateMockSubscription();
   const [plans, setPlans] = useState<Plan[]>([]);
+  const [isYearly, setIsYearly] = useState(false);
+  
   const [loading, setLoading] = useState(true);
   const [activatingPlanId, setActivatingPlanId] = useState<string | null>(null);
   const [notification, setNotification] = useState<NotificationState | null>(
@@ -220,7 +224,7 @@ export default function PricingPage() {
       <div className="min-h-screen bg-background">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
           {/* Header */}
-          <div className="text-center mb-16">
+          <div className="text-center mb-8">
             <h1 className="text-4xl md:text-5xl font-bold mb-4">
               Simple, Transparent Pricing
             </h1>
@@ -244,6 +248,29 @@ export default function PricingPage() {
                   remaining)
                 </span>
               </div>
+            )}
+          </div>
+
+          {/* Toggle Switch */}
+          <div className="flex items-center justify-center gap-4 mb-12">
+            <span className={`text-lg font-medium transition-colors ${!isYearly ? 'text-primary' : 'text-muted-foreground'}`}>
+              Monthly
+            </span>
+            
+            <Switch 
+              checked={isYearly}
+              onCheckedChange={setIsYearly}
+              className="data-[state=checked]:bg-primary"
+            />
+
+            <span className={`text-lg font-medium transition-colors ${isYearly ? 'text-primary' : 'text-muted-foreground'}`}>
+              Yearly
+            </span>
+            
+            {isYearly && (
+              <span className="ml-2 inline-flex items-center rounded-full bg-green-100 px-3 py-1 text-sm font-medium text-green-800 dark:bg-green-900 dark:text-green-100">
+                Save 15%
+              </span>
             )}
           </div>
 
