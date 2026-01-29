@@ -95,13 +95,16 @@ export default function PricingPage() {
         setLoading(false);
       });
   }, []);
+const getYearlyPrice = (planPrice: number) => {
+  return Math.round(planPrice * 12 * 0.85);
+};
 
   const getFeatures = (planId: string): string[] => {
     // Convert planId to lowercase and handle variations
     const normalizedPlanId = planId.toLowerCase() as PlanId;
     return subscriptionFeatures[normalizedPlanId] || [];
   };
-
+  
   const handleSubscribe = async (planId: string) => {
     if (!userData?.user) {
       router.push("/signup");
@@ -325,14 +328,14 @@ export default function PricingPage() {
                           : "For professional creators"}
                     </p>
                     <div className="mb-6">
-                      <span className="text-4xl font-bold">${plan.price}</span>
-                      <span className="text-muted-foreground">/month</span>
+                      <span className="text-4xl font-bold">${getYearlyPrice(plan.price)}</span>
+                      <span className="text-muted-foreground">/Year</span>
                     </div>
                     <ul className="space-y-3 mb-8">
                       <li className="flex items-start gap-3">
                         <Check className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
                         <span className="text-sm">
-                          {plan.videosPerMonth} video generations/month
+                          {plan.videosPerMonth} video generations/year
                         </span>
                       </li>
                       {getFeatures(plan.id).map((feature, fIdx) => (
@@ -363,6 +366,7 @@ export default function PricingPage() {
               })}
             </div>
           ):(
+            // monthly plan
             <div className="grid md:grid-cols-3 gap-6 max-w-6xl mx-auto">
               {plans.map((plan) => {
                 // Check if this is the current active plan
