@@ -17,9 +17,10 @@ import { NotificationModal } from "@/components/notification-modal";
 import type { Plan, SubscriptionPlan, PlanMap } from "@/types/pricing.types";
 import type { NotificationState } from "@/types/components.types";
 import { Switch } from "@/components/ui/switch";
+import { Spinner } from "@/components/ui/spinner";
 
 // Define the type for plan IDs
-type PlanId = 'starter' | 'creator' | 'pro' | 'singleShot';
+type PlanId = "starter" | "creator" | "pro" | "singleShot";
 
 // Features object outside component
 const subscriptionFeatures: Record<PlanId, string[]> = {
@@ -76,7 +77,7 @@ export default function PricingPage() {
   const activateMockSubscription = useActivateMockSubscription();
   const [plans, setPlans] = useState<Plan[]>([]);
   const [isYearly, setIsYearly] = useState(false);
-  
+
   const [loading, setLoading] = useState(true);
   const [activatingPlanId, setActivatingPlanId] = useState<string | null>(null);
   const [notification, setNotification] = useState<NotificationState | null>(
@@ -253,20 +254,24 @@ export default function PricingPage() {
 
           {/* Toggle Switch */}
           <div className="flex items-center justify-center gap-4 mb-12">
-            <span className={`text-lg font-medium transition-colors ${!isYearly ? 'text-primary' : 'text-muted-foreground'}`}>
+            <span
+              className={`text-lg font-medium transition-colors ${!isYearly ? "text-primary" : "text-muted-foreground"}`}
+            >
               Monthly
             </span>
-            
-            <Switch 
+
+            <Switch
               checked={isYearly}
               onCheckedChange={setIsYearly}
               className="data-[state=checked]:bg-primary"
             />
 
-            <span className={`text-lg font-medium transition-colors ${isYearly ? 'text-primary' : 'text-muted-foreground'}`}>
+            <span
+              className={`text-lg font-medium transition-colors ${isYearly ? "text-primary" : "text-muted-foreground"}`}
+            >
               Yearly
             </span>
-            
+
             {isYearly && (
               <span className="ml-2 inline-flex items-center rounded-full bg-green-100 px-3 py-1 text-sm font-medium text-green-800 dark:bg-green-900 dark:text-green-100">
                 Save 15%
@@ -275,11 +280,89 @@ export default function PricingPage() {
           </div>
 
           {/* Pricing Plans */}
-          {loading ? (
-            <div className="text-center py-12">
-              <p className="text-muted-foreground">Loading plans...</p>
+          {isYearly ? (
+            // yearly plan
+            <div className="grid md:grid-cols-3 gap-6 max-w-6xl mx-auto">
+              {plans.map((plan) => {
+                // Check if this is the current active plan
+                const isCurrentPlan =
+                  currentSubscription && currentSubscription.plan === plan.id;
+
+                return (
+                  <div
+                    key={plan.id}
+                    className={`relative rounded-xl border-2 p-8 w-full ${
+                      plan.popular
+                        ? "border-primary bg-primary/5 ring-2 ring-primary"
+                        : "border-border bg-card"
+                    }`}
+                  >
+                    {plan.popular && (
+                      <>
+                        <BorderBeam
+                          size={100}
+                          duration={6}
+                          colorFrom="#ffaa40"
+                          colorTo="#9c40ff"
+                          borderWidth={2}
+                        />
+                        <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1 bg-primary text-primary-foreground text-sm font-medium rounded-full z-10">
+                          Most Popular
+                        </div>
+                      </>
+                    )}
+                    {isCurrentPlan && (
+                      <div className="absolute -top-4 right-4 px-3 py-1 bg-green-500 text-white text-xs font-medium rounded-full z-10">
+                        Active
+                      </div>
+                    )}
+                    <h3 className="text-2xl font-bold mb-2">{plan.name}</h3>
+                    <p className="text-muted-foreground text-sm mb-6">
+                      {plan.id === "starter"
+                        ? "Perfect for getting started"
+                        : plan.id === "creator"
+                          ? "For content creators and marketers"
+                          : "For professional creators"}
+                    </p>
+                    <div className="mb-6">
+                      <span className="text-4xl font-bold">${plan.price}</span>
+                      <span className="text-muted-foreground">/month</span>
+                    </div>
+                    <ul className="space-y-3 mb-8">
+                      <li className="flex items-start gap-3">
+                        <Check className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
+                        <span className="text-sm">
+                          {plan.videosPerMonth} video generations/month
+                        </span>
+                      </li>
+                      {getFeatures(plan.id).map((feature, fIdx) => (
+                        <li key={fIdx} className="flex items-start gap-3">
+                          <Check className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
+                          <span className="text-sm">{feature}</span>
+                        </li>
+                      ))}
+                    </ul>
+
+                    <Button
+                      className="w-full"
+                      variant={plan.popular ? "default" : "outline"}
+                      onClick={() => handleSubscribe(plan.id)}
+                      disabled={activatingPlanId !== null || isCurrentPlan}
+                    >
+                      {activatingPlanId === plan.id
+                        ? "Activating..."
+                        : isCurrentPlan
+                          ? "Current Plan"
+                          : currentSubscription &&
+                              currentSubscription.plan !== "free"
+                            ? "Stack Plan"
+                            : "Start Generating"}{" "}
+                    </Button>
+                  </div>
+                );
+              })}
             </div>
-          ) : (
+          ):(
             <div className="grid md:grid-cols-3 gap-6 max-w-6xl mx-auto">
               {plans.map((plan) => {
                 // Check if this is the current active plan
@@ -361,6 +444,7 @@ export default function PricingPage() {
               })}
             </div>
           )}
+            
         </div>
       </div>
       {/* Notification Modal */}
