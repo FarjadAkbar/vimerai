@@ -20,7 +20,7 @@ import { Switch } from "@/components/ui/switch";
 import { Spinner } from "@/components/ui/spinner";
 
 // Define the type for plan IDs
-type PlanId = "starter" | "creator" | "pro" | "singleShot";
+type PlanId = "starter" | "creator" | "pro" ;
 
 // Features object outside component
 const subscriptionFeatures: Record<PlanId, string[]> = {
@@ -285,22 +285,27 @@ const getYearlyPrice = (planPrice: number) => {
           {/* Pricing Plans */}
           {isYearly ? (
             // yearly plan
-            <div className="grid md:grid-cols-3 gap-6 max-w-6xl mx-auto">
+            <div className="grid md:grid-cols-4 gap-6 max-w-6xl mx-auto">
               {plans.map((plan) => {
                 // Check if this is the current active plan
                 const isCurrentPlan =
                   currentSubscription && currentSubscription.plan === plan.id;
+                
+                // Check if this is the single shot plan
+                const isSingleShot = plan.id === "single";
 
                 return (
                   <div
                     key={plan.id}
                     className={`relative rounded-xl border-2 p-8 w-full ${
-                      plan.popular
-                        ? "border-primary bg-primary/5 ring-2 ring-primary"
-                        : "border-border bg-card"
+                      isSingleShot
+                        ? "border-border bg-card"
+                        : plan.popular
+                          ? "border-primary bg-primary/5 ring-2 ring-primary"
+                          : "border-border bg-card"
                     }`}
                   >
-                    {plan.popular && (
+                    {plan.popular && !isSingleShot && (
                       <>
                         <BorderBeam
                           size={100}
@@ -314,6 +319,11 @@ const getYearlyPrice = (planPrice: number) => {
                         </div>
                       </>
                     )}
+                    {isSingleShot && (
+                      <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1 bg-blue-500 text-white text-sm font-medium rounded-full z-10">
+                        One-Time
+                      </div>
+                    )}
                     {isCurrentPlan && (
                       <div className="absolute -top-4 right-4 px-3 py-1 bg-green-500 text-white text-xs font-medium rounded-full z-10">
                         Active
@@ -325,17 +335,23 @@ const getYearlyPrice = (planPrice: number) => {
                         ? "Perfect for getting started"
                         : plan.id === "creator"
                           ? "For content creators and marketers"
-                          : "For professional creators"}
+                          : plan.id === "pro"
+                            ? "For professional creators"
+                            : "One-time video generation"}
                     </p>
                     <div className="mb-6">
-                      <span className="text-4xl font-bold">${getYearlyPrice(plan.price)}</span>
-                      <span className="text-muted-foreground">/Year</span>
+                      <span className="text-4xl font-bold">
+                        ${isSingleShot ? plan.price : getYearlyPrice(plan.price)}
+                      </span>
+                      <span className="text-muted-foreground">
+                        {isSingleShot ? "" : "/Year"}
+                      </span>
                     </div>
                     <ul className="space-y-3 mb-8">
                       <li className="flex items-start gap-3">
                         <Check className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
                         <span className="text-sm">
-                          {plan.videosPerMonth} video generations/year
+                          {plan.videosPerMonth} video generation{isSingleShot ? "" : "s/year"}
                         </span>
                       </li>
                       {getFeatures(plan.id).map((feature, fIdx) => (
@@ -348,7 +364,7 @@ const getYearlyPrice = (planPrice: number) => {
 
                     <Button
                       className="w-full"
-                      variant={plan.popular ? "default" : "outline"}
+                      variant={plan.popular && !isSingleShot ? "default" : "outline"}
                       onClick={() => handleSubscribe(plan.id)}
                       disabled={activatingPlanId !== null || isCurrentPlan}
                     >
@@ -367,22 +383,27 @@ const getYearlyPrice = (planPrice: number) => {
             </div>
           ):(
             // monthly plan
-            <div className="grid md:grid-cols-3 gap-6 max-w-6xl mx-auto">
+            <div className="grid md:grid-cols-4 gap-6 max-w-6xl mx-auto">
               {plans.map((plan) => {
                 // Check if this is the current active plan
                 const isCurrentPlan =
                   currentSubscription && currentSubscription.plan === plan.id;
+                
+                // Check if this is the single shot plan
+                const isSingleShot = plan.id === "single";
 
                 return (
                   <div
                     key={plan.id}
                     className={`relative rounded-xl border-2 p-8 w-full ${
-                      plan.popular
-                        ? "border-primary bg-primary/5 ring-2 ring-primary"
-                        : "border-border bg-card"
+                      isSingleShot
+                        ? "border-border bg-card"
+                        : plan.popular
+                          ? "border-primary bg-primary/5 ring-2 ring-primary"
+                          : "border-border bg-card"
                     }`}
                   >
-                    {plan.popular && (
+                    {plan.popular && !isSingleShot && (
                       <>
                         <BorderBeam
                           size={100}
@@ -396,6 +417,11 @@ const getYearlyPrice = (planPrice: number) => {
                         </div>
                       </>
                     )}
+                    {isSingleShot && (
+                      <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1 bg-blue-500 text-white text-sm font-medium rounded-full z-10">
+                        One-Time
+                      </div>
+                    )}
                     {isCurrentPlan && (
                       <div className="absolute -top-4 right-4 px-3 py-1 bg-green-500 text-white text-xs font-medium rounded-full z-10">
                         Active
@@ -407,17 +433,21 @@ const getYearlyPrice = (planPrice: number) => {
                         ? "Perfect for getting started"
                         : plan.id === "creator"
                           ? "For content creators and marketers"
-                          : "For professional creators"}
+                          : plan.id === "pro"
+                            ? "For professional creators"
+                            : "One-time video generation"}
                     </p>
                     <div className="mb-6">
                       <span className="text-4xl font-bold">${plan.price}</span>
-                      <span className="text-muted-foreground">/month</span>
+                      <span className="text-muted-foreground">
+                        {isSingleShot ? "" : "/month"}
+                      </span>
                     </div>
                     <ul className="space-y-3 mb-8">
                       <li className="flex items-start gap-3">
                         <Check className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
                         <span className="text-sm">
-                          {plan.videosPerMonth} video generations/month
+                          {plan.videosPerMonth} video generation{isSingleShot ? "" : "s/month"}
                         </span>
                       </li>
                       {getFeatures(plan.id).map((feature, fIdx) => (
@@ -430,7 +460,7 @@ const getYearlyPrice = (planPrice: number) => {
 
                     <Button
                       className="w-full"
-                      variant={plan.popular ? "default" : "outline"}
+                      variant={plan.popular && !isSingleShot ? "default" : "outline"}
                       onClick={() => handleSubscribe(plan.id)}
                       disabled={activatingPlanId !== null || isCurrentPlan}
                     >

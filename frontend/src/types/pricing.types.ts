@@ -8,7 +8,7 @@ export interface Plan {
   popular?: boolean;
 }
 
-export type SubscriptionPlan = "starter" | "creator" | "pro";
+export type SubscriptionPlan = "starter" | "creator" | "pro" ;
 
 export interface PlanMap {
   [key: string]: SubscriptionPlan;
