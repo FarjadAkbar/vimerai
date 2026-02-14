@@ -35,6 +35,9 @@ export class SubscriptionEntity {
   @Column({ nullable: true, type: 'varchar' })
   stripeSubscriptionId: string | null;
 
+  @Column({ nullable: true, type: 'varchar' })
+  paypalSubscriptionId: string | null;
+
   @CreateDateColumn()
   createdAt: Date;
 
@@ -51,6 +54,7 @@ export class SubscriptionEntity {
       entity.isActive,
       entity.stripeCustomerId,
       entity.stripeSubscriptionId,
+      entity.paypalSubscriptionId ?? null,
       entity.createdAt,
       entity.updatedAt,
     );
@@ -66,6 +70,7 @@ export class SubscriptionEntity {
     entity.isActive = domain.isActive;
     entity.stripeCustomerId = domain.stripeCustomerId;
     entity.stripeSubscriptionId = domain.stripeSubscriptionId;
+    entity.paypalSubscriptionId = domain.paypalSubscriptionId;
     if (domain.createdAt) entity.createdAt = domain.createdAt;
     if (domain.updatedAt) entity.updatedAt = domain.updatedAt;
     return entity;

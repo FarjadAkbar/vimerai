@@ -7,6 +7,7 @@ export class User {
     public readonly updatedAt: Date,
     public passwordResetToken?: string | null,
     public passwordResetExpires?: Date | null,
+    public readonly singleShotCredits: number = 0,
   ) {}
 
   static create(
@@ -25,6 +26,36 @@ export class User {
       now,
       passwordResetToken,
       passwordResetExpires,
+      0,
+    );
+  }
+
+  addSingleShotCredits(amount: number): User {
+    return new User(
+      this.id,
+      this.email,
+      this.passwordHash,
+      this.createdAt,
+      new Date(),
+      this.passwordResetToken,
+      this.passwordResetExpires,
+      this.singleShotCredits + amount,
+    );
+  }
+
+  consumeSingleShotCredit(): User {
+    if (this.singleShotCredits <= 0) {
+      return this;
+    }
+    return new User(
+      this.id,
+      this.email,
+      this.passwordHash,
+      this.createdAt,
+      new Date(),
+      this.passwordResetToken,
+      this.passwordResetExpires,
+      this.singleShotCredits - 1,
     );
   }
 
@@ -37,6 +68,7 @@ export class User {
       new Date(),
       token,
       expiresAt,
+      this.singleShotCredits,
     );
   }
 
@@ -49,6 +81,7 @@ export class User {
       new Date(),
       this.passwordResetToken,
       this.passwordResetExpires,
+      this.singleShotCredits,
     );
   }
 }

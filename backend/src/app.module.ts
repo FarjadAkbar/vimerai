@@ -12,7 +12,7 @@ import { UsersModule } from './application/users/users.module';
 import databaseConfig from './infrastructure/config/database.config';
 import serverConfig from './infrastructure/config/server.config';
 import jwtConfig from './infrastructure/config/jwt.config';
-import stripeConfig from './infrastructure/config/stripe.config';
+import paymentConfig from './infrastructure/config/payment.config';
 import videoGenerationConfig from './infrastructure/config/video-generation.config';
 import storageConfig from './infrastructure/config/storage.config';
 import emailConfig from './infrastructure/config/email.config';
@@ -26,7 +26,7 @@ import emailConfig from './infrastructure/config/email.config';
         databaseConfig,
         serverConfig,
         jwtConfig,
-        stripeConfig,
+        paymentConfig,
         videoGenerationConfig,
         storageConfig,
         emailConfig,
