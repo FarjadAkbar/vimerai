@@ -1,55 +1,81 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+  Logger,
+} from '@nestjs/common';
 import { Inject } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { v4 as uuidv4 } from 'uuid';
 import { ISubscriptionService } from '@/core/ports/subscription.service';
 import type { ISubscriptionRepository } from '@/core/ports/subscription.repository';
+import type { IUserRepository } from '@/core/ports/user.repository';
 import type { IVideoRepository } from '@/core/ports/video.repository';
-import type { IPaymentService } from '@/core/ports/payment.service';
-import { PAYMENT_SERVICE_TOKEN } from '@/core/tokens/injection.tokens';
+import type {
+  IPaymentService,
+  BillingPeriod,
+} from '@/core/ports/payment.service';
+import type { IPlanRepository } from '@/core/ports/plan.repository';
+import {
+  PAYMENT_SERVICE_TOKEN,
+  USER_REPOSITORY_TOKEN,
+  PLAN_REPOSITORY_TOKEN,
+} from '@/core/tokens/injection.tokens';
 import { Subscription, SubscriptionPlan } from '@/domain/subscription.entity';
 
 @Injectable()
 export class SubscriptionService implements ISubscriptionService {
-  // Plan limits
-  private readonly PLAN_LIMITS = {
-    [SubscriptionPlan.STARTER]: 10,
-    [SubscriptionPlan.CREATOR]: 50,
-    [SubscriptionPlan.PRO]: 200,
-  };
+  private readonly logger = new Logger(SubscriptionService.name);
+  private readonly paypalEnvironment: string;
 
   constructor(
     @Inject('ISubscriptionRepository')
     private readonly subscriptionRepository: ISubscriptionRepository,
+    @Inject(USER_REPOSITORY_TOKEN)
+    private readonly userRepository: IUserRepository,
     @Inject('IVideoRepository')
     private readonly videoRepository: IVideoRepository,
     @Inject(PAYMENT_SERVICE_TOKEN)
     private readonly paymentService: IPaymentService,
-  ) {}
+    @Inject(PLAN_REPOSITORY_TOKEN)
+    private readonly planRepository: IPlanRepository,
+    private readonly configService: ConfigService,
+  ) {
+    this.paypalEnvironment =
+      this.configService.get<string>('payment.paypal.environment') ?? 'sandbox';
+  }
+
+  /** Resolve video-per-month limit for a plan from DB, with fallback */
+  private async getPlanLimit(plan: SubscriptionPlan): Promise<number> {
+    const dbPlan = await this.planRepository.getPlanBySlug(plan);
+    if (dbPlan) return dbPlan.videosPerMonth;
+    // Fallback if DB is empty (should not happen after seed)
+    const fallback: Record<string, number> = {
+      starter: 10,
+      creator: 50,
+      pro: 200,
+    };
+    return fallback[plan] ?? 0;
+  }
 
   async getCurrentSubscription(userId: string): Promise<{
     plan: SubscriptionPlan;
     videosRemaining: number;
     limit: number;
+    singleShotCredits: number;
   }> {
+    const user = await this.userRepository.getUserById(userId);
+    const singleShotCredits = user?.singleShotCredits ?? 0;
+
     const subscription =
       await this.subscriptionRepository.getSubscriptionByUserId(userId);
 
-    // If no subscription exists, return free plan data (no DB entry)
     if (!subscription) {
-      // Check if user has already used their free preview
-      const userVideos = await this.videoRepository.getVideosByUserId(
-        userId,
-        100,
-        0,
-      );
-      const hasUsedPreview = userVideos.videos.some(
-        (v) => v.previewUrl !== null,
-      );
-
       return {
         plan: SubscriptionPlan.FREE,
-        videosRemaining: hasUsedPreview ? 0 : 1, // Only 1 preview allowed
-        limit: 1,
+        videosRemaining: 0,
+        limit: 0,
+        singleShotCredits,
       };
     }
 
@@ -57,6 +83,7 @@ export class SubscriptionService implements ISubscriptionService {
       plan: subscription.plan,
       videosRemaining: subscription.getRemaining(),
       limit: subscription.videosLimit,
+      singleShotCredits,
     };
   }
 
@@ -64,48 +91,58 @@ export class SubscriptionService implements ISubscriptionService {
     videosUsed: number;
     videosRemaining: number;
     limit: number;
+    singleShotCredits: number;
   }> {
+    const user = await this.userRepository.getUserById(userId);
+    const singleShotCredits = user?.singleShotCredits ?? 0;
     const subscription =
       await this.subscriptionRepository.getSubscriptionByUserId(userId);
 
     if (!subscription) {
-      return { videosUsed: 0, videosRemaining: 0, limit: 0 };
+      return {
+        videosUsed: 0,
+        videosRemaining: 0,
+        limit: 0,
+        singleShotCredits,
+      };
     }
 
     return {
       videosUsed: subscription.videosUsed,
       videosRemaining: subscription.getRemaining(),
       limit: subscription.videosLimit,
+      singleShotCredits,
     };
   }
 
   async canGenerate(userId: string): Promise<boolean> {
+    const user = await this.userRepository.getUserById(userId);
+    const singleShotCredits = user?.singleShotCredits ?? 0;
+    if (singleShotCredits > 0) {
+      return true;
+    }
+
     const subscription =
       await this.subscriptionRepository.getSubscriptionByUserId(userId);
-
-    // If no subscription, check if user can use free preview
     if (!subscription) {
-      const userVideos = await this.videoRepository.getVideosByUserId(
-        userId,
-        100,
-        0,
-      );
-      const hasUsedPreview = userVideos.videos.some(
-        (v) => v.previewUrl !== null,
-      );
-      // Free users can only generate preview if they haven't used it yet
-      return !hasUsedPreview;
+      return false;
     }
 
     return subscription.canGenerate();
   }
 
   async recordVideoGeneration(userId: string): Promise<void> {
+    const user = await this.userRepository.getUserById(userId);
+    const singleShotCredits = user?.singleShotCredits ?? 0;
+
+    if (user && singleShotCredits > 0) {
+      const updatedUser = user.consumeSingleShotCredit();
+      await this.userRepository.updateUser(updatedUser);
+      return;
+    }
+
     const subscription =
       await this.subscriptionRepository.getSubscriptionByUserId(userId);
-
-    // Free plan users don't have a subscription, so don't record usage
-    // (preview usage is tracked via video.previewUrl existence)
     if (!subscription) {
       return;
     }
@@ -114,19 +151,136 @@ export class SubscriptionService implements ISubscriptionService {
     await this.subscriptionRepository.updateSubscription(updated);
   }
 
-  async createCheckoutSession(
+  async purchaseSingleShot(
     userId: string,
-    plan: SubscriptionPlan,
+  ): Promise<{ singleShotCredits: number }> {
+    const user = await this.userRepository.getUserById(userId);
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+    const updatedUser = user.addSingleShotCredits(1);
+    await this.userRepository.updateUser(updatedUser);
+    return { singleShotCredits: updatedUser.singleShotCredits };
+  }
+
+  async createSingleShotCheckout(
+    userId: string,
     successUrl: string,
     cancelUrl: string,
-  ): Promise<{ sessionId: string; url: string }> {
-    return this.paymentService.createCheckoutSession({
+  ): Promise<{ orderId: string; url: string }> {
+    // Get single-shot price from DB
+    const singleShotPlan =
+      await this.planRepository.getPlanBySlug('single-shot');
+    const price = singleShotPlan?.monthlyPrice ?? 4.99;
+
+    return this.paymentService.createSingleShotOrder({
       userId,
-      plan,
+      amount: price,
+      currency: 'EUR',
       successUrl,
       cancelUrl,
     });
   }
+
+  async captureSingleShot(
+    orderId: string,
+  ): Promise<{ singleShotCredits: number } | null> {
+    const result = await this.paymentService.captureSingleShotOrder(orderId);
+    if (!result?.userId) return null;
+    const { singleShotCredits } = await this.purchaseSingleShot(result.userId);
+    return { singleShotCredits };
+  }
+
+  // ─── PayPal Subscription Flow ──────────────────────────────────────────
+
+  async createCheckoutSession(
+    userId: string,
+    plan: SubscriptionPlan,
+    billingPeriod: BillingPeriod,
+    successUrl: string,
+    cancelUrl: string,
+  ): Promise<{ sessionId: string; url: string }> {
+    // Look up plan from DB and resolve the correct PayPal plan ID for the current environment
+    const dbPlan = await this.planRepository.getPlanBySlug(plan);
+    const paypalPlanId = dbPlan?.getPaypalPlanId(
+      this.paypalEnvironment,
+      billingPeriod,
+    );
+
+    return this.paymentService.createCheckoutSession({
+      userId,
+      plan,
+      billingPeriod,
+      paypalPlanId: paypalPlanId ?? undefined,
+      successUrl,
+      cancelUrl,
+    });
+  }
+
+  async activatePayPalSubscription(
+    subscriptionId: string,
+  ): Promise<{ plan: SubscriptionPlan } | null> {
+    const result =
+      await this.paymentService.activateSubscription(subscriptionId);
+    if (!result?.userId || !result?.plan) return null;
+
+    let subscription =
+      await this.subscriptionRepository.getSubscriptionByUserId(result.userId);
+
+    const videosLimit = await this.getPlanLimit(result.plan);
+
+    if (!subscription) {
+      subscription = Subscription.create(
+        uuidv4(),
+        result.userId,
+        result.plan,
+        videosLimit,
+        null,
+        null,
+        result.paypalSubscriptionId,
+      );
+      const active = subscription.updateActiveStatus(true);
+      await this.subscriptionRepository.createSubscription(active);
+    } else {
+      const currentRemaining = subscription.getRemaining();
+      const totalVideos = currentRemaining + videosLimit;
+
+      const updated = subscription
+        .updatePlan(result.plan, totalVideos)
+        .updatePaypalSubscriptionId(result.paypalSubscriptionId)
+        .updateActiveStatus(true);
+      await this.subscriptionRepository.updateSubscription(updated);
+    }
+
+    return { plan: result.plan };
+  }
+
+  async cancelSubscription(userId: string): Promise<{ cancelled: boolean }> {
+    const subscription =
+      await this.subscriptionRepository.getSubscriptionByUserId(userId);
+
+    if (!subscription) {
+      throw new NotFoundException('No active subscription found');
+    }
+
+    if (subscription.paypalSubscriptionId) {
+      const success = await this.paymentService.cancelSubscription(
+        subscription.paypalSubscriptionId,
+      );
+      if (!success) {
+        throw new BadRequestException(
+          'Failed to cancel subscription on PayPal',
+        );
+      }
+    }
+
+    const updated = subscription.updateActiveStatus(false);
+    await this.subscriptionRepository.updateSubscription(updated);
+
+    return { cancelled: true };
+  }
+
+  // ─── Portal / Manage ──────────────────────────────────────────────────
 
   async createPortalSession(
     userId: string,
@@ -135,16 +289,22 @@ export class SubscriptionService implements ISubscriptionService {
     const subscription =
       await this.subscriptionRepository.getSubscriptionByUserId(userId);
 
-    if (!subscription || !subscription.stripeCustomerId) {
+    if (!subscription) {
       throw new NotFoundException('No active subscription found');
     }
 
-    return this.paymentService.createPortalSession(
-      userId,
-      subscription.stripeCustomerId,
-      returnUrl,
-    );
+    if (subscription.stripeCustomerId) {
+      return this.paymentService.createPortalSession(
+        userId,
+        subscription.stripeCustomerId,
+        returnUrl,
+      );
+    }
+
+    return { url: returnUrl };
   }
+
+  // ─── Stripe Webhook (backward compat) ─────────────────────────────────
 
   async handleStripeWebhook(
     userId: string,
@@ -152,60 +312,141 @@ export class SubscriptionService implements ISubscriptionService {
     plan: SubscriptionPlan,
     status: string,
   ): Promise<void> {
-    // Find subscription by user ID
     let subscription =
       await this.subscriptionRepository.getSubscriptionByUserId(userId);
 
     const isActive = status === 'active' || status === 'trialing';
+    const videosLimit = await this.getPlanLimit(plan);
 
     if (!subscription) {
-      // Create new subscription from webhook
       subscription = Subscription.create(
         uuidv4(),
         userId,
         plan,
-        this.PLAN_LIMITS[plan],
-        null, // stripeCustomerId - will be set when we have it
+        videosLimit,
+        null,
         subscriptionId,
+        null,
       );
-      // Create a new subscription with isActive set correctly
       const newSubscription = subscription.updateActiveStatus(isActive);
       await this.subscriptionRepository.createSubscription(newSubscription);
     } else {
-      // Update existing subscription
       const updated = subscription
-        .updatePlan(plan, this.PLAN_LIMITS[plan])
+        .updatePlan(plan, videosLimit)
         .updateStripeIds(subscription.stripeCustomerId, subscriptionId)
         .updateActiveStatus(isActive);
       await this.subscriptionRepository.updateSubscription(updated);
     }
   }
 
+  // ─── PayPal Webhook ───────────────────────────────────────────────────
+
+  async handlePayPalWebhook(
+    eventType: string,
+    resource: Record<string, unknown>,
+  ): Promise<void> {
+    const subscriptionId =
+      typeof resource.id === 'string' ? resource.id : undefined;
+    const customId =
+      typeof resource.custom_id === 'string' ? resource.custom_id : undefined;
+
+    if (!subscriptionId) return;
+
+    switch (eventType) {
+      case 'BILLING.SUBSCRIPTION.ACTIVATED': {
+        if (!customId) return;
+        const sep = customId.indexOf('|');
+        if (sep === -1) return;
+        const userId = customId.slice(0, sep);
+        const planStr = customId.slice(sep + 1);
+        const planMap: Record<string, SubscriptionPlan> = {
+          starter: SubscriptionPlan.STARTER,
+          creator: SubscriptionPlan.CREATOR,
+          pro: SubscriptionPlan.PRO,
+        };
+        const plan = planMap[planStr];
+        if (!plan || !userId) return;
+
+        const videosLimit = await this.getPlanLimit(plan);
+        let subscription =
+          await this.subscriptionRepository.getSubscriptionByUserId(userId);
+
+        if (!subscription) {
+          subscription = Subscription.create(
+            uuidv4(),
+            userId,
+            plan,
+            videosLimit,
+            null,
+            null,
+            subscriptionId,
+          );
+          const active = subscription.updateActiveStatus(true);
+          await this.subscriptionRepository.createSubscription(active);
+        } else {
+          const updated = subscription
+            .updatePlan(plan, videosLimit)
+            .updatePaypalSubscriptionId(subscriptionId)
+            .updateActiveStatus(true);
+          await this.subscriptionRepository.updateSubscription(updated);
+        }
+        break;
+      }
+
+      case 'BILLING.SUBSCRIPTION.CANCELLED':
+      case 'BILLING.SUBSCRIPTION.SUSPENDED':
+      case 'BILLING.SUBSCRIPTION.EXPIRED': {
+        if (!customId) return;
+        const sep = customId.indexOf('|');
+        if (sep === -1) return;
+        const userId = customId.slice(0, sep);
+        if (!userId) return;
+
+        const subscription =
+          await this.subscriptionRepository.getSubscriptionByUserId(userId);
+        if (!subscription) return;
+
+        const updated = subscription.updateActiveStatus(false);
+        await this.subscriptionRepository.updateSubscription(updated);
+        break;
+      }
+
+      case 'PAYMENT.SALE.COMPLETED': {
+        // Recurring payment received - subscription continues
+        this.logger.log('PayPal recurring payment received');
+        break;
+      }
+
+      default:
+        break;
+    }
+  }
+
+  // ─── Mock Subscription (dev/testing) ──────────────────────────────────
+
   async activateMockSubscription(
     userId: string,
     plan: SubscriptionPlan,
   ): Promise<{ message: string; plan: SubscriptionPlan }> {
-    // Find existing subscription
+    const videosLimit = await this.getPlanLimit(plan);
     let subscription =
       await this.subscriptionRepository.getSubscriptionByUserId(userId);
 
     if (!subscription) {
-      // Create new mock subscription
       subscription = Subscription.create(
         uuidv4(),
         userId,
         plan,
-        this.PLAN_LIMITS[plan],
-        null, // No Stripe customer ID for mock
-        null, // No Stripe subscription ID for mock
+        videosLimit,
+        null,
+        null,
+        null,
       );
       const newSubscription = subscription.updateActiveStatus(true);
       await this.subscriptionRepository.createSubscription(newSubscription);
     } else {
-      // Update existing subscription to new plan
       const currentRemaining = subscription.getRemaining();
-      const newPlanVideos = this.PLAN_LIMITS[plan];
-      const totalVideos = currentRemaining + newPlanVideos;
+      const totalVideos = currentRemaining + videosLimit;
 
       const updated = subscription
         .updatePlan(plan, totalVideos)
@@ -213,9 +454,6 @@ export class SubscriptionService implements ISubscriptionService {
       await this.subscriptionRepository.updateSubscription(updated);
     }
 
-    return {
-      message: 'Subscription activated successfully',
-      plan,
-    };
+    return { message: 'Subscription activated successfully', plan };
   }
 }

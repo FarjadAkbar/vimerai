@@ -1,7 +1,6 @@
 "use client";
 
 import { UseFormReturn } from "react-hook-form";
-import { Button } from "@/components/ui/button";
 import { Wand2, Clock, AlertCircle, Zap } from "lucide-react";
 import type { GenerateVideoInput } from "@/lib/auth/schema";
 import { RainbowButton } from "@/components/ui/rainbow-button";
@@ -42,7 +41,6 @@ export function GeneratorForm({
   onBlockedClick,
 }: GeneratorFormProps) {
   const handleFormSubmit = (data: GenerateVideoInput) => {
-    // Prevent form submission if blocked
     if (!canGenerate && blockedReason && onBlockedClick) {
       onBlockedClick();
       return;
@@ -68,7 +66,7 @@ export function GeneratorForm({
               <FormLabel>Video Description</FormLabel>
               <FormControl>
                 <Textarea
-                  placeholder="E.g., A professional product launch video for a new smartphone showing features like camera, battery life, and design..."
+                  placeholder="E.g., A professional product launch video for a new smartphone showing features like camera, battery life, and design"
                   className="min-h-32"
                   {...field}
                   disabled={isGenerating || (mode === "full" && !canGenerate)}
@@ -82,7 +80,7 @@ export function GeneratorForm({
           )}
         />
 
-        {/* Fast Mode Only - Hidden Cinematic/Avatar as per Phase 1 */}
+        {/* Fast Mode Only */}
         <FormField
           control={form.control}
           name="mode"
@@ -98,7 +96,7 @@ export function GeneratorForm({
                     <div>
                       <h3 className="font-semibold">Fast Mode</h3>
                       <p className="text-xs text-muted-foreground">
-                        Perfect for social media. 2-5 min generation.
+                        Perfect for social media, 2-5 min generation
                       </p>
                     </div>
                   </div>
@@ -109,43 +107,37 @@ export function GeneratorForm({
           )}
         />
 
-        {/* <Button
-          
-        > */}
-          <RainbowButton type="submit"
+        <RainbowButton
+          type="submit"
           size="lg"
-          className={`w-full gap-2 ${
+          className={`w-full min-h-14 gap-2 text-base font-semibold ${
             !canGenerate && blockedReason
               ? "bg-primary/50 hover:bg-primary/60 cursor-pointer"
               : "bg-primary hover:bg-primary/90"
           } disabled:opacity-50 disabled:cursor-not-allowed`}
           disabled={isGenerating}
           onClick={(e) => {
-            // If blocked, prevent form submission and show modal
             if (!canGenerate && blockedReason && onBlockedClick) {
               e.preventDefault();
               e.stopPropagation();
               onBlockedClick();
             }
-          }}>
+          }}
+        >
           {isGenerating ? (
             <>
               <Clock className="w-5 h-5 animate-spin" />
               {mode === "preview"
-                ? statusData?.status === "processing"
-                  ? "Processing Preview..."
-                  : statusData?.status === "pending"
-                  ? "Generating Preview..."
-                  : "Generating Preview..."
+                ? "Generating Preview..."
                 : "Generating..."}
             </>
           ) : (
             <>
-              <Wand2 className="w-5 h-5 " /> Generate Video 
+              <Wand2 className="w-5 h-5" />
+              Generate Video
             </>
           )}
-          </RainbowButton>
-        {/* </Button> */}
+        </RainbowButton>
       </form>
     </Form>
   );

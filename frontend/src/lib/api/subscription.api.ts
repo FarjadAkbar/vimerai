@@ -1,33 +1,48 @@
 import { api } from './client';
 
 export type SubscriptionPlan = 'free' | 'starter' | 'creator' | 'pro';
+export type BillingPeriod = 'monthly' | 'yearly';
 
 export interface CurrentSubscriptionResponse {
   plan: SubscriptionPlan;
   videosRemaining: number;
   limit: number;
+  singleShotCredits: number;
 }
 
 export interface UsageResponse {
   videosUsed: number;
   videosRemaining: number;
   limit: number;
+  singleShotCredits: number;
 }
 
 export interface Plan {
   id: string;
   name: string;
-  price: number;
   videosPerMonth: number;
+  monthlyPrice: number;
+  yearlyPrice: number;
   popular?: boolean;
 }
 
+export interface SingleShotProduct {
+  id: string;
+  name: string;
+  type: 'one-time';
+  videosIncluded: number;
+  price: number;
+}
+
 export interface PlansResponse {
+  region: string;
   plans: Plan[];
+  singleShot: SingleShotProduct;
 }
 
 export interface CreateCheckoutRequest {
   plan: SubscriptionPlan;
+  billingPeriod: BillingPeriod;
   successUrl: string;
   cancelUrl: string;
 }
@@ -58,8 +73,10 @@ export const subscriptionApi = {
     return response.data;
   },
 
-  getPlans: async (): Promise<PlansResponse> => {
-    const response = await api.get<PlansResponse>('/subscription/plans');
+  getPlans: async (region = 'europe'): Promise<PlansResponse> => {
+    const response = await api.get<PlansResponse>(
+      `/subscription/plans?region=${region}`,
+    );
     return response.data;
   },
 
@@ -69,6 +86,23 @@ export const subscriptionApi = {
     const response = await api.post<CreateCheckoutResponse>(
       '/subscription/checkout',
       data,
+    );
+    return response.data;
+  },
+
+  activateSubscription: async (
+    subscriptionId: string,
+  ): Promise<{ plan: SubscriptionPlan } | null> => {
+    const response = await api.post<{ plan: SubscriptionPlan } | null>(
+      '/subscription/activate-subscription',
+      { subscriptionId },
+    );
+    return response.data;
+  },
+
+  cancelSubscription: async (): Promise<{ cancelled: boolean }> => {
+    const response = await api.post<{ cancelled: boolean }>(
+      '/subscription/cancel-subscription',
     );
     return response.data;
   },
@@ -92,5 +126,32 @@ export const subscriptionApi = {
     );
     return response.data;
   },
-};
 
+  purchaseSingleShot: async (): Promise<{ singleShotCredits: number }> => {
+    const response = await api.post<{ singleShotCredits: number }>(
+      '/subscription/purchase-single-shot',
+    );
+    return response.data;
+  },
+
+  createSingleShotCheckout: async (data: {
+    successUrl: string;
+    cancelUrl: string;
+  }): Promise<{ orderId: string; url: string }> => {
+    const response = await api.post<{ orderId: string; url: string }>(
+      '/subscription/checkout-single-shot',
+      data,
+    );
+    return response.data;
+  },
+
+  captureSingleShot: async (
+    orderId: string,
+  ): Promise<{ singleShotCredits: number } | null> => {
+    const response = await api.post<{ singleShotCredits: number } | null>(
+      '/subscription/capture-single-shot',
+      { orderId },
+    );
+    return response.data;
+  },
+};

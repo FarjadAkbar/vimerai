@@ -46,7 +46,18 @@ const Header = () => {
     <nav className="sticky top-0 z-50 border-b border-border bg-background/95 backdrop-blur-md">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
         <Link href="/" className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+          {/* Add public/logo.svg to use your logo; Sparkles icon is fallback */}
+          <img
+            src="/logo.svg"
+            alt="Vimerai"
+            className="h-8 w-auto object-contain"
+            onError={(e) => {
+              e.currentTarget.classList.add("hidden");
+              const fallback = e.currentTarget.nextElementSibling as HTMLElement | null;
+              if (fallback) fallback.classList.remove("hidden");
+            }}
+          />
+          <div className="logo-fallback hidden w-8 h-8 flex items-center justify-center rounded-lg bg-primary">
             <Sparkles className="w-5 h-5 text-primary-foreground" />
           </div>
           <span className="text-xl font-bold">Vimerai</span>
@@ -123,22 +134,42 @@ const Header = () => {
                   </div>
 
                   {/* Usage Stats */}
-                  {
-                    subscription?.plan !== 'free' && (
-                      <div className="p-4 space-y-2 border-b border-border">
-                        <div className="flex items-center">
-                          <p className="text-lg font-semibold">
-                            {subscription?.videosRemaining}/{subscription?.limit}
-                          </p>
-                          <span className="text-sm text-muted-foreground mx-4">Videos Remaining</span>
-                        </div>
+                  {(subscription?.plan !== "free" ||
+                    (subscription?.singleShotCredits ?? 0) > 0) && (
+                    <div className="p-4 space-y-2 border-b border-border">
+                      <div className="flex items-center gap-4">
+                        {subscription?.plan !== "free" && (
+                          <div className="flex items-center">
+                            <p className="text-lg font-semibold">
+                              {subscription?.videosRemaining}/{subscription?.limit}
+                            </p>
+                            <span className="text-sm text-muted-foreground ml-2">
+                              Videos
+                            </span>
+                          </div>
+                        )}
+                        {(subscription?.singleShotCredits ?? 0) > 0 && (
+                          <div className="flex items-center">
+                            <p className="text-lg font-semibold">
+                              {subscription?.singleShotCredits}
+                            </p>
+                            <span className="text-sm text-muted-foreground ml-2">
+                              Single Shot
+                              {(subscription?.singleShotCredits ?? 0) !== 1
+                                ? "s"
+                                : ""}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                      {subscription?.plan !== "free" && (
                         <Progress
                           className="bg-gray-400 [&>div]:bg-green-600"
                           value={progressValue}
                         />
-                      </div>
-                   )
-                  }
+                      )}
+                    </div>
+                  )}
 
                  
 

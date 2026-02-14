@@ -5,6 +5,7 @@ import { UserEntity } from './typeorm/entities/user.entity';
 import { VideoEntity } from './typeorm/entities/video.entity';
 import { PromptTemplateEntity } from './typeorm/entities/prompt-template.entity';
 import { SubscriptionEntity } from './typeorm/entities/subscription.entity';
+import { PlanEntity } from './typeorm/entities/plan.entity';
 import databaseConfig from '@/infrastructure/config/database.config';
 
 @Module({
@@ -19,6 +20,7 @@ import databaseConfig from '@/infrastructure/config/database.config';
           VideoEntity,
           PromptTemplateEntity,
           SubscriptionEntity,
+          PlanEntity,
         ],
         migrations: ['dist/infrastructure/persistence/migrations/*.js'],
         migrationsRun: false, // Set to true to auto-run migrations on app start
@@ -29,6 +31,7 @@ import databaseConfig from '@/infrastructure/config/database.config';
       VideoEntity,
       PromptTemplateEntity,
       SubscriptionEntity,
+      PlanEntity,
     ]),
   ],
   exports: [TypeOrmModule],

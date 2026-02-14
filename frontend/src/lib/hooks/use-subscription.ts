@@ -9,7 +9,7 @@ export const useCurrentSubscription = (enabled = true) => {
   return useQuery({
     queryKey: ['subscription', 'current'],
     queryFn: () => subscriptionApi.getCurrentSubscription(),
-    enabled, // Only call API when enabled (user is logged in)
+    enabled,
   });
 };
 
@@ -32,10 +32,31 @@ export const useCreateCheckout = () => {
     mutationFn: (data: CreateCheckoutRequest) =>
       subscriptionApi.createCheckout(data),
     onSuccess: (data) => {
-      // Redirect to Stripe checkout
+      // Redirect to PayPal approval page
       if (data.url && typeof window !== 'undefined') {
         window.location.href = data.url;
       }
+    },
+  });
+};
+
+export const useActivateSubscription = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (subscriptionId: string) =>
+      subscriptionApi.activateSubscription(subscriptionId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['subscription'] });
+    },
+  });
+};
+
+export const useCancelSubscription = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: () => subscriptionApi.cancelSubscription(),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['subscription'] });
     },
   });
 };
@@ -45,7 +66,6 @@ export const useCreatePortal = () => {
     mutationFn: (data: CreatePortalRequest) =>
       subscriptionApi.createPortal(data),
     onSuccess: (data) => {
-      // Redirect to Stripe portal
       if (data.url && typeof window !== 'undefined') {
         window.location.href = data.url;
       }
@@ -59,9 +79,39 @@ export const useActivateMockSubscription = () => {
     mutationFn: (plan: 'starter' | 'creator' | 'pro') =>
       subscriptionApi.activateMockSubscription(plan),
     onSuccess: () => {
-      // Invalidate subscription queries to refetch
       queryClient.invalidateQueries({ queryKey: ['subscription'] });
     },
   });
 };
 
+export const usePurchaseSingleShot = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: () => subscriptionApi.purchaseSingleShot(),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['subscription'] });
+    },
+  });
+};
+
+export const useCreateSingleShotCheckout = () => {
+  return useMutation({
+    mutationFn: (data: { successUrl: string; cancelUrl: string }) =>
+      subscriptionApi.createSingleShotCheckout(data),
+    onSuccess: (data) => {
+      if (data?.url && typeof window !== 'undefined') {
+        window.location.href = data.url;
+      }
+    },
+  });
+};
+
+export const useCaptureSingleShot = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (orderId: string) => subscriptionApi.captureSingleShot(orderId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['subscription'] });
+    },
+  });
+};

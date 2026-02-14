@@ -15,6 +15,7 @@ export class Subscription {
     public readonly isActive: boolean,
     public readonly stripeCustomerId: string | null,
     public readonly stripeSubscriptionId: string | null,
+    public readonly paypalSubscriptionId: string | null,
     public readonly createdAt: Date,
     public readonly updatedAt: Date,
   ) {}
@@ -26,6 +27,7 @@ export class Subscription {
     videosLimit: number,
     stripeCustomerId?: string | null,
     stripeSubscriptionId?: string | null,
+    paypalSubscriptionId?: string | null,
   ): Subscription {
     const now = new Date();
     return new Subscription(
@@ -37,6 +39,7 @@ export class Subscription {
       true,
       stripeCustomerId || null,
       stripeSubscriptionId || null,
+      paypalSubscriptionId || null,
       now,
       now,
     );
@@ -52,6 +55,7 @@ export class Subscription {
       this.isActive,
       this.stripeCustomerId,
       this.stripeSubscriptionId,
+      this.paypalSubscriptionId,
       this.createdAt,
       new Date(),
     );
@@ -67,6 +71,7 @@ export class Subscription {
       this.isActive,
       this.stripeCustomerId,
       this.stripeSubscriptionId,
+      this.paypalSubscriptionId,
       this.createdAt,
       new Date(),
     );
@@ -85,6 +90,25 @@ export class Subscription {
       this.isActive,
       customerId,
       subscriptionId,
+      this.paypalSubscriptionId,
+      this.createdAt,
+      new Date(),
+    );
+  }
+
+  updatePaypalSubscriptionId(
+    paypalSubscriptionId: string | null,
+  ): Subscription {
+    return new Subscription(
+      this.id,
+      this.userId,
+      this.plan,
+      this.videosUsed,
+      this.videosLimit,
+      this.isActive,
+      this.stripeCustomerId,
+      this.stripeSubscriptionId,
+      paypalSubscriptionId,
       this.createdAt,
       new Date(),
     );
@@ -100,6 +124,7 @@ export class Subscription {
       isActive,
       this.stripeCustomerId,
       this.stripeSubscriptionId,
+      this.paypalSubscriptionId,
       this.createdAt,
       new Date(),
     );
