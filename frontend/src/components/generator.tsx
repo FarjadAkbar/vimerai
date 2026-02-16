@@ -82,7 +82,7 @@ export function Generator({
       if (mode === "preview") {
         if (!hasUsedPreview) {
           await delay(1000);
-          setPreviewUrl("https://www.youtube.com/embed/dQw4w9WgXcQ");
+          setPreviewUrl("https://lorem.video/720p");
           storage.setUsedPreview(true);
         }
       } else {

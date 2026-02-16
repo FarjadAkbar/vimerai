@@ -25,11 +25,12 @@ export class MockVideoGenerationProvider implements IVideoGenerationProvider {
 
   // Sample video URLs for demonstration
   private readonly SAMPLE_VIDEOS = [
-    "https://www.youtube.com/embed/dQw4w9WgXcQ",
-    "https://www.youtube.com/embed/9bZkp7q19f0",
-    "https://www.youtube.com/embed/l482T0yNkeo",
-    "https://www.youtube.com/embed/3tmd-ClpJxA",
-    "https://www.youtube.com/embed/kJQP7kiw5Fk",
+    'https://lorem.video/720p',
+    'https://lorem.video/720p_h264_10s',
+    'https://lorem.video/cat_128kbps',
+    'https://lorem.video/corgi_128kbps',
+    'https://lorem.video/bunny_128kbps',
+    'https://lorem.video/test',
   ];
 
   async generateVideo(
