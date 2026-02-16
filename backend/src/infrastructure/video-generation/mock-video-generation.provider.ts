@@ -25,12 +25,11 @@ export class MockVideoGenerationProvider implements IVideoGenerationProvider {
 
   // Sample video URLs for demonstration
   private readonly SAMPLE_VIDEOS = [
-    'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4',
-    'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4',
-    'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4',
-    'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4',
-    'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4',
-    'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4',
+    "https://www.youtube.com/embed/dQw4w9WgXcQ",
+    "https://www.youtube.com/embed/9bZkp7q19f0",
+    "https://www.youtube.com/embed/l482T0yNkeo",
+    "https://www.youtube.com/embed/3tmd-ClpJxA",
+    "https://www.youtube.com/embed/kJQP7kiw5Fk",
   ];
 
   async generateVideo(
