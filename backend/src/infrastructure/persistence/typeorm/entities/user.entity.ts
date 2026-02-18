@@ -24,6 +24,9 @@ export class UserEntity {
   @Column({ nullable: true, type: 'timestamp' })
   passwordResetExpires: Date | null;
 
+  @Column({ type: 'int', default: 0 })
+  singleShotCredits: number;
+
   @CreateDateColumn()
   createdAt: Date;
 
@@ -39,6 +42,7 @@ export class UserEntity {
       entity.updatedAt,
       entity.passwordResetToken,
       entity.passwordResetExpires,
+      entity.singleShotCredits ?? 0,
     );
   }
 
@@ -49,7 +53,7 @@ export class UserEntity {
     entity.passwordHash = domain.passwordHash;
     entity.passwordResetToken = domain.passwordResetToken ?? null;
     entity.passwordResetExpires = domain.passwordResetExpires ?? null;
-    // Preserve timestamps if entity already exists
+    entity.singleShotCredits = domain.singleShotCredits ?? 0;
     if (domain.createdAt) {
       entity.createdAt = domain.createdAt;
     }

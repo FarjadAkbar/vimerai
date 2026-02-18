@@ -82,7 +82,7 @@ export function Generator({
       if (mode === "preview") {
         if (!hasUsedPreview) {
             await delay(1000);
-            setPreviewUrl("https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4");
+            setPreviewUrl("https://lorem.video/720p");
             storage.setUsedPreview(true);
         }
       } else {
@@ -281,16 +281,16 @@ export function Generator({
 
   const isPreviewGeneration = mode === "preview";
 
-  // For full mode, check subscription limits
+  // For full mode, check subscription or Single Shot credits (Smart Preview never consumes credits)
   const canGenerate = useMemo(() => {
     if (mode === "preview") {
-      // Preview mode: can generate if not logged in (will redirect) or if logged in and hasn't used preview
       return !hasUsedPreview;
     }
-    // Full mode: must be logged in and have subscription with remaining videos
     if (!isLoggedIn) return false;
-    if (subscriptionLoading) return true; // Allow while loading
-    return subscription ? subscription.videosRemaining > 0 : false;
+    if (subscriptionLoading) return true;
+    const subscriptionCredits = subscription?.videosRemaining ?? 0;
+    const singleShotCredits = subscription?.singleShotCredits ?? 0;
+    return subscriptionCredits > 0 || singleShotCredits > 0;
   }, [mode, hasUsedPreview, subscriptionLoading, subscription, isLoggedIn]);
 
   // Get blocked state message and CTA
@@ -329,9 +329,11 @@ export function Generator({
           variant: "destructive" as const,
         };
       }
-      if (subscription.videosRemaining === 0) {
+      const subscriptionCredits = subscription.videosRemaining ?? 0;
+      const singleShotCredits = subscription.singleShotCredits ?? 0;
+      if (subscriptionCredits === 0 && singleShotCredits === 0) {
         return {
-          message: "You've reached your video generation limit. Please subscribe to generate more videos.",
+          message: "You've reached your video generation limit. Subscribe or buy a Single Shot to continue.",
           cta: { text: "Upgrade Plan", href: "/pricing" },
           variant: "destructive" as const,
         };
@@ -349,10 +351,12 @@ export function Generator({
         {showSubscriptionInfo &&
           !subscriptionLoading &&
           subscription &&
-          subscription.plan !== "free" && (
+          (subscription.plan !== "free" || (subscription.singleShotCredits ?? 0) > 0) && (
             <SubscriptionInfo
               plan={subscription.plan}
               videosRemaining={subscription.videosRemaining}
+              singleShotCredits={subscription.singleShotCredits}
+              showCreditSource={mode === "full"}
             />
           )}
           
@@ -442,22 +446,20 @@ export function Generator({
                 <Link href="/signup" className="text-primary hover:underline">
                   signup
                 </Link>
-                . Full generation requires an active plan{" "}
-                <Link href="/pricing" className="text-primary hover:underline">
-                  subscribe
-                </Link>
-                .
-              </>
-            ) : subscription?.plan === "free" ? (
-              <>
-                Click &quot;Generate Video&quot; to see a smart preview. Full video generation available after{" "}
+                . Full generation requires an active{" "}
                 <Link href="/pricing" className="text-primary hover:underline">
                   subscription
                 </Link>
-                .
+              </>
+            ) : !subscription || subscription.plan === "free" ? (
+              <>
+                Click Generate Video to see a smart preview. Full video generation available after{" "}
+                <Link href="/pricing" className="text-primary underline  hover:underline">
+                  subscribing
+                </Link>
               </>
             ) : (
-              "Click &quot;Generate Video&quot; to see a smart preview."
+              "Click Generate Video to see a smart preview"
             )}
           </p>
         )}

@@ -3,12 +3,23 @@
 export interface Plan {
   id: string;
   name: string;
-  price: number;
   videosPerMonth: number;
+  monthlyPrice: number;
+  yearlyPrice: number;
   popular?: boolean;
 }
 
-export type SubscriptionPlan = "starter" | "creator" | "pro" ;
+export interface SingleShotProduct {
+  id: string;
+  name: string;
+  type: "one-time";
+  videosIncluded: number;
+  price: number;
+}
+
+export type SubscriptionPlan = "starter" | "creator" | "pro";
+
+export type BillingPeriod = "monthly" | "yearly";
 
 export interface PlanMap {
   [key: string]: SubscriptionPlan;

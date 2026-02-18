@@ -4,6 +4,8 @@ import Stripe from 'stripe';
 import {
   IPaymentService,
   CreateCheckoutSessionDto,
+  CreateSingleShotOrderDto,
+  ActivateSubscriptionResult,
 } from '@/core/ports/payment.service';
 import { SubscriptionPlan } from '@/domain/subscription.entity';
 
@@ -23,13 +25,13 @@ export class StripePaymentService implements IPaymentService {
   constructor(private readonly configService: ConfigService) {
     const paymentConfig = this.configService.get<{
       stripe: {
-      secretKey: string;
-      webhookSecret: string;
-      priceIds: {
-        starter: string;
-        creator: string;
-        pro: string;
-      };
+        secretKey: string;
+        webhookSecret: string;
+        priceIds: {
+          starter: string;
+          creator: string;
+          pro: string;
+        };
       };
     }>('payment');
 
@@ -55,9 +57,8 @@ export class StripePaymentService implements IPaymentService {
     }
 
     try {
-      // Create or retrieve Stripe customer
       const customers = await this.stripe.customers.list({
-        email: dto.userId, // In production, use actual user email
+        email: dto.userId,
         limit: 1,
       });
 
@@ -100,8 +101,20 @@ export class StripePaymentService implements IPaymentService {
     }
   }
 
+  async activateSubscription(
+    _subscriptionId: string,
+  ): Promise<ActivateSubscriptionResult | null> {
+    // Not used with Stripe (Stripe uses webhooks for activation)
+    return null;
+  }
+
+  async cancelSubscription(_subscriptionId: string): Promise<boolean> {
+    // Stripe subscriptions are cancelled via the portal or webhooks
+    return false;
+  }
+
   async createPortalSession(
-    userId: string,
+    _userId: string,
     customerId: string,
     returnUrl: string,
   ): Promise<{ url: string }> {
@@ -117,6 +130,20 @@ export class StripePaymentService implements IPaymentService {
         `Failed to create portal session: ${error instanceof Error ? error.message : 'Unknown error'}`,
       );
     }
+  }
+
+  async createSingleShotOrder(
+    _dto: CreateSingleShotOrderDto,
+  ): Promise<{ orderId: string; url: string }> {
+    throw new BadRequestException(
+      'Single Shot checkout is not supported with Stripe. Use PayPal.',
+    );
+  }
+
+  async captureSingleShotOrder(
+    _orderId: string,
+  ): Promise<{ userId: string } | null> {
+    return null;
   }
 
   handleWebhook(

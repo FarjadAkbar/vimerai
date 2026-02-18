@@ -9,3 +9,4 @@ export const SUBSCRIPTION_SERVICE_TOKEN = 'ISubscriptionService';
 export const PAYMENT_SERVICE_TOKEN = 'IPaymentService';
 export const VIDEO_GENERATION_PROVIDER_TOKEN = 'IVideoGenerationProvider';
 export const STORAGE_SERVICE_TOKEN = 'IStorageService';
+export const PLAN_REPOSITORY_TOKEN = 'IPlanRepository';
