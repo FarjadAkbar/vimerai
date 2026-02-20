@@ -1,7 +1,7 @@
 "use client";
 
 import { UseFormReturn } from "react-hook-form";
-import { Wand2, Clock, AlertCircle, Zap } from "lucide-react";
+import { AlertCircle, MoveRight, Zap } from "lucide-react";
 import type { GenerateVideoInput } from "@/lib/auth/schema";
 import ShinyText from "@/components/ShinyText";
 import { RainbowButton } from "@/components/ui/rainbow-button";
@@ -69,12 +69,42 @@ export function GeneratorForm({
             <FormItem>
               <FormLabel>Video Description</FormLabel>
               <FormControl>
-                <Textarea
-                  placeholder="E.g., A professional product launch video for a new smartphone showing features like camera, battery life, and design"
-                  className="min-h-32"
-                  {...field}
-                  disabled={isGenerating || (mode === "full" && !canGenerate)}
-                />
+                {/* Wrapper with relative positioning */}
+                <div className="relative">
+                  <Textarea
+                    placeholder="E.g., A professional product launch video for a new smartphone showing features like camera, battery life, and design"
+                    className="min-h-40 resize-none pb-16" // pb-16 so text doesn't go under button
+                    {...field}
+                    disabled={isGenerating || (mode === "full" && !canGenerate)}
+                  />
+
+                  {/* Rainbow Button inside the textarea box, bottom-right */}
+                  <div className="absolute bottom-3 right-3">
+                    <RainbowButton
+                      type="submit"
+                      size="sm"
+                      className={`gap-2 text-sm font-semibold h-9 px-4 ${
+                        !canGenerate && blockedReason
+                          ? "opacity-70 cursor-pointer"
+                          : ""
+                      } disabled:opacity-50 disabled:cursor-not-allowed`}
+                      disabled={isGenerating}
+                      onClick={(e) => {
+                        if (!canGenerate && blockedReason && onBlockedClick) {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          onBlockedClick();
+                        }
+                      }}
+                    >
+                      {isGenerating
+                        ? mode === "preview"
+                          ? "Generating Preview..."
+                          : "Generating..."
+                        : <MoveRight />}
+                    </RainbowButton>
+                  </div>
+                </div>
               </FormControl>
               <FormMessage />
               <p className="text-xs text-muted-foreground">
@@ -122,33 +152,6 @@ export function GeneratorForm({
             </FormItem>
           )}
         />
-
-        <RainbowButton
-          type="submit"
-          size="lg"
-          className={`w-full min-h-14 gap-2 text-base font-semibold ${
-            !canGenerate && blockedReason
-              ? "bg-primary/50 hover:bg-primary/60 cursor-pointer"
-              : "bg-primary hover:bg-primary/90"
-          } disabled:opacity-50 disabled:cursor-not-allowed`}
-          disabled={isGenerating}
-          onClick={(e) => {
-            if (!canGenerate && blockedReason && onBlockedClick) {
-              e.preventDefault();
-              e.stopPropagation();
-              onBlockedClick();
-            }
-          }}
-        >
-          {isGenerating ? (
-            <>
-              <Clock className="w-5 h-5 animate-spin" />
-              {mode === "preview" ? "Generating Preview..." : "Generating..."}
-            </>
-          ) : (
-            <>Generate Video</>
-          )}
-        </RainbowButton>
       </form>
     </Form>
   );

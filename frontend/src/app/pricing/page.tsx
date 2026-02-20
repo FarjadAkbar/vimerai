@@ -359,7 +359,7 @@ export default function PricingPage() {
                     key={plan.id}
                     className={`relative rounded-xl border-2 p-6 flex flex-col ${
                       isCurrentPlan
-                        ? "border-[#00c951] border-4 bg-[#005823]/30"
+                        ? "border-[#00c951] border-4 "
                         : "border-border bg-card"
                     }`}
                   >
