@@ -24,6 +24,47 @@ import type {
 import type { NotificationState } from "@/types/components.types";
 import { Spinner } from "@/components/ui/spinner";
 
+type PlanId = 'starter' | 'creator' | 'pro' | 'singleShot';
+
+// Features object outside component
+const subscriptionFeatures: Record<PlanId, string[]> = {
+  starter: [
+    "Create short-form videos optimized for social media",
+    "Video length up to 5 seconds",
+    "HD output (up to 720p)",
+    "Standard processing speed",
+    "Access to basic AI styles",
+    "One retry per video (technical failure only)",
+    "Watermark-free videos",
+    "Social media usage rights",
+    "Simple monthly quota",
+  ],
+  creator: [
+    "Create short-form videos optimized for social media",
+    "Video length up to 10 seconds",
+    "Full HD output (up to 1080p)",
+    "Faster processing speed",
+    "Access to premium AI styles",
+    "Two retries per video",
+    "Watermark-free videos",
+    "Commercial usage rights",
+    "Priority support",
+  ],
+  pro: [
+    "Create professional videos for any platform",
+    "Video length up to 30 seconds",
+    "4K output (up to 2160p)",
+    "Ultra-fast processing",
+    "Access to all AI styles",
+    "Unlimited retries",
+    "Watermark-free videos",
+    "Full commercial license",
+    "24/7 priority support",
+    "Custom branding options",
+  ],
+  
+};
+
 export default function PricingPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -79,6 +120,14 @@ export default function PricingPage() {
     });
   }, [searchParams, captureSingleShot, router]);
 
+
+    const getFeatures = (planId: string): string[] => {
+    // Convert planId to lowercase and handle variations
+    const normalizedPlanId = planId.toLowerCase() as PlanId;
+    return subscriptionFeatures[normalizedPlanId] || [];
+  };
+
+
   useEffect(() => {
     const subscriptionId = searchParams.get("subscription_id");
     const subSuccess = searchParams.get("subscription") === "success";
@@ -124,17 +173,21 @@ export default function PricingPage() {
   const plans: Plan[] = plansData?.plans ?? [];
   const singleShot = plansData?.singleShot ?? null;
 
-  const getFeatures = () => [
-    "Fast Mode generation",
-    "Smart Preview",
-    "Prompt Studio access",
-  ];
+  // const getFeatures = () => [
+  //   "Fast Mode generation",
+  //   "Smart Preview",
+  //   "Prompt Studio access",
+  // ];
 
   const getSingleShotFeatures = () => [
-    "1 video generation",
-    "Never expires",
-    "Consumed only when you generate",
-    "Fast Mode generation",
+    "One-time video generation",
+    "Video length up to 5 seconds",
+    "HD output (up to 720p)",
+    "Standard processing speed",
+    "Access to basic AI styles",
+    "No retries",
+    "Watermark-free video",
+    "Personal usage rights",
   ];
 
   const handleSubscribe = async (planId: string) => {
@@ -373,7 +426,7 @@ export default function PricingPage() {
                           {plan.videosPerMonth} video generations/month
                         </span>
                       </li>
-                      {getFeatures().map((feature, fIdx) => (
+                      {getFeatures(plan.id).map((feature, fIdx) => (
                         <li key={fIdx} className="flex items-start gap-3">
                           <Check className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
                           <span className="text-sm">{feature}</span>
