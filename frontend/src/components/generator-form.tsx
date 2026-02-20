@@ -1,7 +1,7 @@
 "use client";
 
 import { UseFormReturn } from "react-hook-form";
-import { AlertCircle, MoveRight, Zap } from "lucide-react";
+import { AlertCircle, MoveRight, Send, Zap } from "lucide-react";
 import type { GenerateVideoInput } from "@/lib/auth/schema";
 import ShinyText from "@/components/ShinyText";
 import { RainbowButton } from "@/components/ui/rainbow-button";
@@ -14,6 +14,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Textarea } from "@/components/ui/textarea";
+import { Spinner } from "./ui/spinner";
 
 interface GeneratorFormProps {
   form: UseFormReturn<GenerateVideoInput>;
@@ -83,7 +84,7 @@ export function GeneratorForm({
                     <RainbowButton
                       type="submit"
                       size="sm"
-                      className={`gap-2 text-sm font-semibold h-9 px-4 ${
+                      className={`gap-2 text-sm font-semibold h-9 rounded px-4 ${
                         !canGenerate && blockedReason
                           ? "opacity-70 cursor-pointer"
                           : ""
@@ -100,8 +101,8 @@ export function GeneratorForm({
                       {isGenerating
                         ? mode === "preview"
                           ? "Generating Preview..."
-                          : "Generating..."
-                        : <MoveRight />}
+                          : <Spinner className="size-6" />
+                        : <Send size={36} />}
                     </RainbowButton>
                   </div>
                 </div>

@@ -1,6 +1,6 @@
 // pricing.types.ts
 
-export type PlanId = "starter" | "creator" | "pro" | "singleshot" | "single";
+export type PlanId = "starter" | "creator" | "pro" | "single";
 
 export interface Plan {
   id: string;
