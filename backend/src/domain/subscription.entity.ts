@@ -5,6 +5,8 @@ export enum SubscriptionPlan {
   PRO = 'pro',
 }
 
+export type BillingPeriod = 'monthly' | 'yearly';
+
 export class Subscription {
   constructor(
     public readonly id: string,
@@ -16,6 +18,7 @@ export class Subscription {
     public readonly stripeCustomerId: string | null,
     public readonly stripeSubscriptionId: string | null,
     public readonly paypalSubscriptionId: string | null,
+    public readonly billingPeriod: BillingPeriod | null,
     public readonly createdAt: Date,
     public readonly updatedAt: Date,
   ) {}
@@ -28,6 +31,7 @@ export class Subscription {
     stripeCustomerId?: string | null,
     stripeSubscriptionId?: string | null,
     paypalSubscriptionId?: string | null,
+    billingPeriod?: BillingPeriod | null,
   ): Subscription {
     const now = new Date();
     return new Subscription(
@@ -40,6 +44,7 @@ export class Subscription {
       stripeCustomerId || null,
       stripeSubscriptionId || null,
       paypalSubscriptionId || null,
+      billingPeriod ?? null,
       now,
       now,
     );
@@ -56,6 +61,7 @@ export class Subscription {
       this.stripeCustomerId,
       this.stripeSubscriptionId,
       this.paypalSubscriptionId,
+      this.billingPeriod,
       this.createdAt,
       new Date(),
     );
@@ -72,6 +78,7 @@ export class Subscription {
       this.stripeCustomerId,
       this.stripeSubscriptionId,
       this.paypalSubscriptionId,
+      this.billingPeriod,
       this.createdAt,
       new Date(),
     );
@@ -91,6 +98,7 @@ export class Subscription {
       customerId,
       subscriptionId,
       this.paypalSubscriptionId,
+      this.billingPeriod,
       this.createdAt,
       new Date(),
     );
@@ -109,6 +117,24 @@ export class Subscription {
       this.stripeCustomerId,
       this.stripeSubscriptionId,
       paypalSubscriptionId,
+      this.billingPeriod,
+      this.createdAt,
+      new Date(),
+    );
+  }
+
+  updateBillingPeriod(billingPeriod: BillingPeriod): Subscription {
+    return new Subscription(
+      this.id,
+      this.userId,
+      this.plan,
+      this.videosUsed,
+      this.videosLimit,
+      this.isActive,
+      this.stripeCustomerId,
+      this.stripeSubscriptionId,
+      this.paypalSubscriptionId,
+      billingPeriod,
       this.createdAt,
       new Date(),
     );
@@ -125,6 +151,7 @@ export class Subscription {
       this.stripeCustomerId,
       this.stripeSubscriptionId,
       this.paypalSubscriptionId,
+      this.billingPeriod,
       this.createdAt,
       new Date(),
     );

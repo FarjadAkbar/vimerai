@@ -1,14 +1,12 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import {
-  SubscriptionController,
-  SubscriptionPublicController,
-} from './subscription.controller';
+import { SubscriptionController } from './subscription.controller';
 import {
   SubscriptionWebhookController,
   PayPalWebhookController,
 } from './subscription-webhook.controller';
 import { SubscriptionService } from './subscription.service';
+import { PlanSeedService } from './plan-seed.service';
 import { DatabaseModule } from '@/infrastructure/persistence/database.module';
 import { TypeOrmSubscriptionRepository } from '@/infrastructure/persistence/typeorm/repositories/subscription.repository';
 import { TypeOrmUserRepository } from '@/infrastructure/persistence/typeorm/repositories/user.repository';
@@ -24,12 +22,12 @@ import {
   imports: [DatabaseModule, PaymentModule, ConfigModule],
   controllers: [
     SubscriptionController,
-    SubscriptionPublicController,
     SubscriptionWebhookController,
     PayPalWebhookController,
   ],
   providers: [
     SubscriptionService,
+    PlanSeedService,
     {
       provide: 'ISubscriptionRepository',
       useClass: TypeOrmSubscriptionRepository,

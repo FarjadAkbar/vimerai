@@ -108,12 +108,12 @@ export function VideoGrid({
     <div className={className}>
       {/* Header */}
       {showHeader && (
-        <div className="mb-8">
-          <div className="flex items-center justify-between mb-4">
+        <div className="mb-10">
+          <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-4">
             <div>
-              <h1 className="text-4xl font-bold mb-2">{headerTitle}</h1>
+              <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-foreground mb-1.5">{headerTitle}</h1>
               {showSearch && (
-                <p className="text-muted-foreground">Manage and organize your generated videos</p>
+                <p className="text-muted-foreground text-sm">Search and manage your generated videos</p>
               )}
             </div>
             {headerAction}
@@ -141,10 +141,13 @@ export function VideoGrid({
           <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
         </div>
       ) : filteredVideos.length === 0 ? (
-        <div className="text-center py-12 rounded-xl border border-border bg-card">
-          <VideoIcon className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
-          <p className="text-muted-foreground mb-2">
+        <div className="text-center py-16 px-6 rounded-2xl border border-border bg-card/80 dark:bg-card/60 backdrop-blur-sm">
+          <VideoIcon className="w-14 h-14 text-muted-foreground/80 mx-auto mb-5" />
+          <p className="text-muted-foreground mb-1">
             {emptyMessage || (searchQuery ? "No videos found matching your search" : "No videos yet")}
+          </p>
+          <p className="text-sm text-muted-foreground/80 mb-6">
+            {searchQuery ? "Try a different search term" : "Create a video from the generator to see it here."}
           </p>
           {!searchQuery && emptyAction}
         </div>
@@ -216,25 +219,25 @@ export function VideoGrid({
                         {(video.status === "completed" || video.previewUrl) && (video.videoUrl || video.previewUrl) ? (
                           <>
                             <Button
-                              variant="outline"
+                              variant="default"
                               size="sm"
-                              className="flex-1 bg-transparent"
+                              className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground"
                               onClick={() => handleDownload(video.id)}
                               disabled={downloadVideo.isPending}
                             >
                               <Download className="w-4 h-4" /> Download
                             </Button>
                             <Link href={`/editor/${video.id}`}>
-                              <Button variant="outline" size="sm" className="bg-transparent">
+                              <Button variant="outline" size="sm" className="border-border hover:border-primary/50 hover:text-primary">
                                 Edit
                               </Button>
                             </Link>
                             <AlertDialog open={deleteDialogOpen && videoToDelete === video.id} onOpenChange={setDeleteDialogOpen}>
                               <AlertDialogTrigger asChild>
                                 <Button
-                                  variant="outline"
+                                  variant="ghost"
                                   size="sm"
-                                  className="bg-transparent"
+                                  className="text-muted-foreground hover:text-destructive hover:bg-destructive/10"
                                   onClick={() => handleDeleteClick(video.id)}
                                   disabled={deleteVideo.isPending}
                                 >
@@ -268,9 +271,9 @@ export function VideoGrid({
                             <AlertDialog open={deleteDialogOpen && videoToDelete === video.id} onOpenChange={setDeleteDialogOpen}>
                               <AlertDialogTrigger asChild>
                                 <Button
-                                  variant="outline"
+                                  variant="ghost"
                                   size="sm"
-                                  className="bg-transparent"
+                                  className="text-muted-foreground hover:text-destructive hover:bg-destructive/10"
                                   onClick={() => handleDeleteClick(video.id)}
                                   disabled={deleteVideo.isPending}
                                 >

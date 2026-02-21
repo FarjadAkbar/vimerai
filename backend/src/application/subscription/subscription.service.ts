@@ -22,11 +22,14 @@ import {
   PLAN_REPOSITORY_TOKEN,
 } from '@/core/tokens/injection.tokens';
 import { Subscription, SubscriptionPlan } from '@/domain/subscription.entity';
+import {
+  PAYPAL_PLAN_IDS_BY_REGION,
+  type PricingRegion,
+} from '@/infrastructure/config/payment.config';
 
 @Injectable()
 export class SubscriptionService implements ISubscriptionService {
   private readonly logger = new Logger(SubscriptionService.name);
-  private readonly paypalEnvironment: string;
 
   constructor(
     @Inject('ISubscriptionRepository')
@@ -40,26 +43,32 @@ export class SubscriptionService implements ISubscriptionService {
     @Inject(PLAN_REPOSITORY_TOKEN)
     private readonly planRepository: IPlanRepository,
     private readonly configService: ConfigService,
-  ) {
-    this.paypalEnvironment =
-      this.configService.get<string>('payment.paypal.environment') ?? 'sandbox';
-  }
+  ) {}
 
   /** Resolve video-per-month limit for a plan from DB, with fallback */
   private async getPlanLimit(plan: SubscriptionPlan): Promise<number> {
     const dbPlan = await this.planRepository.getPlanBySlug(plan);
     if (dbPlan) return dbPlan.videosPerMonth;
-    // Fallback if DB is empty (should not happen after seed)
+    // Fallback if DB is empty (should not happen after seed); must match seed-plans.ts
     const fallback: Record<string, number> = {
-      starter: 10,
-      creator: 50,
-      pro: 200,
+      starter: 3,
+      creator: 6,
+      pro: 10,
     };
     return fallback[plan] ?? 0;
   }
 
+  getPricingRegion(regionOverride?: PricingRegion | null): { region: 'global' | 'mea' } {
+    const region =
+      regionOverride ??
+      this.configService.get<PricingRegion>('payment.pricingRegion') ??
+      'global';
+    return { region };
+  }
+
   async getCurrentSubscription(userId: string): Promise<{
     plan: SubscriptionPlan;
+    billingPeriod: 'monthly' | 'yearly' | null;
     videosRemaining: number;
     limit: number;
     singleShotCredits: number;
@@ -73,6 +82,7 @@ export class SubscriptionService implements ISubscriptionService {
     if (!subscription) {
       return {
         plan: SubscriptionPlan.FREE,
+        billingPeriod: null,
         videosRemaining: 0,
         limit: 0,
         singleShotCredits,
@@ -81,6 +91,7 @@ export class SubscriptionService implements ISubscriptionService {
 
     return {
       plan: subscription.plan,
+      billingPeriod: subscription.billingPeriod,
       videosRemaining: subscription.getRemaining(),
       limit: subscription.videosLimit,
       singleShotCredits,
@@ -168,14 +179,12 @@ export class SubscriptionService implements ISubscriptionService {
     successUrl: string,
     cancelUrl: string,
   ): Promise<{ orderId: string; url: string }> {
-    // Get single-shot price from DB
-    const singleShotPlan =
-      await this.planRepository.getPlanBySlug('single-shot');
-    const price = singleShotPlan?.monthlyPrice ?? 4.99;
+    const amount =
+      this.configService.get<number>('payment.singleShotAmount') ?? 10;
 
     return this.paymentService.createSingleShotOrder({
       userId,
-      amount: price,
+      amount,
       currency: 'EUR',
       successUrl,
       cancelUrl,
@@ -199,19 +208,25 @@ export class SubscriptionService implements ISubscriptionService {
     billingPeriod: BillingPeriod,
     successUrl: string,
     cancelUrl: string,
+    regionOverride?: PricingRegion | null,
   ): Promise<{ sessionId: string; url: string }> {
-    // Look up plan from DB and resolve the correct PayPal plan ID for the current environment
-    const dbPlan = await this.planRepository.getPlanBySlug(plan);
-    const paypalPlanId = dbPlan?.getPaypalPlanId(
-      this.paypalEnvironment,
-      billingPeriod,
-    );
-
+    const pricingRegion: PricingRegion =
+      regionOverride ??
+      this.configService.get<PricingRegion>('payment.pricingRegion') ??
+      'global';
+    const regionPlans = PAYPAL_PLAN_IDS_BY_REGION[pricingRegion];
+    const planKey = `${plan}-${billingPeriod}`;
+    const paypalPlanId = regionPlans[planKey];
+    if (!paypalPlanId) {
+      throw new BadRequestException(
+        `PayPal plan for ${plan} (${billingPeriod}) is not configured for region ${pricingRegion}`,
+      );
+    }
     return this.paymentService.createCheckoutSession({
       userId,
       plan,
       billingPeriod,
-      paypalPlanId: paypalPlanId ?? undefined,
+      paypalPlanId,
       successUrl,
       cancelUrl,
     });
@@ -238,6 +253,7 @@ export class SubscriptionService implements ISubscriptionService {
         null,
         null,
         result.paypalSubscriptionId,
+        result.billingPeriod,
       );
       const active = subscription.updateActiveStatus(true);
       await this.subscriptionRepository.createSubscription(active);
@@ -248,6 +264,7 @@ export class SubscriptionService implements ISubscriptionService {
       const updated = subscription
         .updatePlan(result.plan, totalVideos)
         .updatePaypalSubscriptionId(result.paypalSubscriptionId)
+        .updateBillingPeriod(result.billingPeriod)
         .updateActiveStatus(true);
       await this.subscriptionRepository.updateSubscription(updated);
     }
@@ -355,10 +372,12 @@ export class SubscriptionService implements ISubscriptionService {
     switch (eventType) {
       case 'BILLING.SUBSCRIPTION.ACTIVATED': {
         if (!customId) return;
-        const sep = customId.indexOf('|');
-        if (sep === -1) return;
-        const userId = customId.slice(0, sep);
-        const planStr = customId.slice(sep + 1);
+        const parts = customId.split('|');
+        if (parts.length < 2) return;
+        const userId = parts[0];
+        const planStr = parts[1];
+        const billingPeriod =
+          parts[2] === 'yearly' ? ('yearly' as const) : ('monthly' as const);
         const planMap: Record<string, SubscriptionPlan> = {
           starter: SubscriptionPlan.STARTER,
           creator: SubscriptionPlan.CREATOR,
@@ -380,6 +399,7 @@ export class SubscriptionService implements ISubscriptionService {
             null,
             null,
             subscriptionId,
+            billingPeriod,
           );
           const active = subscription.updateActiveStatus(true);
           await this.subscriptionRepository.createSubscription(active);
@@ -387,6 +407,7 @@ export class SubscriptionService implements ISubscriptionService {
           const updated = subscription
             .updatePlan(plan, videosLimit)
             .updatePaypalSubscriptionId(subscriptionId)
+            .updateBillingPeriod(billingPeriod)
             .updateActiveStatus(true);
           await this.subscriptionRepository.updateSubscription(updated);
         }

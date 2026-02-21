@@ -5,7 +5,7 @@ import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Sparkles, AlertCircle, Lock, Eye, EyeOff} from "lucide-react"
+import { AlertCircle, Eye, EyeOff } from "lucide-react"
 import { loginSchema, type LoginInput } from "@/lib/auth/schema"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { useState, useEffect } from "react"
@@ -55,20 +55,18 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
-      <div className="w-full max-w-md space-y-8">
-        <Link href='/'>
-      {/* <ArrowLeftIcon />  */}
-        </Link>
-        <div className="text-center space-y-2">
-          <div className="flex items-center justify-center gap-2">
-            <Sparkles className="h-8 w-8 text-primary" />
-            <h1 className="text-3xl font-bold">VimeraAI</h1>
-          </div>
-          <p className="text-muted-foreground">Sign in to your account</p>
+    <div className="min-h-screen flex items-center justify-center px-4 py-12">
+      <div className="w-full max-w-md">
+        <div className="text-center mb-8">
+          <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight text-foreground">
+            Sign in to your account
+          </h1>
+          <p className="text-muted-foreground text-sm mt-2">Use your email and password to continue</p>
         </div>
 
-        <Form {...form}>
+        <div className="relative rounded-2xl border border-border/80 bg-card/80 dark:bg-card/60 backdrop-blur-xl p-6 sm:p-8 shadow-xl shadow-black/5 dark:shadow-black/20 ring-1 ring-white/5 dark:ring-white/5">
+          <div className="absolute inset-x-0 top-0 h-px rounded-t-2xl bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
+          <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             {form.formState.errors.root && (
               <div className="flex items-center gap-2 p-3 text-sm text-destructive bg-destructive/10 rounded-md">
@@ -97,36 +95,34 @@ export default function LoginPage() {
             />
 
             <FormField
-  control={form.control}
-  name="password"
-  render={({ field }) => (
-    <FormItem>
-      <FormLabel>Password</FormLabel>
-
-      <FormControl>
-        <div className="relative">
-          <Input
-            type={isVisible ? "text" : "password"}
-            placeholder="••••••••"
-            {...field}
-            disabled={login.isPending}
-            className="pr-10"   // right side space for button
-          />
-
-          <button
-            type="button"
-            onClick={togglePassword}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-primary"
-          >
-            {isVisible ? <Eye size={20} /> : <EyeOff size={20} />}
-          </button>
-        </div>
-      </FormControl>
-
-      <FormMessage />
-    </FormItem>
-  )}
-/>
+              control={form.control}
+              name="password"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Password</FormLabel>
+                  <FormControl>
+                    <div className="relative">
+                      <Input
+                        type={isVisible ? "text" : "password"}
+                        placeholder="••••••••"
+                        {...field}
+                        disabled={login.isPending}
+                        className="pr-10"
+                      />
+                      <button
+                        type="button"
+                        onClick={togglePassword}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                        aria-label={isVisible ? "Hide password" : "Show password"}
+                      >
+                        {isVisible ? <Eye size={18} /> : <EyeOff size={18} />}
+                      </button>
+                    </div>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
             <div className="flex items-center justify-between gap-4">
               {/* Remember Me Checkbox */}
@@ -159,15 +155,16 @@ export default function LoginPage() {
 
             <Button
               type="submit"
-              className="w-full"
+              className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-medium"
               disabled={login.isPending}
             >
               {login.isPending ? "Signing in..." : "Sign in"}
             </Button>
           </form>
         </Form>
+        </div>
 
-        <p className="text-center text-sm text-muted-foreground">
+        <p className="text-center text-sm text-muted-foreground mt-6">
           Don&apos;t have an account?{" "}
           <Link href="/signup" className="text-primary hover:underline">
             Sign up

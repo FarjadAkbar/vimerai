@@ -70,11 +70,11 @@ export function GeneratorForm({
             <FormItem>
               <FormLabel>Video Description</FormLabel>
               <FormControl>
-                {/* Wrapper with relative positioning */}
-                <div className="relative">
+                {/* Glassmorphism textarea wrapper */}
+                <div className="relative rounded-xl overflow-hidden border border-border/80 bg-muted/30 dark:bg-muted/20 backdrop-blur-xl shadow-lg">
                   <Textarea
                     placeholder="E.g., A professional product launch video for a new smartphone showing features like camera, battery life, and design"
-                    className="min-h-40 resize-none pb-16" // pb-16 so text doesn't go under button
+                    className="min-h-40 resize-none pb-16 border-0 bg-transparent focus-visible:ring-ring/30 placeholder:text-muted-foreground/80"
                     {...field}
                     disabled={isGenerating || (mode === "full" && !canGenerate)}
                   />
@@ -102,7 +102,7 @@ export function GeneratorForm({
                         ? mode === "preview"
                           ? "Generating Preview..."
                           : <Spinner className="size-6" />
-                        : <Send size={36} />}
+                        : <Send className="size-5" />}
                     </RainbowButton>
                   </div>
                 </div>

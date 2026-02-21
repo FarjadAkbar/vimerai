@@ -38,6 +38,9 @@ export class SubscriptionEntity {
   @Column({ nullable: true, type: 'varchar' })
   paypalSubscriptionId: string | null;
 
+  @Column({ nullable: true, type: 'varchar', length: 20 })
+  billingPeriod: string | null;
+
   @CreateDateColumn()
   createdAt: Date;
 
@@ -45,6 +48,10 @@ export class SubscriptionEntity {
   updatedAt: Date;
 
   static toDomain(entity: SubscriptionEntity): Subscription {
+    const billingPeriod =
+      entity.billingPeriod === 'yearly' || entity.billingPeriod === 'monthly'
+        ? (entity.billingPeriod as 'monthly' | 'yearly')
+        : null;
     return new Subscription(
       entity.id,
       entity.userId,
@@ -55,6 +62,7 @@ export class SubscriptionEntity {
       entity.stripeCustomerId,
       entity.stripeSubscriptionId,
       entity.paypalSubscriptionId ?? null,
+      billingPeriod,
       entity.createdAt,
       entity.updatedAt,
     );
@@ -71,6 +79,7 @@ export class SubscriptionEntity {
     entity.stripeCustomerId = domain.stripeCustomerId;
     entity.stripeSubscriptionId = domain.stripeSubscriptionId;
     entity.paypalSubscriptionId = domain.paypalSubscriptionId;
+    entity.billingPeriod = domain.billingPeriod;
     if (domain.createdAt) entity.createdAt = domain.createdAt;
     if (domain.updatedAt) entity.updatedAt = domain.updatedAt;
     return entity;

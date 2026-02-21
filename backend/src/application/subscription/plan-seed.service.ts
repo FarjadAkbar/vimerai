@@ -2,14 +2,11 @@ import { Injectable, Logger, Inject, OnModuleInit } from '@nestjs/common';
 import { v4 as uuidv4 } from 'uuid';
 import type { IPlanRepository } from '@/core/ports/plan.repository';
 import { Plan } from '@/domain/plan.entity';
-
-const PLAN_REPOSITORY_TOKEN = 'IPlanRepository';
+import { PLAN_REPOSITORY_TOKEN } from '@/core/tokens/injection.tokens';
 
 /**
  * Auto-seeds the plans table on first boot if it is empty.
- * For manual seeding with PayPal plan IDs, use:
- *   pnpm seed:plans          (skip if rows exist)
- *   pnpm seed:plans --force  (drop and re-create)
+ * Plans store only name and limit; PayPal plan IDs live on frontend / PayPal.
  */
 @Injectable()
 export class PlanSeedService implements OnModuleInit {
@@ -23,15 +20,11 @@ export class PlanSeedService implements OnModuleInit {
   async onModuleInit(): Promise<void> {
     const count = await this.planRepository.countPlans();
     if (count > 0) {
-      this.logger.log(
-        `Plans table has ${count} entries – skipping auto-seed. Use "pnpm seed:plans --force" to re-seed.`,
-      );
+      this.logger.log(`Plans table has ${count} entries – skipping auto-seed.`);
       return;
     }
 
-    this.logger.warn(
-      'Plans table is empty – inserting default plans. Run "pnpm seed:plans" to populate PayPal plan IDs from .env.',
-    );
+    this.logger.log('Plans table is empty – inserting default plans (name + limit only).');
     await this.seedDefaults();
   }
 
@@ -43,56 +36,11 @@ export class PlanSeedService implements OnModuleInit {
       name: string;
       type: 'subscription' | 'one-time';
       videos: number;
-      price: number;
-      discount: number;
-      popular: boolean;
-      order: number;
-      desc: string;
     }> = [
-      {
-        slug: 'starter',
-        name: 'Starter',
-        type: 'subscription',
-        videos: 10,
-        price: 9.99,
-        discount: 0.15,
-        popular: false,
-        order: 1,
-        desc: 'Perfect for getting started - 10 videos per month',
-      },
-      {
-        slug: 'creator',
-        name: 'AI Creator',
-        type: 'subscription',
-        videos: 50,
-        price: 29.99,
-        discount: 0.15,
-        popular: true,
-        order: 2,
-        desc: 'For content creators and marketers - 50 videos per month',
-      },
-      {
-        slug: 'pro',
-        name: 'Pro',
-        type: 'subscription',
-        videos: 200,
-        price: 99.99,
-        discount: 0.15,
-        popular: false,
-        order: 3,
-        desc: 'For professional creators - 200 videos per month',
-      },
-      {
-        slug: 'single-shot',
-        name: 'Single Shot',
-        type: 'one-time',
-        videos: 1,
-        price: 4.99,
-        discount: 0,
-        popular: false,
-        order: 4,
-        desc: 'One-time purchase - 1 video credit, no expiration',
-      },
+      { slug: 'starter', name: 'AI Starter', type: 'subscription', videos: 3 },
+      { slug: 'creator', name: 'AI Creator', type: 'subscription', videos: 6 },
+      { slug: 'pro', name: 'AI Pro Studio', type: 'subscription', videos: 10 },
+      { slug: 'single-shot', name: 'AI Single Shot', type: 'one-time', videos: 1 },
     ];
 
     for (const d of defaults) {
@@ -102,19 +50,6 @@ export class PlanSeedService implements OnModuleInit {
         d.name,
         d.type,
         d.videos,
-        d.price,
-        d.discount,
-        null, // paypalSandboxMonthly — fill via CLI seeder
-        null, // paypalSandboxYearly
-        null, // paypalLiveMonthly
-        null, // paypalLiveYearly
-        null, // stripeTestPriceId
-        null, // stripeLivePriceId
-        d.desc,
-        d.popular,
-        d.order,
-        true,
-        'europe',
         now,
         now,
       );

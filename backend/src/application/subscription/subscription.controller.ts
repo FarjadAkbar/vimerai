@@ -3,64 +3,78 @@ import {
   Get,
   Post,
   Body,
-  Query,
+  Req,
   UseGuards,
   ValidationPipe,
   HttpCode,
   HttpStatus,
-  Inject,
 } from '@nestjs/common';
+import type { Request } from 'express';
 import { SubscriptionService } from './subscription.service';
 import { CreateCheckoutDto } from './dto/create-checkout.dto';
 import { JwtAuthGuard } from '@/infrastructure/auth/jwt-auth.guard';
 import { CurrentUser } from '@/infrastructure/auth/current-user.decorator';
 import { SubscriptionPlan } from '@/domain/subscription.entity';
-import type { IPlanRepository } from '@/core/ports/plan.repository';
-import { PLAN_REPOSITORY_TOKEN } from '@/core/tokens/injection.tokens';
+import { getRegionFromRequest } from './pricing-region.util';
 
 @Controller('subscription')
-@UseGuards(JwtAuthGuard)
 export class SubscriptionController {
   constructor(private readonly subscriptionService: SubscriptionService) {}
 
+  /** Public: no auth. Returns pricing region from request geo (Vercel/Cloudflare) or config fallback. */
+  @Get('pricing-region')
+  async getPricingRegion(@Req() req: Request) {
+    const region = await getRegionFromRequest(req);
+    return this.subscriptionService.getPricingRegion(region);
+  }
+
   @Get('current')
+  @UseGuards(JwtAuthGuard)
   async getCurrent(@CurrentUser() user: { userId: string }) {
     return this.subscriptionService.getCurrentSubscription(user.userId);
   }
 
   @Get('usage')
+  @UseGuards(JwtAuthGuard)
   async getUsage(@CurrentUser() user: { userId: string }) {
     return this.subscriptionService.getUsage(user.userId);
   }
 
   @Post('checkout')
+  @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.OK)
   async createCheckout(
     @CurrentUser() user: { userId: string },
     @Body(ValidationPipe) dto: CreateCheckoutDto,
+    @Req() req: Request,
   ) {
+    const region = await getRegionFromRequest(req);
     return this.subscriptionService.createCheckoutSession(
       user.userId,
       dto.plan,
       dto.billingPeriod,
       dto.successUrl,
       dto.cancelUrl,
+      region,
     );
   }
 
   @Post('activate-subscription')
+  @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.OK)
   async activateSubscription(@Body('subscriptionId') subscriptionId: string) {
     return this.subscriptionService.activatePayPalSubscription(subscriptionId);
   }
 
   @Post('cancel-subscription')
+  @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.OK)
   async cancelSubscription(@CurrentUser() user: { userId: string }) {
     return this.subscriptionService.cancelSubscription(user.userId);
   }
 
   @Post('portal')
+  @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.OK)
   async createPortal(
     @CurrentUser() user: { userId: string },
@@ -70,6 +84,7 @@ export class SubscriptionController {
   }
 
   @Post('activate-mock')
+  @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.OK)
   async activateMockSubscription(
     @CurrentUser() user: { userId: string },
@@ -79,12 +94,14 @@ export class SubscriptionController {
   }
 
   @Post('purchase-single-shot')
+  @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.OK)
   async purchaseSingleShot(@CurrentUser() user: { userId: string }) {
     return this.subscriptionService.purchaseSingleShot(user.userId);
   }
 
   @Post('checkout-single-shot')
+  @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.OK)
   async createSingleShotCheckout(
     @CurrentUser() user: { userId: string },
@@ -99,48 +116,9 @@ export class SubscriptionController {
   }
 
   @Post('capture-single-shot')
+  @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.OK)
   async captureSingleShot(@Body('orderId') orderId: string) {
     return this.subscriptionService.captureSingleShot(orderId);
-  }
-}
-
-// ─── Public Plans Controller (no auth required, reads from DB) ──────────
-
-@Controller('subscription')
-export class SubscriptionPublicController {
-  constructor(
-    @Inject(PLAN_REPOSITORY_TOKEN)
-    private readonly planRepository: IPlanRepository,
-  ) {}
-
-  @Get('plans')
-  async getPlans(@Query('region') _region?: string) {
-    const region = _region || 'europe';
-    const allPlans = await this.planRepository.getAllActivePlans(region);
-
-    const subscriptionPlans = allPlans
-      .filter((p) => p.type === 'subscription')
-      .map((p) => ({
-        id: p.slug,
-        name: p.name,
-        videosPerMonth: p.videosPerMonth,
-        monthlyPrice: p.monthlyPrice,
-        yearlyPrice: p.yearlyPrice,
-        popular: p.popular,
-      }));
-
-    const singleShotPlan = allPlans.find((p) => p.type === 'one-time');
-    const singleShot = singleShotPlan
-      ? {
-          id: singleShotPlan.slug,
-          name: singleShotPlan.name,
-          type: 'one-time' as const,
-          videosIncluded: singleShotPlan.videosPerMonth,
-          price: singleShotPlan.monthlyPrice,
-        }
-      : null;
-
-    return { region, plans: subscriptionPlans, singleShot };
   }
 }

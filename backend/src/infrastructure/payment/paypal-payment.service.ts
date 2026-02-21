@@ -116,7 +116,7 @@ export class PayPalPaymentService implements IPaymentService {
 
     if (!planId) {
       throw new BadRequestException(
-        `PayPal plan ID not found for: ${dto.plan} (${dto.billingPeriod}). Check the plans table.`,
+        `PayPal plan ID is required for checkout. Provide paypalPlanId from frontend config.`,
       );
     }
 
@@ -127,7 +127,7 @@ export class PayPalPaymentService implements IPaymentService {
         '/v1/billing/subscriptions',
         {
           plan_id: planId,
-          custom_id: `${dto.userId}|${dto.plan}`,
+          custom_id: `${dto.userId}|${dto.plan}|${dto.billingPeriod}`,
           application_context: {
             brand_name: 'Vimerai',
             locale: 'en-US',
@@ -219,12 +219,13 @@ export class PayPalPaymentService implements IPaymentService {
         return null;
       }
 
-      // Parse custom_id: "userId|plan"
-      const sep = customId.indexOf('|');
-      if (sep === -1) return null;
+      // Parse custom_id: "userId|plan" (legacy) or "userId|plan|billingPeriod"
+      const parts = customId.split('|');
+      if (parts.length < 2) return null;
 
-      const userId = customId.slice(0, sep);
-      const planStr = customId.slice(sep + 1);
+      const userId = parts[0];
+      const planStr = parts[1];
+      const billingPeriod = (parts[2] === 'yearly' ? 'yearly' : 'monthly') as 'monthly' | 'yearly';
 
       const planMap: Record<string, SubscriptionPlan> = {
         starter: SubscriptionPlan.STARTER,
@@ -238,6 +239,7 @@ export class PayPalPaymentService implements IPaymentService {
       return {
         userId,
         plan,
+        billingPeriod,
         paypalSubscriptionId: subscriptionId,
         status,
       };
