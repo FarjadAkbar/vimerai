@@ -454,7 +454,7 @@ export function Generator({
             ) : !subscription || subscription.plan === "free" ? (
               <>
                 Click Generate Video to see a smart preview. Full video generation available after{" "}
-                <Link href="/pricing" className="text-primary hover:underline">
+                <Link href="/pricing" className="text-primary underline  hover:underline">
                   subscribing
                 </Link>
               </>

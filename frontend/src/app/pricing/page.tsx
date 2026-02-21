@@ -1,10 +1,10 @@
-"use client"
+"use client";
 
-import { useState, useEffect, useRef } from "react"
-import { useRouter, useSearchParams } from "next/navigation"
-import { Button } from "@/components/ui/button"
-import { Check } from "lucide-react"
-import { BorderBeam } from "@/components/ui/border-beam"
+import { useState, useEffect, useRef } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { Check } from "lucide-react";
+import { BorderBeam } from "@/components/ui/border-beam";
 import {
   usePlans,
   useCurrentSubscription,
@@ -12,39 +12,87 @@ import {
   useCreateSingleShotCheckout,
   useCaptureSingleShot,
   useActivateSubscription,
-} from "@/lib/hooks/use-subscription"
-import { useUser } from "@/lib/hooks/use-user"
-import { NotificationModal } from "@/components/notification-modal"
-import type { Plan, SubscriptionPlan, PlanMap, BillingPeriod } from "@/types/pricing.types"
-import type { NotificationState } from "@/types/components.types"
+} from "@/lib/hooks/use-subscription";
+import { useUser } from "@/lib/hooks/use-user";
+import { NotificationModal } from "@/components/notification-modal";
+import type {
+  Plan,
+  SubscriptionPlan,
+  PlanMap,
+  BillingPeriod,
+} from "@/types/pricing.types";
+import type { NotificationState } from "@/types/components.types";
+import { Spinner } from "@/components/ui/spinner";
+
+
+const prices = [9, 30, 90,];
+
+type PlanId = 'starter' | 'creator' | 'pro' | 'singleShot';
+
+const subscriptionFeatures: Record<PlanId, string[]> = {
+  starter: [
+    "Create short-form videos optimized for social media",
+    "Video length up to 5 seconds",
+    "HD output (up to 720p)",
+    "Standard processing speed",
+    "Access to basic AI styles",
+    "One retry per video (technical failure only)",
+    "Watermark-free videos",
+    "Social media usage rights",
+    "Simple monthly quota",
+  ],
+  creator: [
+    "Create short-form videos optimized for social media",
+    "Video length up to 10 seconds",
+    "Full HD output (up to 1080p)",
+    "Faster processing speed",
+    "Access to premium AI styles",
+    "Two retries per video",
+    "Watermark-free videos",
+    "Commercial usage rights",
+    "Priority support",
+  ],
+  pro: [
+    "Create professional videos for any platform",
+    "Video length up to 30 seconds",
+    "4K output (up to 2160p)",
+    "Ultra-fast processing",
+    "Access to all AI styles",
+    "Unlimited retries",
+    "Watermark-free videos",
+    "Full commercial license",
+    "24/7 priority support",
+    "Custom branding options",
+  ],
+  singleShot: [],
+};
 
 export default function PricingPage() {
-  const router = useRouter()
-  const searchParams = useSearchParams()
-  const { data: userData } = useUser()
-  const { data: currentSubscription } = useCurrentSubscription()
-  const { data: plansData, isLoading: loading } = usePlans()
-  const createCheckout = useCreateCheckout()
-  const createSingleShotCheckout = useCreateSingleShotCheckout()
-  const captureSingleShot = useCaptureSingleShot()
-  const activateSubscription = useActivateSubscription()
-  const [billingPeriod, setBillingPeriod] = useState<BillingPeriod>("monthly")
-  const [activatingPlanId, setActivatingPlanId] = useState<string | null>(null)
-  const [notification, setNotification] = useState<NotificationState | null>(null)
-  const paypalCaptureAttempted = useRef(false)
-  const subscriptionActivateAttempted = useRef(false)
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const { data: userData } = useUser();
+  const { data: currentSubscription } = useCurrentSubscription();
+  const { data: plansData, isLoading: loading } = usePlans();
+  const createCheckout = useCreateCheckout();
+  const createSingleShotCheckout = useCreateSingleShotCheckout();
+  const captureSingleShot = useCaptureSingleShot();
+  const activateSubscription = useActivateSubscription();
+  const [billingPeriod, setBillingPeriod] = useState<BillingPeriod>("monthly");
+  const [activatingPlanId, setActivatingPlanId] = useState<string | null>(null);
+  const [notification, setNotification] = useState<NotificationState | null>(null);
+  const paypalCaptureAttempted = useRef(false);
+  const subscriptionActivateAttempted = useRef(false);
 
-  // Handle return from PayPal Single Shot: capture order and show success
   useEffect(() => {
-    const token = searchParams.get("token")
-    const paypalSuccess = searchParams.get("paypal") === "success"
-    if (!token || !paypalSuccess || paypalCaptureAttempted.current) return
+    const token = searchParams.get("token");
+    const paypalSuccess = searchParams.get("paypal") === "success";
+    if (!token || !paypalSuccess || paypalCaptureAttempted.current) return;
 
-    paypalCaptureAttempted.current = true
+    paypalCaptureAttempted.current = true;
     captureSingleShot.mutate(token, {
       onSuccess: (data) => {
         if (data?.singleShotCredits != null) {
-          window.history.replaceState({}, "", "/pricing")
+          window.history.replaceState({}, "", "/pricing");
           setNotification({
             type: "success",
             title: "Single Shot Purchased",
@@ -52,41 +100,44 @@ export default function PricingPage() {
             action: {
               label: "Start Generating",
               onClick: () => {
-                setNotification(null)
-                router.push("/")
+                setNotification(null);
+                router.push("/");
               },
             },
-          })
+          });
         }
       },
       onError: () => {
-        paypalCaptureAttempted.current = false
-        window.history.replaceState({}, "", "/pricing")
+        paypalCaptureAttempted.current = false;
+        window.history.replaceState({}, "", "/pricing");
         setNotification({
           type: "error",
           title: "Capture Failed",
           message: "We could not complete your purchase. Please contact support if you were charged.",
-        })
+        });
       },
-    })
-  }, [searchParams, captureSingleShot, router])
+    });
+  }, [searchParams, captureSingleShot, router]);
 
-  // Handle return from PayPal Subscription: activate subscription
+  const getFeatures = (planId: string): string[] => {
+    const normalizedPlanId = planId.toLowerCase() as PlanId;
+    return subscriptionFeatures[normalizedPlanId] || [];
+  };
+
   useEffect(() => {
-    const subscriptionId = searchParams.get("subscription_id")
-    const subSuccess = searchParams.get("subscription") === "success"
-    if (!subscriptionId || !subSuccess || subscriptionActivateAttempted.current)
-      return
+    const subscriptionId = searchParams.get("subscription_id");
+    const subSuccess = searchParams.get("subscription") === "success";
+    if (!subscriptionId || !subSuccess || subscriptionActivateAttempted.current) return;
 
-    subscriptionActivateAttempted.current = true
+    subscriptionActivateAttempted.current = true;
     activateSubscription.mutate(subscriptionId, {
       onSuccess: (data) => {
         if (data?.plan) {
-          window.history.replaceState({}, "", "/pricing")
+          window.history.replaceState({}, "", "/pricing");
           const planName =
             data.plan === "creator"
               ? "AI Creator"
-              : data.plan.charAt(0).toUpperCase() + data.plan.slice(1)
+              : data.plan.charAt(0).toUpperCase() + data.plan.slice(1);
           setNotification({
             type: "success",
             title: "Subscription Activated",
@@ -94,44 +145,46 @@ export default function PricingPage() {
             action: {
               label: "Start Generating",
               onClick: () => {
-                setNotification(null)
-                router.push("/")
+                setNotification(null);
+                router.push("/");
               },
             },
-          })
+          });
         }
       },
       onError: () => {
-        subscriptionActivateAttempted.current = false
-        window.history.replaceState({}, "", "/pricing")
+        subscriptionActivateAttempted.current = false;
+        window.history.replaceState({}, "", "/pricing");
         setNotification({
           type: "error",
           title: "Activation Failed",
-          message:
-            "We could not activate your subscription. Please contact support if you were charged.",
-        })
+          message: "We could not activate your subscription. Please contact support if you were charged.",
+        });
       },
-    })
-  }, [searchParams, activateSubscription, router])
+    });
+  }, [searchParams, activateSubscription, router]);
 
-  const plans: Plan[] = plansData?.plans ?? []
-  const singleShot = plansData?.singleShot ?? null
+  const plans: Plan[] = plansData?.plans ?? [];
+  const singleShot = plansData?.singleShot ?? null;
 
-  const getFeatures = () => {
-    return [
-      "Fast Mode generation",
-      "Smart Preview",
-      "Prompt Studio access",
-    ]
-  }
+  const getSingleShotFeatures = () => [
+    "One-time video generation",
+    "Video length up to 5 seconds",
+    "HD output (up to 720p)",
+    "Standard processing speed",
+    "Access to basic AI styles",
+    "No retries",
+    "Watermark-free video",
+    "Personal usage rights",
+  ];
 
   const handleSubscribe = async (planId: string) => {
     if (!userData?.user) {
-      router.push("/signup")
-      return
+      router.push("/signup");
+      return;
     }
-    const selectedPlan = plans.find((p) => p.id === planId)
-    if (!selectedPlan) return
+    const selectedPlan = plans.find((p) => p.id === planId);
+    if (!selectedPlan) return;
 
     if (
       currentSubscription &&
@@ -141,14 +194,12 @@ export default function PricingPage() {
       const currentPlanName =
         currentSubscription.plan === "creator"
           ? "AI Creator"
-          : currentSubscription.plan.charAt(0).toUpperCase() +
-            currentSubscription.plan.slice(1)
+          : currentSubscription.plan.charAt(0).toUpperCase() + currentSubscription.plan.slice(1);
       const newPlanName =
         planId === "creator"
           ? "AI Creator"
-          : planId.charAt(0).toUpperCase() + planId.slice(1)
-      const totalVideos =
-        currentSubscription.videosRemaining + selectedPlan.videosPerMonth
+          : planId.charAt(0).toUpperCase() + planId.slice(1);
+      const totalVideos = currentSubscription.videosRemaining + selectedPlan.videosPerMonth;
 
       setNotification({
         type: "info",
@@ -157,52 +208,57 @@ export default function PricingPage() {
         action: {
           label: "Add Plan",
           onClick: () => {
-            setNotification(null)
-            proceedWithSubscription(planId)
+            setNotification(null);
+            proceedWithSubscription(planId);
           },
         },
-      })
-      return
+      });
+      return;
     }
-    proceedWithSubscription(planId)
-  }
+    proceedWithSubscription(planId);
+  };
 
   const proceedWithSubscription = (planId: string) => {
     const planMap: PlanMap = {
       starter: "starter",
       creator: "creator",
       pro: "pro",
-    }
-    const plan = planMap[planId] as SubscriptionPlan
-    if (!plan) return
+    };
+    const plan = planMap[planId] as SubscriptionPlan;
+    if (!plan) return;
 
-    setActivatingPlanId(planId)
-    const origin = typeof window !== "undefined" ? window.location.origin : ""
-    const successUrl = `${origin}/pricing?subscription=success`
-    const cancelUrl = `${origin}/pricing`
+    setActivatingPlanId(planId);
+    const origin = typeof window !== "undefined" ? window.location.origin : "";
+    const successUrl = `${origin}/pricing?subscription=success`;
+    const cancelUrl = `${origin}/pricing`;
     createCheckout.mutate(
       { plan, billingPeriod, successUrl, cancelUrl },
-      {
-        onSettled: () => setActivatingPlanId(null),
-      },
-    )
-  }
+      { onSettled: () => setActivatingPlanId(null) },
+    );
+  };
 
   const handlePurchaseSingleShot = () => {
     if (!userData?.user) {
-      router.push("/signup")
-      return
+      router.push("/signup");
+      return;
     }
-    const origin = typeof window !== "undefined" ? window.location.origin : ""
-    const successUrl = `${origin}/pricing?paypal=success`
-    const cancelUrl = `${origin}/pricing`
-    createSingleShotCheckout.mutate({ successUrl, cancelUrl })
-  }
+    const origin = typeof window !== "undefined" ? window.location.origin : "";
+    const successUrl = `${origin}/pricing?paypal=success`;
+    const cancelUrl = `${origin}/pricing`;
+    createSingleShotCheckout.mutate({ successUrl, cancelUrl });
+  };
+
+  const getPlanDescription = (planId: string) => {
+    if (planId === "starter") return "Perfect for getting started";
+    if (planId === "creator") return "For content creators and marketers";
+    return "For professional creators";
+  };
 
   return (
     <>
       <div className="min-h-screen bg-background">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+          {/* Header */}
           <div className="text-center mb-16">
             <h1 className="text-4xl md:text-5xl font-bold mb-4">
               Simple, Transparent Pricing
@@ -219,7 +275,7 @@ export default function PricingPage() {
                 <span className="capitalize">
                   {currentSubscription?.plan === "creator"
                     ? "AI Creator"
-                    : currentSubscription?.plan ?? ""}
+                    : (currentSubscription?.plan ?? "")}
                 </span>
                 {(currentSubscription?.videosRemaining ?? 0) > 0 && (
                   <span className="ml-2 text-sm">
@@ -231,16 +287,14 @@ export default function PricingPage() {
                 {(currentSubscription?.singleShotCredits ?? 0) > 0 && (
                   <span className="ml-2 text-sm">
                     {currentSubscription?.singleShotCredits} Single Shot
-                    {(currentSubscription?.singleShotCredits ?? 0) !== 1
-                      ? "s"
-                      : ""}
+                    {(currentSubscription?.singleShotCredits ?? 0) !== 1 ? "s" : ""}
                   </span>
                 )}
               </div>
             )}
           </div>
 
-          {/* Billing toggle: Monthly (default) / Yearly */}
+          {/* Billing toggle */}
           {plans.length > 0 && (
             <div className="flex justify-center gap-2 mb-10">
               <Button
@@ -261,146 +315,146 @@ export default function PricingPage() {
           )}
 
           {loading ? (
-            <div className="text-center py-12">
-              <p className="text-muted-foreground">Loading plans...</p>
+            <div className="flex items-center justify-center min-h-[400px]">
+              <Spinner className="size-8" />
             </div>
           ) : (
-            <div className="grid md:grid-cols-3 gap-6 max-w-6xl mx-auto">
-              {plans.map((plan) => {
+            <div className="grid md:grid-cols-4 gap-4 max-w-6xl mx-auto items-stretch">
+              {/* ── Subscription plan cards ── */}
+              {plans.map((plan, index) => {  // ✅ index added here
                 const isCurrentPlan =
-                  currentSubscription && currentSubscription.plan === plan.id
-                const price =
-                  billingPeriod === "monthly"
-                    ? plan.monthlyPrice
-                    : plan.yearlyPrice
+                  currentSubscription && currentSubscription.plan === plan.id;
 
                 return (
                   <div
                     key={plan.id}
-                    className={`relative rounded-xl border-2 p-8 w-full ${
-                      plan.popular
-                        ? "border-primary bg-primary/5 ring-2 ring-primary"
+                    className={`relative rounded-xl border-2 p-6 flex flex-col ${
+                      isCurrentPlan
+                        ? "border-[#00c951] border-4"
                         : "border-border bg-card"
                     }`}
                   >
+                    {/* Badges */}
                     {plan.popular && (
-                      <>
-                        <BorderBeam
-                          size={100}
-                          duration={6}
-                          colorFrom="#ffaa40"
-                          colorTo="#9c40ff"
-                          borderWidth={2}
-                        />
-                        <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1 bg-primary text-primary-foreground text-sm font-medium rounded-full z-10">
-                          Most Popular
-                        </div>
-                      </>
+                      <BorderBeam
+                        size={100}
+                        duration={6}
+                        colorFrom="#ffaa40"
+                        className="opacity-60"
+                        colorTo="#9c40ff"
+                        borderWidth={2}
+                      />
                     )}
                     {isCurrentPlan && (
                       <div className="absolute -top-4 right-4 px-3 py-1 bg-green-500 text-white text-xs font-medium rounded-full z-10">
                         Active
                       </div>
                     )}
-                    <h3 className="text-2xl font-bold mb-2">{plan.name}</h3>
-                    <p className="text-muted-foreground text-sm mb-6">
-                      {plan.id === "starter"
-                        ? "Perfect for getting started"
-                        : plan.id === "creator"
-                          ? "For content creators and marketers"
-                          : "For professional creators"}
+
+                    {/* ROW 1 — Plan name */}
+                    <h3 className="text-xl font-bold mb-2">{plan.name}</h3>
+
+                    {/* ROW 2 — Description */}
+                    <p className="text-muted-foreground text-sm mb-6 min-h-[40px]">
+                      {getPlanDescription(plan.id)}
                     </p>
+
+                    {/* ROW 3 — Price ✅ Fixed */}
                     <div className="mb-6">
                       <span className="text-4xl font-bold">
-                        &euro;{price}
+                        &euro;{billingPeriod === "monthly" ? Math.round(prices[index]) : Math.floor(prices[index] * 12 * 0.85)}
                       </span>
-                      <span className="text-muted-foreground">
+                      <span className="text-muted-foreground text-sm">
                         /{billingPeriod === "monthly" ? "month" : "year"}
                       </span>
                     </div>
-                    <ul className="space-y-3 mb-8">
-                      <li className="flex items-start gap-3">
-                        <Check className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
-                        <span className="text-sm">
-                          {plan.videosPerMonth} video generations/month
-                        </span>
-                      </li>
-                      {getFeatures().map((feature, fIdx) => (
-                        <li key={fIdx} className="flex items-start gap-3">
-                          <Check className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
-                          <span className="text-sm">{feature}</span>
-                        </li>
-                      ))}
-                    </ul>
+
+                    {/* ROW 4 — CTA button */}
                     <Button
-                      className="w-full"
-                      variant={plan.popular ? "default" : "outline"}
+                      className={`w-full mb-6 bg-white text-black hover:bg-gray-100 ${
+                        isCurrentPlan ? "bg-white text-black" : ""
+                      }`}
                       onClick={() => handleSubscribe(plan.id)}
-                      disabled={activatingPlanId !== null || isCurrentPlan}
+                      disabled={activatingPlanId !== null || !!isCurrentPlan}
                     >
                       {activatingPlanId === plan.id
                         ? "Redirecting to PayPal..."
                         : isCurrentPlan
                           ? "Current Plan"
-                          : currentSubscription &&
-                              currentSubscription.plan !== "free"
-                            ? "Stack Plan"
-                            : "Subscribe with PayPal"}
+                          : "Subscribe"}
                     </Button>
-                  </div>
-                )
-              })}
-            </div>
-          )}
 
-          {/* Single Shot card */}
-          {singleShot && (
-            <div className="mt-12 max-w-md mx-auto">
-              <div className="rounded-xl border-2 border-border bg-card p-8">
-                <h3 className="text-2xl font-bold mb-2">{singleShot.name}</h3>
-                <p className="text-muted-foreground text-sm mb-6">
-                  One-time purchase. One video credit. No expiration. Use it
-                  whenever you want.
-                </p>
-                <div className="mb-6">
-                  <span className="text-4xl font-bold">
-                    &euro;{singleShot.price}
-                  </span>
-                  <span className="text-muted-foreground"> one-time</span>
+                    {/* ROW 5 — Features */}
+                    <ul className="space-y-3 flex-1">
+                      <li className="flex items-start gap-3">
+                        <Check className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
+                        <span className="text-sm">
+                          {plan.videosPerMonth} video generations/month
+                        </span>
+                      </li>
+                      {getFeatures(plan.id).map((feature, fIdx) => (
+                        <li key={fIdx} className="flex items-start gap-3">
+                          <Check className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
+                          <span className="text-sm">{feature}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                );
+              })}
+
+              {/* ── Single Shot card ── */}
+              {singleShot && (
+                <div className="relative rounded-xl border-2 border-blue-400 bg-card p-6 flex flex-col">
+                  {(currentSubscription?.singleShotCredits ?? 0) > 0 && (
+                    <div className="absolute -top-4 right-4 px-3 py-1 bg-green-500 text-white text-xs font-medium rounded-full z-10">
+                      {currentSubscription?.singleShotCredits} Credits
+                    </div>
+                  )}
+
+                  {/* ROW 1 — Name */}
+                  <h3 className="text-xl font-bold mb-2">{singleShot.name}</h3>
+
+                  {/* ROW 2 — Description */}
+                  <p className="text-muted-foreground text-sm mb-6 min-h-[40px]">
+                    One-time purchase. No expiration. Use whenever you want.
+                  </p>
+
+                  {/* ROW 3 — Price */}
+                  <div className="mb-6">
+                    <span className="text-4xl font-bold">
+                      &euro;10
+                    </span>
+                    <span className="text-muted-foreground text-sm"> /one-time</span>
+                  </div>
+
+                  {/* ROW 4 — CTA button */}
+                  <Button
+                    className="w-full mb-6 bg-white text-black hover:bg-gray-100"
+                    onClick={handlePurchaseSingleShot}
+                    disabled={createSingleShotCheckout.isPending}
+                  >
+                    {createSingleShotCheckout.isPending
+                      ? "Redirecting to PayPal..."
+                      : "Subscribe"}
+                  </Button>
+
+                  {/* ROW 5 — Features */}
+                  <ul className="space-y-3 flex-1">
+                    {getSingleShotFeatures().map((feature, fIdx) => (
+                      <li key={fIdx} className="flex items-start gap-3">
+                        <Check className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
+                        <span className="text-sm">{feature}</span>
+                      </li>
+                    ))}
+                  </ul>
                 </div>
-                <ul className="space-y-3 mb-8">
-                  <li className="flex items-start gap-3">
-                    <Check className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
-                    <span className="text-sm">
-                      {singleShot.videosIncluded} video generation
-                    </span>
-                  </li>
-                  <li className="flex items-start gap-3">
-                    <Check className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
-                    <span className="text-sm">Never expires</span>
-                  </li>
-                  <li className="flex items-start gap-3">
-                    <Check className="w-5 h-5 text-primary mt-0.5 flex-shrink-0" />
-                    <span className="text-sm">
-                      Consumed only when you generate
-                    </span>
-                  </li>
-                </ul>
-                <Button
-                  className="w-full"
-                  variant="outline"
-                  onClick={handlePurchaseSingleShot}
-                  disabled={createSingleShotCheckout.isPending}
-                >
-                  {createSingleShotCheckout.isPending
-                    ? "Redirecting to PayPal..."
-                    : "Buy with PayPal"}
-                </Button>
-              </div>
+              )}
             </div>
           )}
         </div>
       </div>
+
       {notification && (
         <NotificationModal
           open={!!notification}
@@ -413,5 +467,5 @@ export default function PricingPage() {
         />
       )}
     </>
-  )
+  );
 }

@@ -2,7 +2,7 @@
 import { useLogout } from "@/lib/hooks/use-auth";
 import { Progress } from "@/components/ui/progress";
 import { useUser } from "@/lib/hooks/use-user";
-import { Crown, LogOut, Mail, Settings, Sparkles, Video } from "lucide-react";
+import {  LogOut, Mail,  Sparkles} from "lucide-react";
 import Link from "next/link";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -43,24 +43,16 @@ const Header = () => {
     router.push(href);
   }
   return (
-    <nav className="sticky top-0 z-50 border-b border-border bg-background/95 backdrop-blur-md">
+    <nav className="sticky top-0 z-50 border-b border-border  backdrop-blur-md">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
         <Link href="/" className="flex items-center gap-2">
           {/* Add public/logo.svg to use your logo; Sparkles icon is fallback */}
-          <img
-            src="/logo.svg"
-            alt="Vimerai"
-            className="h-8 w-auto object-contain"
-            onError={(e) => {
-              e.currentTarget.classList.add("hidden");
-              const fallback = e.currentTarget.nextElementSibling as HTMLElement | null;
-              if (fallback) fallback.classList.remove("hidden");
-            }}
-          />
+         
           <div className="logo-fallback hidden w-8 h-8 flex items-center justify-center rounded-lg bg-primary">
             <Sparkles className="w-5 h-5 text-primary-foreground" />
           </div>
-          <span className="text-xl font-bold">Vimerai</span>
+          <img src="/platform/logo-vimera.png" alt="Vimera" className="h-6 sm:h-8 md:h-9 w-auto object-contain" />
+          {/* <span className="text-xl font-bold">VimeraAI</span> */}
         </Link>
         <div className="flex items-center gap-3">
           {userData?.user ? (
@@ -72,15 +64,15 @@ const Header = () => {
                 <Button variant="ghost" size="sm" onClick={(e) => handleNavigation("/my-videos", e)}>
                   My Videos
                 </Button>
-                {/* <Link href="/prompt-studio" onClick={(e) => handleNavigation}>
+                <Link href="/prompt-studio" onClick={(e) => handleNavigation}>
                   <Button variant="ghost" size="sm">
                     Prompt Studio
                   </Button>
-                </Link> */}
+                </Link>
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="text-muted-foreground"
+                  className="text-white"
                   onClick={(e) => handleNavigation("/pricing", e)}
                 >
                   Pricing

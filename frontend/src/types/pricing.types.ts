@@ -1,4 +1,6 @@
-// Pricing page types
+// pricing.types.ts
+
+export type PlanId = "starter" | "creator" | "pro" | "single";
 
 export interface Plan {
   id: string;
@@ -17,7 +19,7 @@ export interface SingleShotProduct {
   price: number;
 }
 
-export type SubscriptionPlan = "starter" | "creator" | "pro";
+export type SubscriptionPlan = "starter" | "creator" | "pro" | "singleshot";
 
 export type BillingPeriod = "monthly" | "yearly";
 
