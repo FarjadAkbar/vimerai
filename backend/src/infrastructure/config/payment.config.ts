@@ -21,4 +21,7 @@ export default registerAs('payment', () => ({
     environment: process.env.PAYPAL_ENVIRONMENT || 'sandbox',
     webhookId: process.env.PAYPAL_WEBHOOK_ID || '',
   },
+
+  // Single-shot one-time purchase amount (EUR); pricing managed on PayPal
+  singleShotAmount: Number(process.env.SINGLE_SHOT_AMOUNT || '10') || 10,
 }));

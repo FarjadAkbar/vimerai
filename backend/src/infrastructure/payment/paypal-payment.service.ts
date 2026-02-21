@@ -116,7 +116,7 @@ export class PayPalPaymentService implements IPaymentService {
 
     if (!planId) {
       throw new BadRequestException(
-        `PayPal plan ID not found for: ${dto.plan} (${dto.billingPeriod}). Check the plans table.`,
+        `PayPal plan ID is required for checkout. Provide paypalPlanId from frontend config.`,
       );
     }
 

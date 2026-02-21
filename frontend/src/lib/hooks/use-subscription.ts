@@ -20,13 +20,6 @@ export const useUsage = () => {
   });
 };
 
-export const usePlans = () => {
-  return useQuery({
-    queryKey: ['subscription', 'plans'],
-    queryFn: () => subscriptionApi.getPlans(),
-  });
-};
-
 export const useCreateCheckout = () => {
   return useMutation({
     mutationFn: (data: CreateCheckoutRequest) =>

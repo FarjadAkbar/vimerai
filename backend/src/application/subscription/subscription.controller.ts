@@ -3,20 +3,16 @@ import {
   Get,
   Post,
   Body,
-  Query,
   UseGuards,
   ValidationPipe,
   HttpCode,
   HttpStatus,
-  Inject,
 } from '@nestjs/common';
 import { SubscriptionService } from './subscription.service';
 import { CreateCheckoutDto } from './dto/create-checkout.dto';
 import { JwtAuthGuard } from '@/infrastructure/auth/jwt-auth.guard';
 import { CurrentUser } from '@/infrastructure/auth/current-user.decorator';
 import { SubscriptionPlan } from '@/domain/subscription.entity';
-import type { IPlanRepository } from '@/core/ports/plan.repository';
-import { PLAN_REPOSITORY_TOKEN } from '@/core/tokens/injection.tokens';
 
 @Controller('subscription')
 @UseGuards(JwtAuthGuard)
@@ -43,6 +39,7 @@ export class SubscriptionController {
       user.userId,
       dto.plan,
       dto.billingPeriod,
+      dto.paypalPlanId,
       dto.successUrl,
       dto.cancelUrl,
     );
@@ -102,45 +99,5 @@ export class SubscriptionController {
   @HttpCode(HttpStatus.OK)
   async captureSingleShot(@Body('orderId') orderId: string) {
     return this.subscriptionService.captureSingleShot(orderId);
-  }
-}
-
-// ─── Public Plans Controller (no auth required, reads from DB) ──────────
-
-@Controller('subscription')
-export class SubscriptionPublicController {
-  constructor(
-    @Inject(PLAN_REPOSITORY_TOKEN)
-    private readonly planRepository: IPlanRepository,
-  ) {}
-
-  @Get('plans')
-  async getPlans(@Query('region') _region?: string) {
-    const region = _region || 'europe';
-    const allPlans = await this.planRepository.getAllActivePlans(region);
-
-    const subscriptionPlans = allPlans
-      .filter((p) => p.type === 'subscription')
-      .map((p) => ({
-        id: p.slug,
-        name: p.name,
-        videosPerMonth: p.videosPerMonth,
-        monthlyPrice: p.monthlyPrice,
-        yearlyPrice: p.yearlyPrice,
-        popular: p.popular,
-      }));
-
-    const singleShotPlan = allPlans.find((p) => p.type === 'one-time');
-    const singleShot = singleShotPlan
-      ? {
-          id: singleShotPlan.slug,
-          name: singleShotPlan.name,
-          type: 'one-time' as const,
-          videosIncluded: singleShotPlan.videosPerMonth,
-          price: singleShotPlan.monthlyPrice,
-        }
-      : null;
-
-    return { region, plans: subscriptionPlans, singleShot };
   }
 }

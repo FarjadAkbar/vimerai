@@ -1,4 +1,4 @@
-import { IsEnum, IsString, IsIn } from 'class-validator';
+import { IsEnum, IsString, IsIn, IsNotEmpty } from 'class-validator';
 import { SubscriptionPlan } from '@/domain/subscription.entity';
 
 export class CreateCheckoutDto {
@@ -7,6 +7,11 @@ export class CreateCheckoutDto {
 
   @IsIn(['monthly', 'yearly'])
   billingPeriod: 'monthly' | 'yearly';
+
+  /** PayPal billing plan ID (from frontend config by region). */
+  @IsString()
+  @IsNotEmpty()
+  paypalPlanId: string;
 
   @IsString()
   successUrl: string;

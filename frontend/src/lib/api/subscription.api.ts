@@ -17,32 +17,11 @@ export interface UsageResponse {
   singleShotCredits: number;
 }
 
-export interface Plan {
-  id: string;
-  name: string;
-  videosPerMonth: number;
-  monthlyPrice: number;
-  yearlyPrice: number;
-  popular?: boolean;
-}
-
-export interface SingleShotProduct {
-  id: string;
-  name: string;
-  type: 'one-time';
-  videosIncluded: number;
-  price: number;
-}
-
-export interface PlansResponse {
-  region: string;
-  plans: Plan[];
-  singleShot: SingleShotProduct;
-}
-
 export interface CreateCheckoutRequest {
   plan: SubscriptionPlan;
   billingPeriod: BillingPeriod;
+  /** PayPal billing plan ID (from frontend config by region). */
+  paypalPlanId: string;
   successUrl: string;
   cancelUrl: string;
 }
@@ -70,13 +49,6 @@ export const subscriptionApi = {
 
   getUsage: async (): Promise<UsageResponse> => {
     const response = await api.get<UsageResponse>('/subscription/usage');
-    return response.data;
-  },
-
-  getPlans: async (region = 'europe'): Promise<PlansResponse> => {
-    const response = await api.get<PlansResponse>(
-      `/subscription/plans?region=${region}`,
-    );
     return response.data;
   },
 

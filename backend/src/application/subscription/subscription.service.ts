@@ -26,7 +26,6 @@ import { Subscription, SubscriptionPlan } from '@/domain/subscription.entity';
 @Injectable()
 export class SubscriptionService implements ISubscriptionService {
   private readonly logger = new Logger(SubscriptionService.name);
-  private readonly paypalEnvironment: string;
 
   constructor(
     @Inject('ISubscriptionRepository')
@@ -40,20 +39,17 @@ export class SubscriptionService implements ISubscriptionService {
     @Inject(PLAN_REPOSITORY_TOKEN)
     private readonly planRepository: IPlanRepository,
     private readonly configService: ConfigService,
-  ) {
-    this.paypalEnvironment =
-      this.configService.get<string>('payment.paypal.environment') ?? 'sandbox';
-  }
+  ) {}
 
   /** Resolve video-per-month limit for a plan from DB, with fallback */
   private async getPlanLimit(plan: SubscriptionPlan): Promise<number> {
     const dbPlan = await this.planRepository.getPlanBySlug(plan);
     if (dbPlan) return dbPlan.videosPerMonth;
-    // Fallback if DB is empty (should not happen after seed)
+    // Fallback if DB is empty (should not happen after seed); must match seed-plans.ts
     const fallback: Record<string, number> = {
-      starter: 10,
-      creator: 50,
-      pro: 200,
+      starter: 3,
+      creator: 6,
+      pro: 10,
     };
     return fallback[plan] ?? 0;
   }
@@ -168,14 +164,12 @@ export class SubscriptionService implements ISubscriptionService {
     successUrl: string,
     cancelUrl: string,
   ): Promise<{ orderId: string; url: string }> {
-    // Get single-shot price from DB
-    const singleShotPlan =
-      await this.planRepository.getPlanBySlug('single-shot');
-    const price = singleShotPlan?.monthlyPrice ?? 4.99;
+    const amount =
+      this.configService.get<number>('payment.singleShotAmount') ?? 10;
 
     return this.paymentService.createSingleShotOrder({
       userId,
-      amount: price,
+      amount,
       currency: 'EUR',
       successUrl,
       cancelUrl,
@@ -197,21 +191,15 @@ export class SubscriptionService implements ISubscriptionService {
     userId: string,
     plan: SubscriptionPlan,
     billingPeriod: BillingPeriod,
+    paypalPlanId: string,
     successUrl: string,
     cancelUrl: string,
   ): Promise<{ sessionId: string; url: string }> {
-    // Look up plan from DB and resolve the correct PayPal plan ID for the current environment
-    const dbPlan = await this.planRepository.getPlanBySlug(plan);
-    const paypalPlanId = dbPlan?.getPaypalPlanId(
-      this.paypalEnvironment,
-      billingPeriod,
-    );
-
     return this.paymentService.createCheckoutSession({
       userId,
       plan,
       billingPeriod,
-      paypalPlanId: paypalPlanId ?? undefined,
+      paypalPlanId,
       successUrl,
       cancelUrl,
     });

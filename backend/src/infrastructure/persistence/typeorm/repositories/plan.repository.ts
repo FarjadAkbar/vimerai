@@ -12,18 +12,8 @@ export class TypeOrmPlanRepository implements IPlanRepository {
     private readonly repository: Repository<PlanEntity>,
   ) {}
 
-  async getAllActivePlans(region = 'europe'): Promise<Plan[]> {
-    const entities = await this.repository.find({
-      where: { isActive: true, region },
-      order: { sortOrder: 'ASC' },
-    });
-    return entities.map(PlanEntity.toDomain);
-  }
-
-  async getPlanBySlug(slug: string, region = 'europe'): Promise<Plan | null> {
-    const entity = await this.repository.findOne({
-      where: { slug, region, isActive: true },
-    });
+  async getPlanBySlug(slug: string): Promise<Plan | null> {
+    const entity = await this.repository.findOne({ where: { slug } });
     return entity ? PlanEntity.toDomain(entity) : null;
   }
 

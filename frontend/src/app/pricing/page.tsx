@@ -1,12 +1,14 @@
 "use client";
 
+// Plans, pricing, and features are defined on the frontend. Backend keeps limit + plan name + currency for restrictions only.
+// Do not expose any third-party provider names in UI or user-facing text.
+
 import { useState, useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Check } from "lucide-react";
 import { BorderBeam } from "@/components/ui/border-beam";
 import {
-  usePlans,
   useCurrentSubscription,
   useCreateCheckout,
   useCreateSingleShotCheckout,
@@ -21,14 +23,44 @@ import type {
   PlanMap,
   BillingPeriod,
 } from "@/types/pricing.types";
+import type { SubscriptionPlan as ApiSubscriptionPlan } from "@/lib/api/subscription.api";
 import type { NotificationState } from "@/types/components.types";
-import { Spinner } from "@/components/ui/spinner";
-
-
-const prices = [9, 30, 90,];
 
 type PlanId = 'starter' | 'creator' | 'pro' | 'singleShot';
 
+// PayPal billing plan IDs by region (pricing managed on PayPal). Add Pro Yearly for global when created.
+type PricingRegion = 'global' | 'mea';
+const PAYPAL_PLAN_IDS: Record<PricingRegion, Record<string, string>> = {
+  global: {
+    'starter-monthly': 'P-5RB13907GD995821JNGIBRNY',
+    'starter-yearly': 'P-47G2072900228090SNGIBRVQ',
+    'creator-monthly': 'P-2NY89093PP844033WNGIBR3I',
+    'creator-yearly': 'P-84P92151Y06445051NGIBSCQ',
+    'pro-monthly': 'P-2436777566582301GNGIBSII',
+    'pro-yearly': '', // Add when Pro Yearly is created in PayPal
+  },
+  mea: {
+    'starter-monthly': 'P-9XX436710M2019608NGMY6SI',
+    'starter-yearly': 'P-6CE45123R0141430BNGMY6PI',
+    'creator-monthly': 'P-3KU15133MU8595837NGMY6MI',
+    'creator-yearly': 'P-2B2535621A749143CNGMY6JA',
+    'pro-monthly': 'P-01W64641HT0541055NGMY6DQ',
+    'pro-yearly': 'P-656176366S7907807NGMY57Y',
+  },
+};
+
+const DEFAULT_PRICING_REGION: PricingRegion = 'global';
+
+// Static plan definitions (frontend). Limits must match backend for restriction logic.
+const YEARLY_DISCOUNT = 0.15;
+const SUBSCRIPTION_PLANS: Plan[] = [
+  { id: 'starter', name: 'AI Starter', videosPerMonth: 3, monthlyPrice: 12, yearlyPrice: Math.round(12 * 12 * (1 - YEARLY_DISCOUNT) * 100) / 100, popular: false },
+  { id: 'creator', name: 'AI Creator', videosPerMonth: 6, monthlyPrice: 35, yearlyPrice: Math.round(35 * 12 * (1 - YEARLY_DISCOUNT) * 100) / 100, popular: true },
+  { id: 'pro', name: 'AI Pro Studio', videosPerMonth: 10, monthlyPrice: 99, yearlyPrice: Math.round(99 * 12 * (1 - YEARLY_DISCOUNT) * 100) / 100, popular: false },
+];
+const SINGLE_SHOT = { id: 'single-shot', name: 'AI Single Shot', type: 'one-time' as const, videosIncluded: 1, price: 10 };
+
+// Feature bullets must match final spec; first line (videos per month) is shown from API.
 const subscriptionFeatures: Record<PlanId, string[]> = {
   starter: [
     "Create short-form videos optimized for social media",
@@ -42,27 +74,30 @@ const subscriptionFeatures: Record<PlanId, string[]> = {
     "Simple monthly quota",
   ],
   creator: [
-    "Create short-form videos optimized for social media",
+    "Create short-form videos optimized for social platforms",
     "Video length up to 10 seconds",
     "Full HD output (up to 1080p)",
-    "Faster processing speed",
-    "Access to premium AI styles",
-    "Two retries per video",
+    "Fast processing speed",
+    "Access to advanced AI styles",
+    "Built-in sound & effects library",
+    "Enhanced visual quality",
+    "One retry per video",
     "Watermark-free videos",
-    "Commercial usage rights",
-    "Priority support",
+    "Full publishing & commercial usage rights",
+    "Priority customer support",
   ],
   pro: [
-    "Create professional videos for any platform",
-    "Video length up to 30 seconds",
-    "4K output (up to 2160p)",
-    "Ultra-fast processing",
-    "Access to all AI styles",
-    "Unlimited retries",
+    "Create high-impact short-form videos for ads & campaigns",
+    "Video length up to 15 seconds",
+    "Premium Full HD output (up to 1080p)",
+    "Ultra-fast processing speed",
+    "Access to cinematic AI styles",
+    "Full sound & effects library",
+    "Enhanced visual quality for professional use",
+    "One retry per video",
     "Watermark-free videos",
-    "Full commercial license",
-    "24/7 priority support",
-    "Custom branding options",
+    "Full commercial usage rights",
+    "VIP customer support",
   ],
   singleShot: [],
 };
@@ -72,7 +107,6 @@ export default function PricingPage() {
   const searchParams = useSearchParams();
   const { data: userData } = useUser();
   const { data: currentSubscription } = useCurrentSubscription();
-  const { data: plansData, isLoading: loading } = usePlans();
   const createCheckout = useCreateCheckout();
   const createSingleShotCheckout = useCreateSingleShotCheckout();
   const captureSingleShot = useCaptureSingleShot();
@@ -134,10 +168,12 @@ export default function PricingPage() {
       onSuccess: (data) => {
         if (data?.plan) {
           window.history.replaceState({}, "", "/pricing");
-          const planName =
-            data.plan === "creator"
-              ? "AI Creator"
-              : data.plan.charAt(0).toUpperCase() + data.plan.slice(1);
+          const planDisplayNames: Record<string, string> = {
+            starter: "AI Starter",
+            creator: "AI Creator",
+            pro: "AI Pro Studio",
+          };
+          const planName = planDisplayNames[data.plan] ?? data.plan;
           setNotification({
             type: "success",
             title: "Subscription Activated",
@@ -164,18 +200,18 @@ export default function PricingPage() {
     });
   }, [searchParams, activateSubscription, router]);
 
-  const plans: Plan[] = plansData?.plans ?? [];
-  const singleShot = plansData?.singleShot ?? null;
+  const plans = SUBSCRIPTION_PLANS;
+  const singleShot = SINGLE_SHOT;
 
   const getSingleShotFeatures = () => [
-    "One-time video generation",
-    "Video length up to 5 seconds",
+    "Create one short-form video",
+    "Video length up to 10 seconds",
     "HD output (up to 720p)",
     "Standard processing speed",
     "Access to basic AI styles",
-    "No retries",
+    "No free retry",
     "Watermark-free video",
-    "Personal usage rights",
+    "Full usage rights",
   ];
 
   const handleSubscribe = async (planId: string) => {
@@ -191,14 +227,13 @@ export default function PricingPage() {
       currentSubscription.plan !== "free" &&
       currentSubscription.videosRemaining > 0
     ) {
-      const currentPlanName =
-        currentSubscription.plan === "creator"
-          ? "AI Creator"
-          : currentSubscription.plan.charAt(0).toUpperCase() + currentSubscription.plan.slice(1);
-      const newPlanName =
-        planId === "creator"
-          ? "AI Creator"
-          : planId.charAt(0).toUpperCase() + planId.slice(1);
+      const planDisplayNames: Record<string, string> = {
+        starter: "AI Starter",
+        creator: "AI Creator",
+        pro: "AI Pro Studio",
+      };
+      const currentPlanName = planDisplayNames[currentSubscription.plan] ?? currentSubscription.plan;
+      const newPlanName = planDisplayNames[planId] ?? planId;
       const totalVideos = currentSubscription.videosRemaining + selectedPlan.videosPerMonth;
 
       setNotification({
@@ -227,12 +262,24 @@ export default function PricingPage() {
     const plan = planMap[planId] as SubscriptionPlan;
     if (!plan) return;
 
+    const regionPlans = PAYPAL_PLAN_IDS[DEFAULT_PRICING_REGION];
+    const key = `${planId}-${billingPeriod}` as keyof typeof regionPlans;
+    const paypalPlanId = regionPlans[key];
+    if (!paypalPlanId) {
+      setNotification({
+        type: "error",
+        title: "Checkout unavailable",
+        message: `PayPal plan for ${planId} (${billingPeriod}) is not configured for this region.`,
+      });
+      return;
+    }
+
     setActivatingPlanId(planId);
     const origin = typeof window !== "undefined" ? window.location.origin : "";
     const successUrl = `${origin}/pricing?subscription=success`;
     const cancelUrl = `${origin}/pricing`;
     createCheckout.mutate(
-      { plan, billingPeriod, successUrl, cancelUrl },
+      { plan: plan as ApiSubscriptionPlan, billingPeriod, paypalPlanId, successUrl, cancelUrl },
       { onSettled: () => setActivatingPlanId(null) },
     );
   };
@@ -249,9 +296,10 @@ export default function PricingPage() {
   };
 
   const getPlanDescription = (planId: string) => {
-    if (planId === "starter") return "Perfect for getting started";
-    if (planId === "creator") return "For content creators and marketers";
-    return "For professional creators";
+    if (planId === "starter") return "Create short-form videos optimized for social media";
+    if (planId === "creator") return "Create short-form videos for social platforms (Most Popular)";
+    if (planId === "pro") return "Create high-impact short-form videos for ads & campaigns";
+    return "";
   };
 
   return (
@@ -268,14 +316,17 @@ export default function PricingPage() {
                 ? "Stack plans to add more videos to your account"
                 : "Choose the plan that fits your needs"}
             </p>
-            {(currentSubscription?.plan !== "free" ||
-              (currentSubscription?.singleShotCredits ?? 0) > 0) && (
+            {currentSubscription?.plan && currentSubscription.plan !== "free" && (
               <div className="mt-4 inline-block px-4 py-2 bg-primary/10 text-primary rounded-lg">
                 <span className="font-medium">Current Plan: </span>
-                <span className="capitalize">
-                  {currentSubscription?.plan === "creator"
-                    ? "AI Creator"
-                    : (currentSubscription?.plan ?? "")}
+                <span>
+                  {currentSubscription.plan === "starter"
+                    ? "AI Starter"
+                    : currentSubscription.plan === "creator"
+                      ? "AI Creator"
+                      : currentSubscription.plan === "pro"
+                        ? "AI Pro Studio"
+                        : currentSubscription.plan}
                 </span>
                 {(currentSubscription?.videosRemaining ?? 0) > 0 && (
                   <span className="ml-2 text-sm">
@@ -294,32 +345,44 @@ export default function PricingPage() {
             )}
           </div>
 
-          {/* Billing toggle */}
+          {/* Billing toggle: Monthly / Yearly */}
           {plans.length > 0 && (
-            <div className="flex justify-center gap-2 mb-10">
-              <Button
-                variant={billingPeriod === "monthly" ? "default" : "outline"}
-                size="sm"
-                onClick={() => setBillingPeriod("monthly")}
+            <div className="flex justify-center mb-10">
+              <div
+                role="group"
+                aria-label="Billing period"
+                className="inline-flex rounded-lg border border-input bg-muted p-0.5"
               >
-                Monthly
-              </Button>
-              <Button
-                variant={billingPeriod === "yearly" ? "default" : "outline"}
-                size="sm"
-                onClick={() => setBillingPeriod("yearly")}
-              >
-                Yearly (15% off)
-              </Button>
+                <button
+                  type="button"
+                  onClick={() => setBillingPeriod("monthly")}
+                  className={`rounded-md px-4 py-2 text-sm font-medium transition-colors ${
+                    billingPeriod === "monthly"
+                      ? "bg-background text-foreground shadow-sm"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  Monthly
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setBillingPeriod("yearly")}
+                  className={`rounded-md px-4 py-2 text-sm font-medium transition-colors inline-flex items-center gap-1.5 ${
+                    billingPeriod === "yearly"
+                      ? "bg-background text-foreground shadow-sm"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  Yearly
+                  <span className="rounded bg-green-600 px-1.5 py-0.5 text-[10px] font-semibold text-white">
+                    Save 15%
+                  </span>
+                </button>
+              </div>
             </div>
           )}
 
-          {loading ? (
-            <div className="flex items-center justify-center min-h-[400px]">
-              <Spinner className="size-8" />
-            </div>
-          ) : (
-            <div className="grid md:grid-cols-4 gap-4 max-w-6xl mx-auto items-stretch">
+          <div className="grid md:grid-cols-4 gap-4 max-w-6xl mx-auto items-stretch">
               {/* ── Subscription plan cards ── */}
               {plans.map((plan, index) => {  // ✅ index added here
                 const isCurrentPlan =
@@ -359,10 +422,12 @@ export default function PricingPage() {
                       {getPlanDescription(plan.id)}
                     </p>
 
-                    {/* ROW 3 — Price ✅ Fixed */}
+                    {/* ROW 3 — Price (frontend); limits must match backend for restrictions */}
                     <div className="mb-6">
                       <span className="text-4xl font-bold">
-                        &euro;{billingPeriod === "monthly" ? Math.round(prices[index]) : Math.floor(prices[index] * 12 * 0.85)}
+                        &euro;{billingPeriod === "monthly"
+                          ? plan.monthlyPrice.toFixed(2)
+                          : plan.yearlyPrice.toFixed(2)}
                       </span>
                       <span className="text-muted-foreground text-sm">
                         /{billingPeriod === "monthly" ? "month" : "year"}
@@ -378,7 +443,7 @@ export default function PricingPage() {
                       disabled={activatingPlanId !== null || !!isCurrentPlan}
                     >
                       {activatingPlanId === plan.id
-                        ? "Redirecting to PayPal..."
+                        ? "Redirecting to checkout..."
                         : isCurrentPlan
                           ? "Current Plan"
                           : "Subscribe"}
@@ -417,13 +482,13 @@ export default function PricingPage() {
 
                   {/* ROW 2 — Description */}
                   <p className="text-muted-foreground text-sm mb-6 min-h-[40px]">
-                    One-time purchase. No expiration. Use whenever you want.
+                    One-time purchase. One short-form video, no expiration.
                   </p>
 
-                  {/* ROW 3 — Price */}
+                  {/* ROW 3 — Price (frontend) */}
                   <div className="mb-6">
                     <span className="text-4xl font-bold">
-                      &euro;10
+                      &euro;{singleShot.price.toFixed(2)}
                     </span>
                     <span className="text-muted-foreground text-sm"> /one-time</span>
                   </div>
@@ -435,8 +500,8 @@ export default function PricingPage() {
                     disabled={createSingleShotCheckout.isPending}
                   >
                     {createSingleShotCheckout.isPending
-                      ? "Redirecting to PayPal..."
-                      : "Subscribe"}
+                      ? "Redirecting to checkout..."
+                      : "Purchase"}
                   </Button>
 
                   {/* ROW 5 — Features */}
@@ -450,8 +515,7 @@ export default function PricingPage() {
                   </ul>
                 </div>
               )}
-            </div>
-          )}
+          </div>
         </div>
       </div>
 

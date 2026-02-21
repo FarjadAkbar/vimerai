@@ -2,7 +2,7 @@
 
 import DarkVeil from "@/components/DarkVeil";
 import { Generator } from "@/components/generator";
-  import TextType from "@/components/TextType";
+import TextType from "@/components/TextType";
 import { useAppState } from "@/lib/providers/app-state-provider";
 
 export default function HomePage() {
@@ -30,7 +30,7 @@ export default function HomePage() {
             Create short videos for social media in seconds
           </h1>
 
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+          <p className="text-lg max-w-2xl mx-auto">
             Transform your text prompts into professional videos for
             <TextType
               text={["  Instagram.", "  TikTok.", "  YouTube."]}
