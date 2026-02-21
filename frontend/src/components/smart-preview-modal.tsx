@@ -1,5 +1,7 @@
 "use client"
 
+import { useEffect, useState } from "react"
+import { createPortal } from "react-dom"
 import { Button } from "@/components/ui/button"
 import { X } from "lucide-react"
 import { useRouter } from "next/navigation"
@@ -14,6 +16,12 @@ export function SmartPreviewModal({
   onClose,
 }: SmartPreviewModalProps) {
   const router = useRouter()
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
+
   const handleContinue = () => {
     router.push("/pricing")
   }
@@ -21,8 +29,8 @@ export function SmartPreviewModal({
     router.push("/signup")
   }
 
-  return (
-    <div className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4 overflow-y-auto">
+  const modal = (
+    <div className="fixed inset-0 z-[100] bg-black/80 flex items-center justify-center p-4 overflow-y-auto" aria-modal="true" role="dialog">
       <div className="max-w-2xl w-full bg-background rounded-xl border border-border p-4 sm:p-6 space-y-4 my-auto max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between">
           <div>
@@ -66,4 +74,7 @@ export function SmartPreviewModal({
       </div>
     </div>
   )
+
+  if (!mounted || typeof document === "undefined") return null
+  return createPortal(modal, document.body)
 }

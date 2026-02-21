@@ -6,7 +6,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Sparkles, AlertCircle, ArrowLeft, Eye, EyeOff } from "lucide-react";
+import { AlertCircle, Eye, EyeOff } from "lucide-react";
 import { signupSchema, type SignupInput } from "@/lib/auth/schema";
 import {
   Form,
@@ -68,18 +68,19 @@ export default function SignupPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
-      <div className="w-full max-w-md space-y-8">
-        <div className="text-center space-y-2">
-          <div className="flex items-center justify-center gap-2">
-            <Sparkles className="h-8 w-8 text-primary" />
-            <h1 className="text-3xl font-bold">VimeraAI</h1>
-          </div>
-          <p className="text-muted-foreground">Create your account</p>
+    <div className="min-h-screen flex items-center justify-center px-4 py-12">
+      <div className="w-full max-w-md">
+        <div className="text-center mb-8">
+          <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight text-foreground">
+            Create your account
+          </h1>
+          <p className="text-muted-foreground text-sm mt-2">Sign up with your email to get started</p>
         </div>
 
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        <div className="relative rounded-2xl border border-border/80 bg-card/80 dark:bg-card/60 backdrop-blur-xl p-6 sm:p-8 shadow-xl shadow-black/5 dark:shadow-black/20 ring-1 ring-white/5 dark:ring-white/5">
+          <div className="absolute inset-x-0 top-0 h-px rounded-t-2xl bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             {form.formState.errors.root && (
               <div className="p-4 text-sm bg-destructive/10 border border-destructive/20 rounded-lg space-y-3">
                 <div className="flex items-start gap-2">
@@ -156,13 +157,10 @@ export default function SignupPage() {
                       <button
                         type="button"
                         onClick={() => setIsPasswordVisible(!isPasswordVisible)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-primary"
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                        aria-label={isPasswordVisible ? "Hide password" : "Show password"}
                       >
-                        {isPasswordVisible ? (
-                          <Eye size={20} />
-                        ) : (
-                          <EyeOff size={20} />
-                        )}
+                        {isPasswordVisible ? <Eye size={18} /> : <EyeOff size={18} />}
                       </button>
                     </div>
                   </FormControl>
@@ -195,13 +193,10 @@ export default function SignupPage() {
                         onClick={() =>
                           setIsConfirmPasswordVisible(!isConfirmPasswordVisible)
                         }
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-primary"
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                        aria-label={isConfirmPasswordVisible ? "Hide password" : "Show password"}
                       >
-                        {isConfirmPasswordVisible ? (
-                          <Eye size={20} />
-                        ) : (
-                          <EyeOff size={20} />
-                        )}
+                        {isConfirmPasswordVisible ? <Eye size={18} /> : <EyeOff size={18} />}
                       </button>
                     </div>
                   </FormControl>
@@ -212,15 +207,16 @@ export default function SignupPage() {
 
             <Button
               type="submit"
-              className="w-full"
+              className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-medium"
               disabled={signup.isPending}
             >
               {signup.isPending ? "Creating account..." : "Sign up"}
             </Button>
           </form>
         </Form>
+        </div>
 
-        <p className="text-center text-sm text-muted-foreground">
+        <p className="text-center text-sm text-muted-foreground mt-6">
           Already have an account?{" "}
           <Link href="/login" className="text-primary hover:underline">
             Sign in

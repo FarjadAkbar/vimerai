@@ -186,7 +186,7 @@ const Header = () => {
                 <Button variant="ghost" size="sm" onClick={(e) => handleNavigation("/", e)}>
                   Generator
                 </Button>
-                <Button variant="ghost" size="sm"  onClick={(e) => handleNavigation("/pricing", e)}>
+                <Button variant="ghost" size="sm" onClick={(e) => handleNavigation("/pricing", e)}>
                   Pricing
                 </Button>
               </div>
