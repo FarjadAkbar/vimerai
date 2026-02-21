@@ -9,7 +9,6 @@ import {
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
-import type { Request } from 'express';
 import { SubscriptionService } from './subscription.service';
 import { CreateCheckoutDto } from './dto/create-checkout.dto';
 import { JwtAuthGuard } from '@/infrastructure/auth/jwt-auth.guard';
@@ -23,8 +22,8 @@ export class SubscriptionController {
 
   /** Public: no auth. Returns pricing region from request geo (Vercel/Cloudflare) or config fallback. */
   @Get('pricing-region')
-  async getPricingRegion(@Req() req: Request) {
-    const region = await getRegionFromRequest(req);
+  async getPricingRegion() {
+    const region = await getRegionFromRequest();
     return this.subscriptionService.getPricingRegion(region);
   }
 
@@ -46,9 +45,8 @@ export class SubscriptionController {
   async createCheckout(
     @CurrentUser() user: { userId: string },
     @Body(ValidationPipe) dto: CreateCheckoutDto,
-    @Req() req: Request,
   ) {
-    const region = await getRegionFromRequest(req);
+    const region = await getRegionFromRequest();
     return this.subscriptionService.createCheckoutSession(
       user.userId,
       dto.plan,
