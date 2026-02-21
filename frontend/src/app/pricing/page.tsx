@@ -24,9 +24,11 @@ import type {
 import type { NotificationState } from "@/types/components.types";
 import { Spinner } from "@/components/ui/spinner";
 
+
+const prices = [9, 30, 90,];
+
 type PlanId = 'starter' | 'creator' | 'pro' | 'singleShot';
 
-// Features object outside component
 const subscriptionFeatures: Record<PlanId, string[]> = {
   starter: [
     "Create short-form videos optimized for social media",
@@ -62,7 +64,7 @@ const subscriptionFeatures: Record<PlanId, string[]> = {
     "24/7 priority support",
     "Custom branding options",
   ],
-  
+  singleShot: [],
 };
 
 export default function PricingPage() {
@@ -77,9 +79,7 @@ export default function PricingPage() {
   const activateSubscription = useActivateSubscription();
   const [billingPeriod, setBillingPeriod] = useState<BillingPeriod>("monthly");
   const [activatingPlanId, setActivatingPlanId] = useState<string | null>(null);
-  const [notification, setNotification] = useState<NotificationState | null>(
-    null,
-  );
+  const [notification, setNotification] = useState<NotificationState | null>(null);
   const paypalCaptureAttempted = useRef(false);
   const subscriptionActivateAttempted = useRef(false);
 
@@ -113,26 +113,21 @@ export default function PricingPage() {
         setNotification({
           type: "error",
           title: "Capture Failed",
-          message:
-            "We could not complete your purchase. Please contact support if you were charged.",
+          message: "We could not complete your purchase. Please contact support if you were charged.",
         });
       },
     });
   }, [searchParams, captureSingleShot, router]);
 
-
-    const getFeatures = (planId: string): string[] => {
-    // Convert planId to lowercase and handle variations
+  const getFeatures = (planId: string): string[] => {
     const normalizedPlanId = planId.toLowerCase() as PlanId;
     return subscriptionFeatures[normalizedPlanId] || [];
   };
 
-
   useEffect(() => {
     const subscriptionId = searchParams.get("subscription_id");
     const subSuccess = searchParams.get("subscription") === "success";
-    if (!subscriptionId || !subSuccess || subscriptionActivateAttempted.current)
-      return;
+    if (!subscriptionId || !subSuccess || subscriptionActivateAttempted.current) return;
 
     subscriptionActivateAttempted.current = true;
     activateSubscription.mutate(subscriptionId, {
@@ -163,8 +158,7 @@ export default function PricingPage() {
         setNotification({
           type: "error",
           title: "Activation Failed",
-          message:
-            "We could not activate your subscription. Please contact support if you were charged.",
+          message: "We could not activate your subscription. Please contact support if you were charged.",
         });
       },
     });
@@ -172,12 +166,6 @@ export default function PricingPage() {
 
   const plans: Plan[] = plansData?.plans ?? [];
   const singleShot = plansData?.singleShot ?? null;
-
-  // const getFeatures = () => [
-  //   "Fast Mode generation",
-  //   "Smart Preview",
-  //   "Prompt Studio access",
-  // ];
 
   const getSingleShotFeatures = () => [
     "One-time video generation",
@@ -206,14 +194,12 @@ export default function PricingPage() {
       const currentPlanName =
         currentSubscription.plan === "creator"
           ? "AI Creator"
-          : currentSubscription.plan.charAt(0).toUpperCase() +
-            currentSubscription.plan.slice(1);
+          : currentSubscription.plan.charAt(0).toUpperCase() + currentSubscription.plan.slice(1);
       const newPlanName =
         planId === "creator"
           ? "AI Creator"
           : planId.charAt(0).toUpperCase() + planId.slice(1);
-      const totalVideos =
-        currentSubscription.videosRemaining + selectedPlan.videosPerMonth;
+      const totalVideos = currentSubscription.videosRemaining + selectedPlan.videosPerMonth;
 
       setNotification({
         type: "info",
@@ -268,15 +254,6 @@ export default function PricingPage() {
     return "For professional creators";
   };
 
-  // ── Shared card inner layout ──────────────────────────────────────────────
-  // Each card is a flex-col. Inside we have 5 "rows":
-  //   1. Name
-  //   2. Description      ← fixed height via min-h
-  //   3. Price
-  //   4. Button
-  //   5. Feature list     ← flex-1 (takes remaining space)
-  // All rows use the same class names so they align across the CSS grid.
-
   return (
     <>
       <div className="min-h-screen bg-background">
@@ -310,9 +287,7 @@ export default function PricingPage() {
                 {(currentSubscription?.singleShotCredits ?? 0) > 0 && (
                   <span className="ml-2 text-sm">
                     {currentSubscription?.singleShotCredits} Single Shot
-                    {(currentSubscription?.singleShotCredits ?? 0) !== 1
-                      ? "s"
-                      : ""}
+                    {(currentSubscription?.singleShotCredits ?? 0) !== 1 ? "s" : ""}
                   </span>
                 )}
               </div>
@@ -346,38 +321,29 @@ export default function PricingPage() {
           ) : (
             <div className="grid md:grid-cols-4 gap-4 max-w-6xl mx-auto items-stretch">
               {/* ── Subscription plan cards ── */}
-              {plans.map((plan) => {
+              {plans.map((plan, index) => {  // ✅ index added here
                 const isCurrentPlan =
                   currentSubscription && currentSubscription.plan === plan.id;
-                const price =
-                  billingPeriod === "monthly"
-                    ? plan.monthlyPrice
-                    : plan.yearlyPrice;
 
                 return (
                   <div
                     key={plan.id}
                     className={`relative rounded-xl border-2 p-6 flex flex-col ${
                       isCurrentPlan
-                        ? "border-[#00c951] border-4 "
+                        ? "border-[#00c951] border-4"
                         : "border-border bg-card"
                     }`}
                   >
                     {/* Badges */}
                     {plan.popular && (
-                      <>
-                        <BorderBeam
-                          size={100}
-                          duration={6}
-                          colorFrom="#ffaa40"
-                          className="opacity-60"
-                          colorTo="#9c40ff"
-                          borderWidth={2}
-                        />
-                        {/* <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1 bg-primary text-primary-foreground text-sm font-medium rounded-full z-10">
-                          Most Popular
-                        </div> */}
-                      </>
+                      <BorderBeam
+                        size={100}
+                        duration={6}
+                        colorFrom="#ffaa40"
+                        className="opacity-60"
+                        colorTo="#9c40ff"
+                        borderWidth={2}
+                      />
                     )}
                     {isCurrentPlan && (
                       <div className="absolute -top-4 right-4 px-3 py-1 bg-green-500 text-white text-xs font-medium rounded-full z-10">
@@ -388,15 +354,15 @@ export default function PricingPage() {
                     {/* ROW 1 — Plan name */}
                     <h3 className="text-xl font-bold mb-2">{plan.name}</h3>
 
-                    {/* ROW 2 — Description (fixed min-height keeps rows aligned) */}
+                    {/* ROW 2 — Description */}
                     <p className="text-muted-foreground text-sm mb-6 min-h-[40px]">
                       {getPlanDescription(plan.id)}
                     </p>
 
-                    {/* ROW 3 — Price */}
+                    {/* ROW 3 — Price ✅ Fixed */}
                     <div className="mb-6">
                       <span className="text-4xl font-bold">
-                        &euro;{Math.floor(price)}
+                        &euro;{billingPeriod === "monthly" ? Math.round(prices[index]) : Math.floor(prices[index] * 12 * 0.85)}
                       </span>
                       <span className="text-muted-foreground text-sm">
                         /{billingPeriod === "monthly" ? "month" : "year"}
@@ -418,7 +384,7 @@ export default function PricingPage() {
                           : "Subscribe"}
                     </Button>
 
-                    {/* ROW 5 — Features (flex-1 fills remaining space) */}
+                    {/* ROW 5 — Features */}
                     <ul className="space-y-3 flex-1">
                       <li className="flex items-start gap-3">
                         <Check className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
@@ -437,13 +403,9 @@ export default function PricingPage() {
                 );
               })}
 
-              {/* ── Single Shot card — 4th column, same grid ── */}
+              {/* ── Single Shot card ── */}
               {singleShot && (
                 <div className="relative rounded-xl border-2 border-blue-400 bg-card p-6 flex flex-col">
-                  {/* Badges */}
-                  {/* <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1 bg-blue-500 text-white text-sm font-medium rounded-full z-10">
-                    One-Time
-                  </div> */}
                   {(currentSubscription?.singleShotCredits ?? 0) > 0 && (
                     <div className="absolute -top-4 right-4 px-3 py-1 bg-green-500 text-white text-xs font-medium rounded-full z-10">
                       {currentSubscription?.singleShotCredits} Credits
@@ -453,7 +415,7 @@ export default function PricingPage() {
                   {/* ROW 1 — Name */}
                   <h3 className="text-xl font-bold mb-2">{singleShot.name}</h3>
 
-                  {/* ROW 2 — Description (same min-h as subscription cards) */}
+                  {/* ROW 2 — Description */}
                   <p className="text-muted-foreground text-sm mb-6 min-h-[40px]">
                     One-time purchase. No expiration. Use whenever you want.
                   </p>
@@ -461,12 +423,9 @@ export default function PricingPage() {
                   {/* ROW 3 — Price */}
                   <div className="mb-6">
                     <span className="text-4xl font-bold">
-                      &euro;{singleShot.price}
+                      &euro;10
                     </span>
-                    <span className="text-muted-foreground text-sm">
-                      {" "}
-                      one-time
-                    </span>
+                    <span className="text-muted-foreground text-sm"> /one-time</span>
                   </div>
 
                   {/* ROW 4 — CTA button */}
@@ -480,7 +439,7 @@ export default function PricingPage() {
                       : "Subscribe"}
                   </Button>
 
-                  {/* ROW 5 — Features (same count as subscription cards) */}
+                  {/* ROW 5 — Features */}
                   <ul className="space-y-3 flex-1">
                     {getSingleShotFeatures().map((feature, fIdx) => (
                       <li key={fIdx} className="flex items-start gap-3">
