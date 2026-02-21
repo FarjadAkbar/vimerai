@@ -30,6 +30,7 @@ export class MockVideoGenerationProvider implements IVideoGenerationProvider {
     'https://lorem.video/cat_128kbps',
     'https://lorem.video/corgi_128kbps',
     'https://lorem.video/bunny_128kbps',
+    'https://lorem.video/test',
   ];
 
   async generateVideo(

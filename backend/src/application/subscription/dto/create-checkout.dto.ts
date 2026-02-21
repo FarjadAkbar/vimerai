@@ -8,14 +8,11 @@ export class CreateCheckoutDto {
   @IsIn(['monthly', 'yearly'])
   billingPeriod: 'monthly' | 'yearly';
 
-  /** PayPal billing plan ID (from frontend config by region). */
   @IsString()
   @IsNotEmpty()
-  paypalPlanId: string;
-
-  @IsString()
   successUrl: string;
 
   @IsString()
+  @IsNotEmpty()
   cancelUrl: string;
 }

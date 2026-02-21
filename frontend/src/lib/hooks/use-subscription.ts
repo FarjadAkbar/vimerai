@@ -13,6 +13,14 @@ export const useCurrentSubscription = (enabled = true) => {
   });
 };
 
+/** Server-side pricing region (global | mea). Public endpoint, no auth required. */
+export const usePricingRegion = () => {
+  return useQuery({
+    queryKey: ['subscription', 'pricing-region'],
+    queryFn: () => subscriptionApi.getPricingRegion(),
+  });
+};
+
 export const useUsage = () => {
   return useQuery({
     queryKey: ['subscription', 'usage'],

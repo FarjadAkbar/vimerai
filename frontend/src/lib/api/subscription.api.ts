@@ -5,6 +5,8 @@ export type BillingPeriod = 'monthly' | 'yearly';
 
 export interface CurrentSubscriptionResponse {
   plan: SubscriptionPlan;
+  /** When user has a recurring plan: 'monthly' | 'yearly'. Null for free or legacy subscriptions. */
+  billingPeriod: 'monthly' | 'yearly' | null;
   videosRemaining: number;
   limit: number;
   singleShotCredits: number;
@@ -20,10 +22,14 @@ export interface UsageResponse {
 export interface CreateCheckoutRequest {
   plan: SubscriptionPlan;
   billingPeriod: BillingPeriod;
-  /** PayPal billing plan ID (from frontend config by region). */
-  paypalPlanId: string;
   successUrl: string;
   cancelUrl: string;
+}
+
+export type PricingRegion = 'global' | 'mea';
+
+export interface PricingRegionResponse {
+  region: PricingRegion;
 }
 
 export interface CreateCheckoutResponse {
@@ -58,6 +64,13 @@ export const subscriptionApi = {
     const response = await api.post<CreateCheckoutResponse>(
       '/subscription/checkout',
       data,
+    );
+    return response.data;
+  },
+
+  getPricingRegion: async (): Promise<PricingRegionResponse> => {
+    const response = await api.get<PricingRegionResponse>(
+      '/subscription/pricing-region',
     );
     return response.data;
   },

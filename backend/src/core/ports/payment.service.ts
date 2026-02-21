@@ -19,6 +19,7 @@ export interface CreateCheckoutSessionResult {
 export interface ActivateSubscriptionResult {
   userId: string;
   plan: SubscriptionPlan;
+  billingPeriod: BillingPeriod;
   paypalSubscriptionId: string;
   status: string;
 }

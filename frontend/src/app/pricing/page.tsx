@@ -3,13 +3,14 @@
 // Plans, pricing, and features are defined on the frontend. Backend keeps limit + plan name + currency for restrictions only.
 // Do not expose any third-party provider names in UI or user-facing text.
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Check } from "lucide-react";
 import { BorderBeam } from "@/components/ui/border-beam";
 import {
   useCurrentSubscription,
+  usePricingRegion,
   useCreateCheckout,
   useCreateSingleShotCheckout,
   useCaptureSingleShot,
@@ -27,37 +28,35 @@ import type { SubscriptionPlan as ApiSubscriptionPlan } from "@/lib/api/subscrip
 import type { NotificationState } from "@/types/components.types";
 
 type PlanId = 'starter' | 'creator' | 'pro' | 'singleShot';
+type PricingRegionKey = 'global' | 'mea';
 
-// PayPal billing plan IDs by region (pricing managed on PayPal). Add Pro Yearly for global when created.
-type PricingRegion = 'global' | 'mea';
-const PAYPAL_PLAN_IDS: Record<PricingRegion, Record<string, string>> = {
-  global: {
-    'starter-monthly': 'P-5RB13907GD995821JNGIBRNY',
-    'starter-yearly': 'P-47G2072900228090SNGIBRVQ',
-    'creator-monthly': 'P-2NY89093PP844033WNGIBR3I',
-    'creator-yearly': 'P-84P92151Y06445051NGIBSCQ',
-    'pro-monthly': 'P-2436777566582301GNGIBSII',
-    'pro-yearly': '', // Add when Pro Yearly is created in PayPal
-  },
-  mea: {
-    'starter-monthly': 'P-9XX436710M2019608NGMY6SI',
-    'starter-yearly': 'P-6CE45123R0141430BNGMY6PI',
-    'creator-monthly': 'P-3KU15133MU8595837NGMY6MI',
-    'creator-yearly': 'P-2B2535621A749143CNGMY6JA',
-    'pro-monthly': 'P-01W64641HT0541055NGMY6DQ',
-    'pro-yearly': 'P-656176366S7907807NGMY57Y',
-  },
+const YEARLY_DISCOUNT = 0.15;
+
+/** Monthly prices by region. Backend resolves PayPal plan IDs by region. */
+const MONTHLY_PRICES_BY_REGION: Record<PricingRegionKey, Record<string, number>> = {
+  global: { starter: 12, creator: 35, pro: 99 },
+  mea: { starter: 9, creator: 30, pro: 90 },
 };
 
-const DEFAULT_PRICING_REGION: PricingRegion = 'global';
+function yearlyFromMonthly(monthly: number): number {
+  return Math.round(monthly * 12 * (1 - YEARLY_DISCOUNT) * 100) / 100;
+}
 
-// Static plan definitions (frontend). Limits must match backend for restriction logic.
-const YEARLY_DISCOUNT = 0.15;
-const SUBSCRIPTION_PLANS: Plan[] = [
-  { id: 'starter', name: 'AI Starter', videosPerMonth: 3, monthlyPrice: 12, yearlyPrice: Math.round(12 * 12 * (1 - YEARLY_DISCOUNT) * 100) / 100, popular: false },
-  { id: 'creator', name: 'AI Creator', videosPerMonth: 6, monthlyPrice: 35, yearlyPrice: Math.round(35 * 12 * (1 - YEARLY_DISCOUNT) * 100) / 100, popular: true },
-  { id: 'pro', name: 'AI Pro Studio', videosPerMonth: 10, monthlyPrice: 99, yearlyPrice: Math.round(99 * 12 * (1 - YEARLY_DISCOUNT) * 100) / 100, popular: false },
+// Plan definitions (limits/names). Prices come from MONTHLY_PRICES_BY_REGION based on API region.
+const SUBSCRIPTION_PLANS_BASE: Omit<Plan, 'monthlyPrice' | 'yearlyPrice'>[] = [
+  { id: 'starter', name: 'AI Starter', videosPerMonth: 3, popular: false },
+  { id: 'creator', name: 'AI Creator', videosPerMonth: 6, popular: true },
+  { id: 'pro', name: 'AI Pro Studio', videosPerMonth: 10, popular: false },
 ];
+
+function buildPlansForRegion(region: PricingRegionKey): Plan[] {
+  const prices = MONTHLY_PRICES_BY_REGION[region];
+  return SUBSCRIPTION_PLANS_BASE.map((plan) => {
+    const monthly = prices[plan.id] ?? 0;
+    return { ...plan, monthlyPrice: monthly, yearlyPrice: yearlyFromMonthly(monthly) };
+  });
+}
+
 const SINGLE_SHOT = { id: 'single-shot', name: 'AI Single Shot', type: 'one-time' as const, videosIncluded: 1, price: 10 };
 
 // Feature bullets must match final spec; first line (videos per month) is shown from API.
@@ -102,11 +101,18 @@ const subscriptionFeatures: Record<PlanId, string[]> = {
   singleShot: [],
 };
 
+/** Show whole numbers without .00; show decimals only when needed (e.g. 12 not 12.00, 122.4 not 122.40). */
+function formatPrice(value: number): string {
+  const n = Number(value);
+  return n % 1 === 0 ? String(Math.round(n)) : String(parseFloat(n.toFixed(2)));
+}
+
 export default function PricingPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { data: userData } = useUser();
   const { data: currentSubscription } = useCurrentSubscription();
+  const { data: pricingRegion } = usePricingRegion();
   const createCheckout = useCreateCheckout();
   const createSingleShotCheckout = useCreateSingleShotCheckout();
   const captureSingleShot = useCaptureSingleShot();
@@ -200,7 +206,18 @@ export default function PricingPage() {
     });
   }, [searchParams, activateSubscription, router]);
 
-  const plans = SUBSCRIPTION_PLANS;
+  // Sync billing period toggle to current subscription when user has one
+  useEffect(() => {
+    if (
+      currentSubscription?.billingPeriod &&
+      currentSubscription.plan !== "free"
+    ) {
+      setBillingPeriod(currentSubscription.billingPeriod);
+    }
+  }, [currentSubscription?.plan, currentSubscription?.billingPeriod]);
+
+  const regionKey: PricingRegionKey = pricingRegion?.region ?? "global";
+  const plans = useMemo(() => buildPlansForRegion(regionKey), [regionKey]);
   const singleShot = SINGLE_SHOT;
 
   const getSingleShotFeatures = () => [
@@ -262,24 +279,12 @@ export default function PricingPage() {
     const plan = planMap[planId] as SubscriptionPlan;
     if (!plan) return;
 
-    const regionPlans = PAYPAL_PLAN_IDS[DEFAULT_PRICING_REGION];
-    const key = `${planId}-${billingPeriod}` as keyof typeof regionPlans;
-    const paypalPlanId = regionPlans[key];
-    if (!paypalPlanId) {
-      setNotification({
-        type: "error",
-        title: "Checkout unavailable",
-        message: `PayPal plan for ${planId} (${billingPeriod}) is not configured for this region.`,
-      });
-      return;
-    }
-
     setActivatingPlanId(planId);
     const origin = typeof window !== "undefined" ? window.location.origin : "";
     const successUrl = `${origin}/pricing?subscription=success`;
     const cancelUrl = `${origin}/pricing`;
     createCheckout.mutate(
-      { plan: plan as ApiSubscriptionPlan, billingPeriod, paypalPlanId, successUrl, cancelUrl },
+      { plan: plan as ApiSubscriptionPlan, billingPeriod, successUrl, cancelUrl },
       { onSettled: () => setActivatingPlanId(null) },
     );
   };
@@ -316,6 +321,11 @@ export default function PricingPage() {
                 ? "Stack plans to add more videos to your account"
                 : "Choose the plan that fits your needs"}
             </p>
+            {pricingRegion?.region === "mea" && (
+              <p className="text-sm text-muted-foreground/80 mt-2">
+                Prices for Middle East & Africa
+              </p>
+            )}
             {currentSubscription?.plan && currentSubscription.plan !== "free" && (
               <div className="mt-4 inline-block px-4 py-2 bg-primary/10 text-primary rounded-lg">
                 <span className="font-medium">Current Plan: </span>
@@ -384,9 +394,13 @@ export default function PricingPage() {
 
           <div className="grid md:grid-cols-4 gap-4 max-w-6xl mx-auto items-stretch">
               {/* ── Subscription plan cards ── */}
-              {plans.map((plan, index) => {  // ✅ index added here
+              {plans.map((plan) => {
+                const effectiveBillingPeriod = currentSubscription?.billingPeriod ?? 'monthly';
                 const isCurrentPlan =
-                  currentSubscription && currentSubscription.plan === plan.id;
+                  currentSubscription &&
+                  currentSubscription.plan !== 'free' &&
+                  currentSubscription.plan === plan.id &&
+                  effectiveBillingPeriod === billingPeriod;
 
                 return (
                   <div
@@ -425,9 +439,9 @@ export default function PricingPage() {
                     {/* ROW 3 — Price (frontend); limits must match backend for restrictions */}
                     <div className="mb-6">
                       <span className="text-4xl font-bold">
-                        &euro;{billingPeriod === "monthly"
-                          ? plan.monthlyPrice.toFixed(2)
-                          : plan.yearlyPrice.toFixed(2)}
+                        &euro;{formatPrice(billingPeriod === "monthly"
+                          ? plan.monthlyPrice
+                          : plan.yearlyPrice)}
                       </span>
                       <span className="text-muted-foreground text-sm">
                         /{billingPeriod === "monthly" ? "month" : "year"}
@@ -488,7 +502,7 @@ export default function PricingPage() {
                   {/* ROW 3 — Price (frontend) */}
                   <div className="mb-6">
                     <span className="text-4xl font-bold">
-                      &euro;{singleShot.price.toFixed(2)}
+                      &euro;{formatPrice(singleShot.price)}
                     </span>
                     <span className="text-muted-foreground text-sm"> /one-time</span>
                   </div>
