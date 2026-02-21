@@ -268,30 +268,29 @@ export default function PricingPage() {
                 ? "Stack plans to add more videos to your account"
                 : "Choose the plan that fits your needs"}
             </p>
-            {(currentSubscription?.plan !== "free" ||
-              (currentSubscription?.singleShotCredits ?? 0) > 0) && (
-              <div className="mt-4 inline-block px-4 py-2 bg-primary/10 text-primary rounded-lg">
-                <span className="font-medium">Current Plan: </span>
-                <span className="capitalize">
-                  {currentSubscription?.plan === "creator"
-                    ? "AI Creator"
-                    : (currentSubscription?.plan ?? "")}
-                </span>
-                {(currentSubscription?.videosRemaining ?? 0) > 0 && (
-                  <span className="ml-2 text-sm">
-                    ({currentSubscription?.videosRemaining} video
-                    {currentSubscription?.videosRemaining !== 1 ? "s" : ""}{" "}
-                    remaining)
-                  </span>
-                )}
-                {(currentSubscription?.singleShotCredits ?? 0) > 0 && (
-                  <span className="ml-2 text-sm">
-                    {currentSubscription?.singleShotCredits} Single Shot
-                    {(currentSubscription?.singleShotCredits ?? 0) !== 1 ? "s" : ""}
-                  </span>
-                )}
-              </div>
-            )}
+            {userData?.user && (currentSubscription?.plan !== "free" || (currentSubscription?.singleShotCredits ?? 0) > 0) && (
+  <div className="mt-4 inline-block px-4 py-2 bg-primary/10 text-primary rounded-lg">
+    <span className="font-medium">Current Plan: </span>
+    <span className="capitalize">
+      {currentSubscription?.plan === "creator"
+        ? "AI Creator"
+        : (currentSubscription?.plan ?? "")}
+    </span>
+    {(currentSubscription?.videosRemaining ?? 0) > 0 && (
+      <span className="ml-2 text-sm">
+        ({currentSubscription?.videosRemaining} video
+        {currentSubscription?.videosRemaining !== 1 ? "s" : ""}{" "}
+        remaining)
+      </span>
+    )}
+    {(currentSubscription?.singleShotCredits ?? 0) > 0 && (
+      <span className="ml-2 text-sm">
+        {currentSubscription?.singleShotCredits} Single Shot
+        {(currentSubscription?.singleShotCredits ?? 0) !== 1 ? "s" : ""}
+      </span>
+    )}
+  </div>
+)}
           </div>
 
           {/* Billing toggle */}
@@ -330,7 +329,7 @@ export default function PricingPage() {
                     key={plan.id}
                     className={`relative rounded-xl border-2 p-6 flex flex-col ${
                       isCurrentPlan
-                        ? "border-[#00c951] border-4"
+                        ? "border-[#3b08a8] border-4"
                         : "border-border bg-card"
                     }`}
                   >
@@ -346,7 +345,7 @@ export default function PricingPage() {
                       />
                     )}
                     {isCurrentPlan && (
-                      <div className="absolute -top-4 right-4 px-3 py-1 bg-green-500 text-white text-xs font-medium rounded-full z-10">
+                      <div className="absolute -top-4 right-4 px-3 py-1 bg-[#3b08a8] text-white text-xs font-medium rounded-full z-10">
                         Active
                       </div>
                     )}
