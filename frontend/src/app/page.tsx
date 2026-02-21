@@ -29,7 +29,7 @@ export default function HomePage() {
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
             Transform your text prompts into professional videos for{" "}
             <TextType
-              text={["Instagram.", "TikTok.", "YouTube."]}
+              text={["Instagram", "TikTok", "YouTube"]}
               className="font-bold text-foreground"
               typingSpeed={85}
               pauseDuration={1550}
