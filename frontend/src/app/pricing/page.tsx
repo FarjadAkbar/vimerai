@@ -393,7 +393,7 @@ export default function PricingPage() {
                     key={plan.id}
                     className={`relative rounded-xl border-2 p-6 flex flex-col ${
                       isCurrentPlan
-                        ? "border-[#00c951] border-4"
+                        ? "border-[#63489c] border-4"
                         : "border-border bg-card"
                     }`}
                   >
@@ -409,7 +409,7 @@ export default function PricingPage() {
                       />
                     )}
                     {isCurrentPlan && (
-                      <div className="absolute -top-4 right-4 px-3 py-1 bg-green-500 text-white text-xs font-medium rounded-full z-10">
+                      <div className="absolute -top-4 right-4 px-3 py-1 bg-[#63489c] text-white text-xs font-medium rounded-full z-10">
                         Active
                       </div>
                     )}
