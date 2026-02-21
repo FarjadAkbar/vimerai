@@ -39,7 +39,7 @@ const MONTHLY_PRICES_BY_REGION: Record<PricingRegionKey, Record<string, number>>
 };
 
 function yearlyFromMonthly(monthly: number): number {
-  return Math.round(monthly * 12 * (1 - YEARLY_DISCOUNT) * 100) / 100;
+  return Math.round(monthly * 12 * (1 - YEARLY_DISCOUNT));
 }
 
 // Plan definitions (limits/names). Prices come from MONTHLY_PRICES_BY_REGION based on API region.
@@ -101,10 +101,9 @@ const subscriptionFeatures: Record<PlanId, string[]> = {
   singleShot: [],
 };
 
-/** Show whole numbers without .00; show decimals only when needed (e.g. 12 not 12.00, 122.4 not 122.40). */
+/** Show rounded prices only (no decimals like 1009.8). */
 function formatPrice(value: number): string {
-  const n = Number(value);
-  return n % 1 === 0 ? String(Math.round(n)) : String(parseFloat(n.toFixed(2)));
+  return String(Math.round(Number(value)));
 }
 
 export default function PricingPage() {
@@ -136,7 +135,7 @@ export default function PricingPage() {
           setNotification({
             type: "success",
             title: "Single Shot Purchased",
-            message: `You now have ${data.singleShotCredits} credit${data.singleShotCredits !== 1 ? "s" : ""}. Use it anytime to generate one video. No expiration.`,
+            message: `You now have ${data.singleShotCredits} credit${data.singleShotCredits !== 1 ? "s" : ""}. Each credit = one video. Buy again anytime to add more.`,
             action: {
               label: "Start Generating",
               onClick: () => {
@@ -221,7 +220,7 @@ export default function PricingPage() {
   const singleShot = SINGLE_SHOT;
 
   const getSingleShotFeatures = () => [
-    "Create one short-form video",
+    "1 credit = 1 video; buy multiple times, credits stack",
     "Video length up to 10 seconds",
     "HD output (up to 720p)",
     "Standard processing speed",
