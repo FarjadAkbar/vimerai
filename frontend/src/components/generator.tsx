@@ -81,9 +81,9 @@ export function Generator({
       // For preview mode, check if user has already used preview
       if (mode === "preview") {
         if (!hasUsedPreview) {
-          await delay(1000);
-          setPreviewUrl("https://lorem.video/720p");
-          storage.setUsedPreview(true);
+            await delay(1000);
+            setPreviewUrl("https://lorem.video/720p");
+            storage.setUsedPreview(true);
         }
       } else {
         // Full video generation mode
@@ -454,7 +454,7 @@ export function Generator({
             ) : !subscription || subscription.plan === "free" ? (
               <>
                 Click Generate Video to see a smart preview. Full video generation available after{" "}
-                <Link href="/pricing" className="text-primary hover:underline">
+                <Link href="/pricing" className="text-primary underline  hover:underline">
                   subscribing
                 </Link>
               </>
