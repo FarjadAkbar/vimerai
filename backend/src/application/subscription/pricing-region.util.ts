@@ -15,11 +15,6 @@ const MEA_COUNTRY_CODES = new Set<string>([
   // Middle East
   'BH', 'CY', 'IR', 'IQ', 'IL', 'JO', 'KW', 'LB', 'OM', 'PS', 'QA', 'SA', 'SY',
   'TR', 'AE', 'YE',
-  
-  // Asia
-  'IN', 'BD', 'BT', 'MM', 'KH', 'CN', 'HK', 'MO', 'JP', 'KR', 'TW', 'VN', 'PH',
-  'MY', 'SG', 'ID', 'TH', 'LA', 'KZ', 'MN', 'NP', 'PK', 'AF', 'TJ', 'TM', 'UZ',
-  'KG', 'AZ', 'GE', 'AM',
 ]);
 
 
