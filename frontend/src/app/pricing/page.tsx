@@ -162,6 +162,8 @@ export default function PricingPage() {
     const normalizedPlanId = planId.toLowerCase() as PlanId;
     return subscriptionFeatures[normalizedPlanId] || [];
   };
+ 
+
 
   useEffect(() => {
     const subscriptionId = searchParams.get("subscription_id");

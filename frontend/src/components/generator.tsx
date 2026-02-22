@@ -471,7 +471,7 @@ export function Generator({
               <h2 className="text-2xl font-bold">Recent Videos</h2>
               <Link href="/my-videos">
                 <Button variant="ghost" size="sm">
-                  View All →
+                  View All
                 </Button>
               </Link>
             </div>

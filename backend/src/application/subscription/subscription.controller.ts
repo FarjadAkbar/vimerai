@@ -24,7 +24,7 @@ export class SubscriptionController {
   /** Public: no auth. Returns pricing region from request geo (Vercel/Cloudflare) or config fallback. */
   @Get('pricing-region')
   async getPricingRegion(@Req() req: Request) {
-    const region = await getRegionFromRequest(req);
+    const region = await getRegionFromRequest();
     return this.subscriptionService.getPricingRegion(region);
   }
 
@@ -48,7 +48,7 @@ export class SubscriptionController {
     @Body(ValidationPipe) dto: CreateCheckoutDto,
     @Req() req: Request,
   ) {
-    const region = await getRegionFromRequest(req);
+    const region = await getRegionFromRequest();
     return this.subscriptionService.createCheckoutSession(
       user.userId,
       dto.plan,

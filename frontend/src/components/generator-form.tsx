@@ -1,9 +1,8 @@
 "use client";
 
 import { UseFormReturn } from "react-hook-form";
-import { AlertCircle, MoveRight, Send, Zap } from "lucide-react";
+import { AlertCircle, Send, Zap } from "lucide-react";
 import type { GenerateVideoInput } from "@/lib/auth/schema";
-import ShinyText from "@/components/ShinyText";
 import { RainbowButton } from "@/components/ui/rainbow-button";
 import {
   Form,
@@ -79,9 +78,15 @@ export function GeneratorForm({
                     disabled={isGenerating || (mode === "full" && !canGenerate)}
                   />
 
-                  {/* Rainbow Button inside the textarea box, bottom-right */}
-                  <div className="absolute bottom-3 right-3">
-                    <RainbowButton
+                  {/* Bottom bar: Fast mode left, submit button right */}
+                  <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between pointer-events-none">
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground pointer-events-none">
+                      <Zap className="w-4 h-4 text-foreground/70" />
+                      <span className="font-medium text-foreground">Fast mode</span>
+                      <span>2–5 min generation</span>
+                    </div>
+                    <div className="pointer-events-auto">
+                      <RainbowButton
                       type="submit"
                       size="sm"
                       className={`gap-2 text-sm font-semibold h-9 rounded px-4 ${
@@ -104,6 +109,7 @@ export function GeneratorForm({
                           : <Spinner className="size-6" />
                         : <Send className="size-5" />}
                     </RainbowButton>
+                    </div>
                   </div>
                 </div>
               </FormControl>
@@ -115,41 +121,15 @@ export function GeneratorForm({
           )}
         />
 
-        {/* Fast Mode Only */}
+        {/* mode: hidden, value is always "fast" */}
         <FormField
           control={form.control}
           name="mode"
-          render={() => (
-            <FormItem>
-              <FormLabel>Generation Mode</FormLabel>
+          render={({ field }) => (
+            <FormItem className="sr-only">
               <FormControl>
-                <div className="p-4 rounded-xl border-2 border-primary bg-primary/5">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 bg-yellow-500/10 rounded-lg flex items-center justify-center">
-                      <Zap className="w-5 h-5 text-yellow-500" />
-                    </div>
-                    <div>
-                      <ShinyText
-                        text="Fast Mode"
-                        className="font-bold"
-                        speed={2}
-                        delay={0}
-                        color="#b5b5b5"
-                        shineColor="#ffffff"
-                        spread={120}
-                        direction="left"
-                        yoyo={false}
-                        pauseOnHover={false}
-                        disabled={false}
-                      />
-                      <p className="text-xs text-muted-foreground">
-                        Perfect for social media, 2-5 min generation
-                      </p>
-                    </div>
-                  </div>
-                </div>
+                <input type="hidden" {...field} value="fast" readOnly />
               </FormControl>
-              <FormMessage />
             </FormItem>
           )}
         />

@@ -1,4 +1,3 @@
-import type { Request } from 'express';
 import type { PricingRegion } from '@/infrastructure/config/payment.config';
 
 /**
@@ -24,17 +23,8 @@ const MEA_COUNTRY_CODES = new Set<string>([
  * If country is in Middle East or Africa, returns 'mea'; otherwise 'global'.
  * If no geo header is present, returns null (caller should use config default).
  */
-export async function getRegionFromRequest(req: Request): Promise<PricingRegion> {
-  // 1️⃣ Try Cloudflare header
-  const cfCountry = req.headers['cf-ipcountry'];
-
-  if (typeof cfCountry === 'string' && cfCountry.length === 2) {
-    return isMEA(cfCountry) ? 'mea' : 'global';
-  }
-
-  // 2️⃣ Manual fallback via IP lookup
-  const ip = getClientIp(req);
-  const country = await lookupCountryFromIP(ip);
+export async function getRegionFromRequest(): Promise<PricingRegion> {
+   const country = await lookupCountryFromIP();
 
   if (!country) return 'global';
 
@@ -45,22 +35,11 @@ function isMEA(countryCode: string): boolean {
   return MEA_COUNTRY_CODES.has(countryCode.toUpperCase());
 }
 
-function getClientIp(req: Request): string {
-  return (
-    (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() ||
-    req.socket.remoteAddress ||
-    ''
-  );
-}
-
-async function lookupCountryFromIP(ip: string): Promise<string | null> {
-  if (!ip) return null;
-
+async function lookupCountryFromIP(): Promise<string | null> {
   try {
-    const res = await fetch(`http://ip-api.com/json/${ip}?fields=countryCode`);
+    const res = await fetch(`https://ipapi.co/json`);
     const data = await res.json();
-    console.log(data);
-    return data.countryCode ?? null;
+    return data.country_code ?? null;
   } catch {
     return null;
   }
