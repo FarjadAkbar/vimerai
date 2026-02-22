@@ -82,7 +82,7 @@ const MEA_COUNTRY_CODES = new Set<string>([
         const res = await fetch(`https://ipapi.co/json`);
         const data = await res.json();
         console.log(data)
-        const country =  data.countryCode ?? null;
+        const country =  data.country_code ?? null;
 
   
   if (!country) return { region: 'global'} ;
