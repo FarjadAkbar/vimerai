@@ -81,7 +81,7 @@ function PasswordResetContent() {
             <p className="text-muted-foreground text-sm mt-1.5">Enter your new password below</p>
           </div>
 
-          <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
+          <div className="relative rounded-2xl border border-border/80 bg-card/80 dark:bg-card/60 backdrop-blur-xl p-6 sm:p-8 shadow-xl shadow-black/5 dark:shadow-black/20 ring-1 ring-white/5 dark:ring-white/5">
             <Form {...resetForm}>
               <form
                 onSubmit={resetForm.handleSubmit(onResetSubmit)}
@@ -158,7 +158,7 @@ function PasswordResetContent() {
         </div>
 
         {emailSent ? (
-          <div className="rounded-xl border border-border bg-card p-6 shadow-sm space-y-4">
+          <div className="relative rounded-2xl border border-border/80 bg-card/80 dark:bg-card/60 backdrop-blur-xl p-6 sm:p-8 shadow-xl shadow-black/5 dark:shadow-black/20 ring-1 ring-white/5 dark:ring-white/5 space-y-4">
             <div className="flex items-center gap-2 p-4 text-sm text-green-600 dark:text-green-400 bg-green-500/10 dark:bg-green-500/10 rounded-lg">
               <CheckCircle className="h-4 w-4 flex-shrink-0" />
               <span>
@@ -170,7 +170,7 @@ function PasswordResetContent() {
             </Link>
           </div>
         ) : (
-          <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
+          <div className="relative rounded-2xl border border-border/80 bg-card/80 dark:bg-card/60 backdrop-blur-xl p-6 sm:p-8 shadow-xl shadow-black/5 dark:shadow-black/20 ring-1 ring-white/5 dark:ring-white/5">
             <Form {...requestForm}>
               <form
                 onSubmit={requestForm.handleSubmit(onRequestSubmit)}

@@ -2,7 +2,7 @@
 import { useLogout } from "@/lib/hooks/use-auth";
 import { Progress } from "@/components/ui/progress";
 import { useUser } from "@/lib/hooks/use-user";
-import {  LogOut, Mail,  Sparkles} from "lucide-react";
+import { LogOut, Mail, LayoutGrid } from "lucide-react";
 import Link from "next/link";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -43,13 +43,13 @@ const Header = () => {
     router.push(href);
   }
   return (
-    <nav className="sticky top-0 z-50 border-b border-border  backdrop-blur-md">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
+    <nav className="sticky top-0 z-50 border-b border-border backdrop-blur-md">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 sm:py-4 flex items-center justify-between gap-4">
         <Link href="/" className="flex items-center gap-2">
           {/* Add public/logo.svg to use your logo; Sparkles icon is fallback */}
          
           <div className="logo-fallback hidden w-8 h-8 flex items-center justify-center rounded-lg bg-primary">
-            <Sparkles className="w-5 h-5 text-primary-foreground" />
+            <LayoutGrid className="w-5 h-5 text-primary-foreground" />
           </div>
           <img src="/platform/logo-vimera.png" alt="Vimera" className="h-6 sm:h-8 md:h-9 w-auto object-contain" />
           {/* <span className="text-xl font-bold">VimeraAI</span> */}

@@ -19,7 +19,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "VimeraAI - AI Video Generator",
-  description: "Create short videos for social media in seconds with AI",
+  description: "Create short videos in seconds. Transform your text prompts into short-form videos.",
 };
 
 export default function RootLayout({

@@ -17,10 +17,22 @@ class ApiClient {
   }
 
   private setupInterceptors() {
+    const publicRoutes = ['/auth/login', '/auth/register', '/auth/password-reset'];
+
     // Request interceptor - add auth token
     this.client.interceptors.request.use(
       (config: InternalAxiosRequestConfig) => {
         const token = this.getToken();
+        const isPublic = publicRoutes.some((route) =>
+          config.url?.includes(route)
+        );
+    
+        if (!token && !isPublic) {
+          return Promise.reject(
+            new AxiosError('No authentication token found', 'NO_TOKEN', config)
+          );
+        }
+
         if (token && config.headers) {
           config.headers.Authorization = `Bearer ${token}`;
         }
