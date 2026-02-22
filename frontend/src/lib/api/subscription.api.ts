@@ -79,7 +79,7 @@ const MEA_COUNTRY_CODES = new Set<string>([
   'BH', 'CY', 'IR', 'IQ', 'IL', 'JO', 'KW', 'LB', 'OM', 'PS', 'QA', 'SA', 'SY',
   'TR', 'AE', 'YE',
 ]);
-        const res = await fetch(`http://ip-api.com/json`);
+        const res = await fetch(`https://ipapi.co/json`);
         const data = await res.json();
         console.log(data)
         const country =  data.countryCode ?? null;
