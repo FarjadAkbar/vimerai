@@ -22,7 +22,7 @@ export default function HomePage() {
 
       <div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-24 sm:pt-20 sm:pb-28">
         <section className="text-center mb-16 sm:mb-12">
-          <h1 className="text-4xl md:text-5xl font-bold tracking-tight text-balance mb-8 text-foreground">
+          <h1 className="text-4xl md:text-5xl font-bold tracking-tight text-balance mb-2 text-foreground">
             Create short videos in seconds
           </h1>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed min-h-[2.5rem] flex justify-center items-center">
