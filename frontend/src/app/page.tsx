@@ -20,8 +20,8 @@ export default function HomePage() {
         />
       </div>
 
-      <div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-24 sm:pt-20 sm:pb-28">
-        <section className="text-center mb-16 sm:mb-12">
+      <div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-20 sm:pt-16 sm:pb-20">
+        <section className="text-center mb-10 sm:mb-10">
           <h1 className="text-4xl md:text-5xl font-bold tracking-tight text-balance mb-2 text-foreground">
             Create short videos in seconds
           </h1>
