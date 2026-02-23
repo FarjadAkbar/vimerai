@@ -416,11 +416,11 @@ export function Generator({
                   <p className="text-sm text-muted-foreground">
                   <WordRotate
                     words={[
-                      "Analyzing your prompt...",
-                      "Generating video content...",
-                      "Processing frames...",
-                      "Optimizing quality...",
-                      "Finalizing your video...",
+                      "Analyzing your prompt",
+                      "Generating video content",
+                      "Processing frames",
+                      "Optimizing quality",
+                      "Finalizing your video",
                     ]}
                     duration={2000}
                   />
