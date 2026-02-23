@@ -312,7 +312,7 @@ export default function PricingPage() {
           {/* Header */}
           <div className="text-center mb-10">
             <h1 className="text-4xl md:text-5xl font-bold mb-4">
-              Simple, Transparent Pricing
+              Simple Transparent Pricing
             </h1>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
               {currentSubscription && currentSubscription.plan !== "free"
@@ -427,7 +427,7 @@ export default function PricingPage() {
 
                   <h3 className="text-xl font-bold mb-2">{plan.name}</h3>
 
-                  <p className="text-muted-foreground text-sm mb-6 min-h-[40px]">
+                  <p className="text-muted-foreground text-sm mb-4 min-h-[40px]">
                     {getPlanDescription(plan.id)}
                   </p>
 
