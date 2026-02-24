@@ -408,7 +408,7 @@ export default function PricingPage() {
                   key={plan.id}
                   className={`relative rounded-xl border p-6 flex flex-col transition-all duration-300 ${
                     isCurrentPlan
-                      ? "border-[#63489c]/50 bg-[#63489c]/5 ring-1 ring-[#63489c]/20"
+                      ? "border-[#470BC1]/50 bg-[#470BC1]/5 ring-1 ring-[#470BC1]/20"
                       : "border-border bg-card hover:border-border/80"
                   }`}
                 >
@@ -423,7 +423,7 @@ export default function PricingPage() {
                     />
                   )}
                   {isCurrentPlan && (
-                    <div className="absolute -top-3 right-4 px-3 py-1 bg-[#63489c] text-white text-[10px] font-bold uppercase tracking-wider rounded-full z-10 shadow-lg">
+                    <div className="absolute -top-3 right-4 px-3 py-1 bg-[#470BC1] text-white text-[10px] font-bold uppercase tracking-wider rounded-full z-10 shadow-lg">
                       Active
                     </div>
                   )}
@@ -449,7 +449,7 @@ export default function PricingPage() {
                     className={`w-full mb-6 font-semibold transition-all duration-300 ${
                       isCurrentPlan 
                         ? "bg-secondary text-secondary-foreground cursor-default" 
-                        : "bg-white text-black hover:bg-[#63489c] hover:text-white"
+                        : "bg-white text-black hover:bg-[#470BC1] hover:text-white"
                     }`}
                     onClick={() => handleSubscribe(plan.id)}
                     disabled={activatingPlanId !== null || !!isCurrentPlan}
@@ -483,7 +483,7 @@ export default function PricingPage() {
           {/* Single Shot card — outside grid so it can be centered */}
           {singleShot && (
             <div className="flex justify-center mt-6">
-              <div className="relative rounded-xl border-2 border-[#63489c] bg-card p-6 flex flex-col w-full max-w-sm">
+              <div className="relative rounded-xl border-2 border-[#470BC1] bg-card p-6 flex flex-col w-full max-w-sm">
                 {(currentSubscription?.singleShotCredits ?? 0) > 0 && (
                   <div className="absolute -top-4 right-4 px-3 py-1 bg-green-500 text-white text-xs font-medium rounded-full z-10">
                     {currentSubscription?.singleShotCredits} Credits
@@ -504,7 +504,7 @@ export default function PricingPage() {
                 </div>
 
                 <Button
-                  className="w-full mb-6 bg-white text-black hover:bg-[#63489c] hover:text-white font-semibold transition-all duration-300"
+                  className="w-full mb-6 bg-white text-black hover:bg-[#470BC1] hover:text-white font-semibold transition-all duration-300"
                   onClick={handlePurchaseSingleShot}
                   disabled={createSingleShotCheckout.isPending}
                 >
