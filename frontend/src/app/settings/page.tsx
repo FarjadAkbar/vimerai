@@ -77,7 +77,13 @@ export default function SettingsPage() {
   }
 
   const planDisplayName = (plan: string) =>
-    plan === "creator" ? "AI Creator" : plan.charAt(0).toUpperCase() + plan.slice(1)
+    plan === "creator"
+      ? "AI Creator"
+      : plan === "pro"
+        ? "AI Pro Studio"
+        : plan === "starter"
+          ? "AI Starter"
+          : plan.charAt(0).toUpperCase() + plan.slice(1)
 
   const hasActiveSubscription =
     currentSubscription &&

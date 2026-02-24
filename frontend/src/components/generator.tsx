@@ -446,7 +446,7 @@ export function Generator({
                 <Link href="/signup" className="text-primary hover:underline">
                   signup
                 </Link>
-                . Full generation requires an active{" "}
+                {" "}Full generation requires an active{" "}
                 <Link href="/pricing" className="text-primary hover:underline">
                   subscription
                 </Link>

@@ -16,7 +16,13 @@ export function SubscriptionInfo({
   showCreditSource = false,
 }: SubscriptionInfoProps) {
   const planDisplayName =
-    plan === "creator" ? "AI Creator" : plan.charAt(0).toUpperCase() + plan.slice(1);
+    plan === "creator"
+      ? "AI Creator"
+      : plan === "pro"
+        ? "AI Pro Studio"
+        : plan === "starter"
+          ? "AI Starter"
+          : plan.charAt(0).toUpperCase() + plan.slice(1);
   const totalCredits = videosRemaining + singleShotCredits;
 
   // Determine which credit will be consumed first (single shot > subscription)
@@ -65,7 +71,6 @@ export function SubscriptionInfo({
       {showCreditSource && totalCredits > 0 && (
         <div className="mt-3 pt-3 border-t border-border">
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <Zap className="w-3.5 h-3.5" />
             <span>
               Next generation will use:{" "}
               <span className="font-medium text-foreground">

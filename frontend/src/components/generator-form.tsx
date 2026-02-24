@@ -81,8 +81,7 @@ export function GeneratorForm({
                   {/* Bottom bar: Fast mode left, submit button right */}
                   <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between pointer-events-none">
                     <div className="flex items-center gap-2 text-sm text-muted-foreground pointer-events-none">
-                      <Zap className="w-4 h-4 text-foreground/70" />
-                      <span className="font-medium text-foreground">Fast mode</span>
+                      <span className="font-medium text-foreground">Fast Mode</span>
                       <span>2–5 min generation</span>
                     </div>
                     <div className="pointer-events-auto">

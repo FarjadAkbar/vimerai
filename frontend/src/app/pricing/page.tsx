@@ -97,10 +97,7 @@ const subscriptionFeatures: Record<PlanId, string[]> = {
     "Watermark-free videos",
     "Full commercial usage rights",
     "VIP customer support",
-  ],
-  singleShot: [
-
-  ],
+  ]
 };
 
 /** Show rounded prices only (no decimals like 1009.8). */
@@ -224,9 +221,14 @@ export default function PricingPage() {
   const singleShot = SINGLE_SHOT;
 
   const getSingleShotFeatures = () => [
-    "One video generation",
-    "No expiration",
-    "Consumed only when generation is executed",
+    "1 credit = 1 video; buy multiple times, credits stack",
+    "Video length up to 10 seconds",
+    "HD output (up to 720p)",
+    "Standard processing speed",
+    "Access to basic AI styles",
+    "No free retry",
+    "Watermark-free video",
+    "Full usage rights"
   ];
 
   const handleSubscribe = async (planId: string) => {
@@ -403,10 +405,10 @@ export default function PricingPage() {
               return (
                 <div
                   key={plan.id}
-                  className={`relative rounded-xl border-2 p-6 flex flex-col ${
+                  className={`relative rounded-xl border p-6 flex flex-col transition-all duration-300 ${
                     isCurrentPlan
-                      ? "border-[#63489c] border-4"
-                      : "border-border bg-card"
+                      ? "border-[#63489c]/50 bg-[#63489c]/5 ring-1 ring-[#63489c]/20"
+                      : "border-border bg-card hover:border-border/80"
                   }`}
                 >
                   {plan.popular && (
@@ -420,7 +422,7 @@ export default function PricingPage() {
                     />
                   )}
                   {isCurrentPlan && (
-                    <div className="absolute -top-4 right-4 px-3 py-1 bg-[#63489c] text-white text-xs font-medium rounded-full z-10">
+                    <div className="absolute -top-3 right-4 px-3 py-1 bg-[#63489c] text-white text-[10px] font-bold uppercase tracking-wider rounded-full z-10 shadow-lg">
                       Active
                     </div>
                   )}
@@ -442,18 +444,20 @@ export default function PricingPage() {
                     </span>
                   </div>
 
-                  <Button
-                    className={`w-full mb-6 bg-white text-black hover:bg-gray-100 ${
-                      isCurrentPlan ? "bg-white text-black" : ""
+                   <Button
+                    className={`w-full mb-6 font-semibold transition-all duration-300 ${
+                      isCurrentPlan 
+                        ? "bg-secondary text-secondary-foreground cursor-default" 
+                        : "bg-white text-black hover:bg-[#63489c] hover:text-white"
                     }`}
                     onClick={() => handleSubscribe(plan.id)}
                     disabled={activatingPlanId !== null || !!isCurrentPlan}
                   >
                     {activatingPlanId === plan.id
-                      ? "Redirecting to checkout..."
+                      ? "Redirecting..."
                       : isCurrentPlan
-                        ? "Current Plan"
-                        : "Subscribe"}
+                        ? "Active Plan"
+                        : "Subscribe Now"}
                   </Button>
 
                   <ul className="space-y-3 flex-1">
@@ -478,7 +482,7 @@ export default function PricingPage() {
           {/* Single Shot card — outside grid so it can be centered */}
           {singleShot && (
             <div className="flex justify-center mt-6">
-              <div className="relative rounded-xl border-2 border-blue-400 bg-card p-6 flex flex-col w-full max-w-sm">
+              <div className="relative rounded-xl border-2 border-[#63489c] bg-card p-6 flex flex-col w-full max-w-sm">
                 {(currentSubscription?.singleShotCredits ?? 0) > 0 && (
                   <div className="absolute -top-4 right-4 px-3 py-1 bg-green-500 text-white text-xs font-medium rounded-full z-10">
                     {currentSubscription?.singleShotCredits} Credits
@@ -488,7 +492,7 @@ export default function PricingPage() {
                 <h3 className="text-xl font-bold mb-2">{singleShot.name}</h3>
 
                 <p className="text-muted-foreground text-sm mb-6 min-h-[40px]">
-                  One-time purchase. One short-form video, no expiration.
+                  One-time purchase. One short-form video, no expiration
                 </p>
 
                 <div className="mb-6">
@@ -499,13 +503,13 @@ export default function PricingPage() {
                 </div>
 
                 <Button
-                  className="w-full mb-6 bg-white text-black hover:bg-gray-100"
+                  className="w-full mb-6 bg-white text-black hover:bg-[#63489c] hover:text-white font-semibold transition-all duration-300"
                   onClick={handlePurchaseSingleShot}
                   disabled={createSingleShotCheckout.isPending}
                 >
                   {createSingleShotCheckout.isPending
-                    ? "Redirecting to checkout..."
-                    : "Purchase"}
+                    ? "Redirecting..."
+                    : "Purchase Credit"}
                 </Button>
 
                 <ul className="space-y-3 flex-1">
