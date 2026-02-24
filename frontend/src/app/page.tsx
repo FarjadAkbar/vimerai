@@ -26,7 +26,7 @@ export default function HomePage() {
             Create short videos in seconds
           </h1>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed min-h-[2.5rem] flex justify-center items-center">
-             Transform your text prompts into short-form videos.           
+             Transform your text prompts into short-form videos          
           </p>
         </section>
 
