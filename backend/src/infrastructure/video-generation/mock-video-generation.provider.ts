@@ -37,7 +37,7 @@ export class MockVideoGenerationProvider implements IVideoGenerationProvider {
     request: GenerateVideoRequest,
   ): Promise<GenerateVideoResponse> {
     // Use provided jobId if available, otherwise generate one
-    const jobId = request.jobId || `mock_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    const jobId = await request.jobId || `mock_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     
     // Get a random sample video
     const randomVideo = this.SAMPLE_VIDEOS[
@@ -51,7 +51,7 @@ export class MockVideoGenerationProvider implements IVideoGenerationProvider {
     });
 
     // Simulate async processing
-    this.processVideoGeneration(jobId, randomVideo, request.mode).catch(
+    await this.processVideoGeneration(jobId, randomVideo, request.mode).catch(
       (error) => {
         console.error('Mock video generation error:', error);
         this.jobStatuses.set(jobId, {
@@ -67,7 +67,7 @@ export class MockVideoGenerationProvider implements IVideoGenerationProvider {
     };
   }
 
-  async getGenerationStatus(jobId: string): Promise<GenerateVideoResponse> {
+  getGenerationStatus(jobId: string): GenerateVideoResponse {
     const job = this.jobStatuses.get(jobId);
 
     if (!job) {

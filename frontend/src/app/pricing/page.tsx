@@ -98,7 +98,9 @@ const subscriptionFeatures: Record<PlanId, string[]> = {
     "Full commercial usage rights",
     "VIP customer support",
   ],
-  singleShot: [],
+  singleShot: [
+
+  ],
 };
 
 /** Show rounded prices only (no decimals like 1009.8). */
@@ -222,14 +224,9 @@ export default function PricingPage() {
   const singleShot = SINGLE_SHOT;
 
   const getSingleShotFeatures = () => [
-    "1 credit = 1 video; buy multiple times, credits stack",
-    "Video length up to 10 seconds",
-    "HD output (up to 720p)",
-    "Standard processing speed",
-    "Access to basic AI styles",
-    "No free retry",
-    "Watermark-free video",
-    "Full usage rights",
+    "One video generation",
+    "No expiration",
+    "Consumed only when generation is executed",
   ];
 
   const handleSubscribe = async (planId: string) => {
@@ -308,14 +305,14 @@ export default function PricingPage() {
     return "";
   };
 
-  return (
+ return (
     <>
       <div className="min-h-screen bg-background">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
           {/* Header */}
           <div className="text-center mb-10">
             <h1 className="text-4xl md:text-5xl font-bold mb-4">
-              Simple, Transparent Pricing
+              Simple Transparent Pricing
             </h1>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
               {currentSubscription && currentSubscription.plan !== "free"
@@ -393,135 +390,80 @@ export default function PricingPage() {
             </div>
           )}
 
-          <div className="grid md:grid-cols-4 gap-4 max-w-6xl mx-auto items-stretch">
-              {/* ── Subscription plan cards ── */}
-              {plans.map((plan) => {
-                const effectiveBillingPeriod = currentSubscription?.billingPeriod ?? 'monthly';
-                const isCurrentPlan =
-                  currentSubscription &&
-                  currentSubscription.plan !== 'free' &&
-                  currentSubscription.plan === plan.id &&
-                  effectiveBillingPeriod === billingPeriod;
+          {/* Subscription plan cards */}
+          <div className="grid md:grid-cols-3 gap-4 max-w-6xl mx-auto items-stretch">
+            {plans.map((plan) => {
+              const effectiveBillingPeriod = currentSubscription?.billingPeriod ?? 'monthly';
+              const isCurrentPlan =
+                currentSubscription &&
+                currentSubscription.plan !== 'free' &&
+                currentSubscription.plan === plan.id &&
+                effectiveBillingPeriod === billingPeriod;
 
-                return (
-                  <div
-                    key={plan.id}
-                    className={`relative rounded-xl border-2 p-6 flex flex-col ${
-                      isCurrentPlan
-                        ? "border-[#63489c] border-4"
-                        : "border-border bg-card"
-                    }`}
-                  >
-                    {/* Badges */}
-                    {plan.popular && (
-                      <BorderBeam
-                        size={100}
-                        duration={6}
-                        colorFrom="#ffaa40"
-                        className="opacity-60"
-                        colorTo="#9c40ff"
-                        borderWidth={2}
-                      />
-                    )}
-                    {isCurrentPlan && (
-                      <div className="absolute -top-4 right-4 px-3 py-1 bg-[#63489c] text-white text-xs font-medium rounded-full z-10">
-                        Active
-                      </div>
-                    )}
-
-                    {/* ROW 1 — Plan name */}
-                    <h3 className="text-xl font-bold mb-2">{plan.name}</h3>
-
-                    {/* ROW 2 — Description */}
-                    <p className="text-muted-foreground text-sm mb-6 min-h-[40px]">
-                      {getPlanDescription(plan.id)}
-                    </p>
-
-                    {/* ROW 3 — Price (frontend); limits must match backend for restrictions */}
-                    <div className="mb-6">
-                      <span className="text-4xl font-bold">
-                        &euro;{formatPrice(billingPeriod === "monthly"
-                          ? plan.monthlyPrice
-                          : plan.yearlyPrice)}
-                      </span>
-                      <span className="text-muted-foreground text-sm">
-                        /{billingPeriod === "monthly" ? "month" : "year"}
-                      </span>
-                    </div>
-
-                    {/* ROW 4 — CTA button */}
-                    <Button
-                      className={`w-full mb-6 bg-white text-black hover:bg-gray-100 ${
-                        isCurrentPlan ? "bg-white text-black" : ""
-                      }`}
-                      onClick={() => handleSubscribe(plan.id)}
-                      disabled={activatingPlanId !== null || !!isCurrentPlan}
-                    >
-                      {activatingPlanId === plan.id
-                        ? "Redirecting to checkout..."
-                        : isCurrentPlan
-                          ? "Current Plan"
-                          : "Subscribe"}
-                    </Button>
-
-                    {/* ROW 5 — Features */}
-                    <ul className="space-y-3 flex-1">
-                      <li className="flex items-start gap-3">
-                        <Check className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
-                        <span className="text-sm">
-                          {plan.videosPerMonth} video generations/month
-                        </span>
-                      </li>
-                      {getFeatures(plan.id).map((feature, fIdx) => (
-                        <li key={fIdx} className="flex items-start gap-3">
-                          <Check className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
-                          <span className="text-sm">{feature}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                );
-              })}
-
-              {/* ── Single Shot card ── */}
-              {singleShot && (
-                <div className="relative rounded-xl border-2 border-blue-400 bg-card p-6 flex flex-col">
-                  {(currentSubscription?.singleShotCredits ?? 0) > 0 && (
-                    <div className="absolute -top-4 right-4 px-3 py-1 bg-green-500 text-white text-xs font-medium rounded-full z-10">
-                      {currentSubscription?.singleShotCredits} Credits
+              return (
+                <div
+                  key={plan.id}
+                  className={`relative rounded-xl border-2 p-6 flex flex-col ${
+                    isCurrentPlan
+                      ? "border-[#63489c] border-4"
+                      : "border-border bg-card"
+                  }`}
+                >
+                  {plan.popular && (
+                    <BorderBeam
+                      size={100}
+                      duration={6}
+                      colorFrom="#ffaa40"
+                      className="opacity-60"
+                      colorTo="#9c40ff"
+                      borderWidth={2}
+                    />
+                  )}
+                  {isCurrentPlan && (
+                    <div className="absolute -top-4 right-4 px-3 py-1 bg-[#63489c] text-white text-xs font-medium rounded-full z-10">
+                      Active
                     </div>
                   )}
 
-                  {/* ROW 1 — Name */}
-                  <h3 className="text-xl font-bold mb-2">{singleShot.name}</h3>
+                  <h3 className="text-xl font-bold mb-2">{plan.name}</h3>
 
-                  {/* ROW 2 — Description */}
-                  <p className="text-muted-foreground text-sm mb-6 min-h-[40px]">
-                    One-time purchase. One short-form video, no expiration.
+                  <p className="text-muted-foreground text-sm mb-4 min-h-[40px]">
+                    {getPlanDescription(plan.id)}
                   </p>
 
-                  {/* ROW 3 — Price (frontend) */}
                   <div className="mb-6">
                     <span className="text-4xl font-bold">
-                      &euro;{formatPrice(singleShot.price)}
+                      ${formatPrice(billingPeriod === "monthly"
+                        ? plan.monthlyPrice
+                        : plan.yearlyPrice)}
                     </span>
-                    <span className="text-muted-foreground text-sm"> /one-time</span>
+                    <span className="text-muted-foreground text-sm">
+                      /{billingPeriod === "monthly" ? "month" : "year"}
+                    </span>
                   </div>
 
-                  {/* ROW 4 — CTA button */}
                   <Button
-                    className="w-full mb-6 bg-white text-black hover:bg-gray-100"
-                    onClick={handlePurchaseSingleShot}
-                    disabled={createSingleShotCheckout.isPending}
+                    className={`w-full mb-6 bg-white text-black hover:bg-gray-100 ${
+                      isCurrentPlan ? "bg-white text-black" : ""
+                    }`}
+                    onClick={() => handleSubscribe(plan.id)}
+                    disabled={activatingPlanId !== null || !!isCurrentPlan}
                   >
-                    {createSingleShotCheckout.isPending
+                    {activatingPlanId === plan.id
                       ? "Redirecting to checkout..."
-                      : "Purchase"}
+                      : isCurrentPlan
+                        ? "Current Plan"
+                        : "Subscribe"}
                   </Button>
 
-                  {/* ROW 5 — Features */}
                   <ul className="space-y-3 flex-1">
-                    {getSingleShotFeatures().map((feature, fIdx) => (
+                    <li className="flex items-start gap-3">
+                      <Check className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
+                      <span className="text-sm">
+                        {plan.videosPerMonth} video generations/month
+                      </span>
+                    </li>
+                    {getFeatures(plan.id).map((feature, fIdx) => (
                       <li key={fIdx} className="flex items-start gap-3">
                         <Check className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
                         <span className="text-sm">{feature}</span>
@@ -529,8 +471,55 @@ export default function PricingPage() {
                     ))}
                   </ul>
                 </div>
-              )}
+              );
+            })}
           </div>
+
+          {/* Single Shot card — outside grid so it can be centered */}
+          {singleShot && (
+            <div className="flex justify-center mt-6">
+              <div className="relative rounded-xl border-2 border-blue-400 bg-card p-6 flex flex-col w-full max-w-sm">
+                {(currentSubscription?.singleShotCredits ?? 0) > 0 && (
+                  <div className="absolute -top-4 right-4 px-3 py-1 bg-green-500 text-white text-xs font-medium rounded-full z-10">
+                    {currentSubscription?.singleShotCredits} Credits
+                  </div>
+                )}
+
+                <h3 className="text-xl font-bold mb-2">{singleShot.name}</h3>
+
+                <p className="text-muted-foreground text-sm mb-6 min-h-[40px]">
+                  One-time purchase. One short-form video, no expiration.
+                </p>
+
+                <div className="mb-6">
+                  <span className="text-4xl font-bold">
+                    ${formatPrice(singleShot.price)}
+                  </span>
+                  <span className="text-muted-foreground text-sm"> /one-time</span>
+                </div>
+
+                <Button
+                  className="w-full mb-6 bg-white text-black hover:bg-gray-100"
+                  onClick={handlePurchaseSingleShot}
+                  disabled={createSingleShotCheckout.isPending}
+                >
+                  {createSingleShotCheckout.isPending
+                    ? "Redirecting to checkout..."
+                    : "Purchase"}
+                </Button>
+
+                <ul className="space-y-3 flex-1">
+                  {getSingleShotFeatures().map((feature, fIdx) => (
+                    <li key={fIdx} className="flex items-start gap-3">
+                      <Check className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
+                      <span className="text-sm">{feature}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          )}
+
         </div>
       </div>
 

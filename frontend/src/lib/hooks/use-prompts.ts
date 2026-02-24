@@ -5,10 +5,11 @@ import type {
   UpdatePromptTemplateRequest,
 } from '@/lib/api/prompts.api';
 
-export const usePrompts = () => {
+export const usePrompts = (enabled = true) => {
   return useQuery({
     queryKey: ['prompts'],
     queryFn: () => promptsApi.getPrompts(),
+    enabled,
   });
 };
 

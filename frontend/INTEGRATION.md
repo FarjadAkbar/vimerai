@@ -76,9 +76,11 @@
 - Real-time status polling
 - Error handling
 
-### ✅ Prompt Studio v1 (Basic)
-- Template-ready structure (API hooks created)
-- Simple prompt interface
+### ✅ Prompt Studio (Full)
+- Create, save, edit, and delete prompt templates
+- List saved prompts with name and preview
+- “Use in Generator”: sends prompt to session storage and navigates to home; generator prefills and user can generate immediately
+- Requires sign-in; prompts API integrated
 
 ### ✅ Basic Error Handling
 - API error handling in all mutations

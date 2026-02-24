@@ -2,7 +2,6 @@
 
 import DarkVeil from "@/components/DarkVeil";
 import { Generator } from "@/components/generator";
-import TextType from "@/components/TextType";
 import { useAppState } from "@/lib/providers/app-state-provider";
 
 export default function HomePage() {
@@ -21,22 +20,13 @@ export default function HomePage() {
         />
       </div>
 
-      <div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-24 sm:pt-24 sm:pb-28">
-        <section className="text-center mb-16 sm:mb-20">
-          <h1 className="text-4xl md:text-5xl font-bold tracking-tight text-balance mb-6 text-foreground">
+      <div className="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-20 sm:pt-16 sm:pb-20">
+        <section className="text-center mb-10 sm:mb-10">
+          <h1 className="text-4xl md:text-5xl font-bold tracking-tight text-balance mb-2 text-foreground">
             Create short videos in seconds
           </h1>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed min-h-[2.5rem] flex justify-center items-center">
-            <TextType
-              text="Transform your text prompts into short-form videos."
-              className="font-medium text-foreground"
-              typingSpeed={40}
-              pauseDuration={2000}
-              loop={false}
-              showCursor
-              cursorCharacter="|"
-              cursorBlinkDuration={0.6}
-            />
+             Transform your text prompts into short-form videos.           
           </p>
         </section>
 
