@@ -97,7 +97,8 @@ const subscriptionFeatures: Record<PlanId, string[]> = {
     "Watermark-free videos",
     "Full commercial usage rights",
     "VIP customer support",
-  ]
+  ],
+  singleShot: []
 };
 
 /** Show rounded prices only (no decimals like 1009.8). */
