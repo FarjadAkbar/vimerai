@@ -37,9 +37,9 @@ function isMEA(countryCode: string): boolean {
 
 async function lookupCountryFromIP(): Promise<string | null> {
   try {
-    const res = await fetch(`http://ip-api.com/json`);
+    const res = await fetch(`https://ipapi.co/json`);
     const data = await res.json();
-    return data.countryCode ?? null;
+    return data.country_code ?? null;
   } catch {
     return null;
   }
