@@ -54,13 +54,13 @@ const Header = () => {
 
   return (
     <nav className="sticky top-0 z-50 border-b border-border backdrop-blur-md bg-background/80">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 sm:py-4 flex items-center justify-between gap-4">
-        <Link href="/" className="flex items-center gap-2">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 sm:py-4 flex items-center justify-between">
+        <Link href="/" className="flex items-center gap-2 flex-shrink-0">
           <img src="/platform/logo-vimera.png" alt="Vimera" className="h-6 sm:h-8 md:h-9 w-auto object-contain" />
         </Link>
 
-        {/* Desktop Navigation */}
-        <div className="hidden md:flex items-center gap-2">
+        {/* Desktop Navigation + Auth combined (no gap between nav and auth buttons) */}
+        <div className="hidden md:flex items-center">
           {navItems.map((item) => (
             <Button
               key={item.href}
@@ -72,9 +72,20 @@ const Header = () => {
               {item.label}
             </Button>
           ))}
+          {/* Auth section sits directly after nav — no gap wrapper */}
+          {isLoggedIn ? null : (
+            <div className="flex items-center ml-2 gap-2">
+              <Button variant="outline" size="sm" onClick={(e) => handleNavigation("/login", e)}>
+                Sign In
+              </Button>
+              <Button size="sm" onClick={(e) => handleNavigation("/signup", e)}>
+                Create Account
+              </Button>
+            </div>
+          )}
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
           {isLoggedIn ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -155,25 +166,16 @@ const Header = () => {
                 </div>
               </DropdownMenuContent>
             </DropdownMenu>
-          ) : (
-            <div className="hidden md:flex items-center gap-2">
-              <Button variant="outline" size="sm" onClick={(e) => handleNavigation("/login", e)}>
-                Sign In
-              </Button>
-              <Button size="sm" onClick={(e) => handleNavigation("/signup", e)}>
-                Create Account
-              </Button>
-            </div>
-          )}
+          ) : null}
 
           {/* Mobile Menu Toggle */}
           <Button
             variant="ghost"
             size="icon"
-            className="md:hidden text-white"
+            className="md:hidden text-white w-9 h-9"
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
           >
-            {isMobileMenuOpen ? <LayoutGrid className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            {isMobileMenuOpen ? <LayoutGrid className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           </Button>
         </div>
       </div>
@@ -181,14 +183,14 @@ const Header = () => {
       {/* Mobile Navigation Menu */}
       {isMobileMenuOpen && (
         <div className="md:hidden border-t border-border bg-background animate-in slide-in-from-top duration-200">
-          <div className="px-4 pt-2 pb-6 space-y-1">
+          <div className="px-4 pt-3 pb-6 space-y-1">
             {navItems.map((item) => (
               <button
                 key={item.href}
-                className={`w-full text-left px-3 py-3 rounded-md text-base font-medium transition-colors ${
+                className={`w-full text-left px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
                   pathname === item.href
                     ? "bg-accent text-accent-foreground"
-                    : "text-white/90 hover:bg-accent/50 hover:text-accent-foreground"
+                    : "text-white/80 hover:bg-accent/40 hover:text-white"
                 }`}
                 onClick={(e) => handleNavigation(item.href, e)}
               >
@@ -196,7 +198,7 @@ const Header = () => {
               </button>
             ))}
             {!isLoggedIn && (
-              <div className="grid grid-cols-2 gap-4 pt-4">
+              <div className="flex flex-col gap-2 pt-4">
                 <Button variant="outline" className="w-full" onClick={(e) => handleNavigation("/login", e)}>
                   Sign In
                 </Button>
