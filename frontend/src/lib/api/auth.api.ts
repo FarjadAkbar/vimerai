@@ -20,10 +20,12 @@ export interface PasswordResetInput {
 
 export const authApi = {
   signup: async (data: SignupInput): Promise<AuthResponse> => {
+    console.log('Attempting signup with data:', data);
     const response = await api.post<AuthResponse>('/auth/signup', {
       email: data.email,
       password: data.password,
     });
+    console.log('Signup response:', response.data);
     return response.data;
   },
 
