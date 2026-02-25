@@ -60,123 +60,121 @@ const Header = () => {
         </Link>
 
         {/* Desktop Navigation */}
-        <div>
-          <div className="hidden md:flex items-center gap-2">
-            {navItems.map((item) => (
-              <Button
-                key={item.href}
-                variant="ghost"
-                size="sm"
-                className={pathname === item.href ? "bg-accent text-accent-foreground" : "text-white/90"}
-                onClick={(e) => handleNavigation(item.href, e)}
-              >
-                {item.label}
-              </Button>
-            ))}
-          </div>
+        <div className="hidden md:flex items-center gap-2">
+          {navItems.map((item) => (
+            <Button
+              key={item.href}
+              variant="ghost"
+              size="sm"
+              className={pathname === item.href ? "bg-accent text-accent-foreground" : "text-white/90"}
+              onClick={(e) => handleNavigation(item.href, e)}
+            >
+              {item.label}
+            </Button>
+          ))}
+        </div>
 
-          <div className="flex items-center gap-3">
-            {isLoggedIn ? (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="rounded-full bg-green-400 grayscale"
-                  >
-                    <Avatar>
-                      <AvatarImage alt="User" />
-                      <AvatarFallback>
-                        {userData?.user?.email?.charAt(0).toUpperCase()}
-                      </AvatarFallback>
-                    </Avatar>
-                  </Button>
-                </DropdownMenuTrigger>
+        <div className="flex items-center gap-3">
+          {isLoggedIn ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="rounded-full bg-green-400 grayscale"
+                >
+                  <Avatar>
+                    <AvatarImage alt="User" />
+                    <AvatarFallback>
+                      {userData?.user?.email?.charAt(0).toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                </Button>
+              </DropdownMenuTrigger>
 
-                <DropdownMenuContent className="w-80 p-0 mr-20 my-3 rounded-2xl border border-border overflow-hidden">
-                  <div className="p-4 border-b border-border text-white">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center">
-                        <Mail className="w-5 h-5 text-muted-foreground" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium truncate">
-                          {userData?.user?.email}
-                        </p>
-                        {subscription?.plan !== 'free' && (
-                          <span className="text-sm font-semibold text-yellow-500">
-                            {subscription?.plan &&
-                              subscription.plan.charAt(0).toUpperCase() +
-                                subscription.plan.slice(1)}
-                          </span>
-                        )}
-                      </div>
+              <DropdownMenuContent className="w-80 p-0 mr-20 my-3 rounded-2xl border border-border overflow-hidden">
+                <div className="p-4 border-b border-border text-white">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center">
+                      <Mail className="w-5 h-5 text-muted-foreground" />
                     </div>
-                  </div>
-
-                  {(subscription?.plan !== "free" || (subscription?.singleShotCredits ?? 0) > 0) && (
-                    <div className="p-4 space-y-2 border-b border-border text-white">
-                      <div className="flex items-center gap-4">
-                        {subscription?.plan !== "free" && (
-                          <div className="flex items-center">
-                            <p className="text-lg font-semibold">
-                              {subscription?.videosRemaining}/{subscription?.limit}
-                            </p>
-                            <span className="text-sm text-muted-foreground ml-2">Videos</span>
-                          </div>
-                        )}
-                        {(subscription?.singleShotCredits ?? 0) > 0 && (
-                          <div className="flex items-center">
-                            <p className="text-lg font-semibold">
-                              {subscription?.singleShotCredits}
-                            </p>
-                            <span className="text-sm text-muted-foreground ml-2">
-                              Single Shot{(subscription?.singleShotCredits ?? 0) !== 1 ? "s" : ""}
-                            </span>
-                          </div>
-                        )}
-                      </div>
-                      {subscription?.plan !== "free" && (
-                        <Progress
-                          className="bg-gray-700 [&>div]:bg-green-600 h-1.5"
-                          value={progressValue}
-                        />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium truncate">
+                        {userData?.user?.email}
+                      </p>
+                      {subscription?.plan !== 'free' && (
+                        <span className="text-sm font-semibold text-yellow-500">
+                          {subscription?.plan &&
+                            subscription.plan.charAt(0).toUpperCase() +
+                              subscription.plan.slice(1)}
+                        </span>
                       )}
                     </div>
-                  )}
-
-                  <div className="p-2">
-                    <button
-                      className="w-full flex items-center gap-3 justify-center px-3 py-2.5 rounded-xl hover:bg-red-800 transition-colors text-left cursor-pointer text-white"
-                      onClick={logout}
-                    >
-                      <LogOut className="w-5 h-5 text-muted-foreground" />
-                      <span className="text-sm font-medium">Log Out</span>
-                    </button>
                   </div>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            ) : (
-              <div className="hidden md:flex items-center gap-2">
-                <Button variant="outline" size="sm" onClick={(e) => handleNavigation("/login", e)}>
-                  Sign In
-                </Button>
-                <Button size="sm" onClick={(e) => handleNavigation("/signup", e)}>
-                  Create Account
-                </Button>
-              </div>
-            )}
+                </div>
 
-            {/* Mobile Menu Toggle */}
-            <Button
-              variant="ghost"
-              size="icon"
-              className="md:hidden text-white"
-              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            >
-              {isMobileMenuOpen ? <LayoutGrid className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-            </Button>
-          </div>
+                {(subscription?.plan !== "free" || (subscription?.singleShotCredits ?? 0) > 0) && (
+                  <div className="p-4 space-y-2 border-b border-border text-white">
+                    <div className="flex items-center gap-4">
+                      {subscription?.plan !== "free" && (
+                        <div className="flex items-center">
+                          <p className="text-lg font-semibold">
+                            {subscription?.videosRemaining}/{subscription?.limit}
+                          </p>
+                          <span className="text-sm text-muted-foreground ml-2">Videos</span>
+                        </div>
+                      )}
+                      {(subscription?.singleShotCredits ?? 0) > 0 && (
+                        <div className="flex items-center">
+                          <p className="text-lg font-semibold">
+                            {subscription?.singleShotCredits}
+                          </p>
+                          <span className="text-sm text-muted-foreground ml-2">
+                            Single Shot{(subscription?.singleShotCredits ?? 0) !== 1 ? "s" : ""}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                    {subscription?.plan !== "free" && (
+                      <Progress
+                        className="bg-gray-700 [&>div]:bg-green-600 h-1.5"
+                        value={progressValue}
+                      />
+                    )}
+                  </div>
+                )}
+
+                <div className="p-2">
+                  <button
+                    className="w-full flex items-center gap-3 justify-center px-3 py-2.5 rounded-xl hover:bg-red-800 transition-colors text-left cursor-pointer text-white"
+                    onClick={logout}
+                  >
+                    <LogOut className="w-5 h-5 text-muted-foreground" />
+                    <span className="text-sm font-medium">Log Out</span>
+                  </button>
+                </div>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : (
+            <div className="hidden md:flex items-center gap-2">
+              <Button variant="outline" size="sm" onClick={(e) => handleNavigation("/login", e)}>
+                Sign In
+              </Button>
+              <Button size="sm" onClick={(e) => handleNavigation("/signup", e)}>
+                Create Account
+              </Button>
+            </div>
+          )}
+
+          {/* Mobile Menu Toggle */}
+          <Button
+            variant="ghost"
+            size="icon"
+            className="md:hidden text-white"
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+          >
+            {isMobileMenuOpen ? <LayoutGrid className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+          </Button>
         </div>
       </div>
 

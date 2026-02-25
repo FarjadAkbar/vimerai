@@ -322,11 +322,6 @@ export default function PricingPage() {
                 ? "Stack plans to add more videos to your account"
                 : "Choose the plan that fits your needs"}
             </p>
-            {pricingRegion?.region === "mea" && (
-              <p className="text-sm text-muted-foreground/80 mt-2">
-                Prices for Middle East & Africa
-              </p>
-            )}
             {currentSubscription?.plan && currentSubscription.plan !== "free" && (
               <div className="mt-4 inline-block px-4 py-2 bg-primary/10 text-primary rounded-lg">
                 <span className="font-medium">Current Plan: </span>
