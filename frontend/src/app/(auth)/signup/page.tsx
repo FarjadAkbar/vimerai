@@ -45,10 +45,12 @@ export default function SignupPage() {
           response?: { data?: { message?: string }; status?: number };
         };
         const message =
-          errorResponse?.response?.data?.message ||
-          "Signup failed. Please try again.";
+        errorResponse?.response?.data?.message ||
+        "Signup failed. Please try again.";
+        
         const status = errorResponse?.response?.status;
-
+        
+        console.log('Signup error:', data);
         // Check if it's a conflict (user already exists)
         if (
           status === 409 ||
@@ -211,6 +213,7 @@ export default function SignupPage() {
               disabled={signup.isPending}
             >
               {signup.isPending ? "Creating account..." : "Sign up"}
+              
             </Button>
           </form>
         </Form>

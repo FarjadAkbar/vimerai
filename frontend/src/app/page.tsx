@@ -9,7 +9,7 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-background relative overflow-x-hidden">
-      <div className="fixed inset-0 pointer-events-none z-0" style={{ backgroundSize: 'cover', backgroundPosition: 'center' }}>
+      <div className="fixed  inset-0 pointer-events-none z-0 " style={{ backgroundSize: 'cover', backgroundPosition: 'center' }}>
         <DarkVeil
           hueShift={0}
           noiseIntensity={0}
