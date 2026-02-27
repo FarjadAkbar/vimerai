@@ -53,48 +53,50 @@ const Header = () => {
             <div className="logo-fallback hidden w-8 h-8 flex items-center justify-center rounded-lg bg-primary">
               <LayoutGrid className="w-5 h-5 text-primary-foreground" />
             </div>
-            <img
-              src="/platform/logo-vimera.png"
-              alt="Vimera"
-              className="h-6 sm:h-8 md:h-9 w-auto object-contain"
-            />
-          </Link>
-
-          <div className="flex items-center gap-3">
-            {userData?.user ? (
-              <>
-                {/* Desktop Nav */}
-                <div className="hidden md:flex items-center gap-2">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={(e) => handleNavigation("/", e)}
-                  >
-                    Generator
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={(e) => handleNavigation("/my-videos", e)}
-                  >
-                    My Videos
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={(e) => handleNavigation("/prompt-studio", e)}
-                  >
-                    Prompt Studio
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="text-white"
-                    onClick={(e) => handleNavigation("/pricing", e)}
-                  >
-                    Pricing
-                  </Button>
-                </div>
+           {/* Logo + Nav wrapper */}
+<div className="flex items-center gap-6">
+  <img
+    src="/platform/logo-vimera.png"
+    alt="Vimera"
+    className="h-6 sm:h-8 md:h-9 w-auto object-contain"
+  />
+</div>
+</Link>
+<div className="flex items-center gap-3">
+  {userData?.user ? (
+    <>
+      {/* Desktop Nav */}
+      <div className="hidden md:flex items-center gap-2">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={(e) => handleNavigation("/", e)}
+        >
+          Generator
+        </Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={(e) => handleNavigation("/my-videos", e)}
+        >
+          My Videos
+        </Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={(e) => handleNavigation("/prompt-studio", e)}
+        >
+          Prompt Studio
+        </Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="text-white"
+          onClick={(e) => handleNavigation("/pricing", e)}
+        >
+          Pricing
+        </Button>
+      </div>
 
                 {/* Mobile Hamburger */}
                 <Button
