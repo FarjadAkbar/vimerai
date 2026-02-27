@@ -130,7 +130,7 @@ const Header = () => {
                     </Button>
                   </DropdownMenuTrigger>
 
-                  <DropdownMenuContent className="w-80 p-0 mr-20 my-3 rounded-2xl border border-border overflow-hidden">
+                  <DropdownMenuContent className="w-80 p-0 mr-4 md:mr-20 my-3 rounded-2xl border border-border overflow-hidden">
                     {/* Email Section */}
                     <div className="p-4 border-b border-border">
                       <div className="flex items-center gap-3">
