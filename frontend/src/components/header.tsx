@@ -58,7 +58,7 @@ const Header = () => {
   <img
     src="/platform/logo-vimera.png"
     alt="Vimera"
-    className="h-6 sm:h-8 md:h-9 w-auto object-contain"
+    className="h-6 sm:h-9 md:h-9 w-auto object-contain"
   />
 </div>
 </Link>
@@ -114,14 +114,14 @@ const Header = () => {
                 </Button>
 
                 {/* Avatar Dropdown */}
-                <DropdownMenu>
+                <DropdownMenu >
                   <DropdownMenuTrigger asChild>
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="rounded-full bg-green-400 grayscale"
+                      className="rounded-full bg-gray-600 w-7 h-7 "
                     >
-                      <Avatar>
+                      <Avatar className="w-6 h-6">
                         <AvatarImage alt="shadcn" />
                         <AvatarFallback>
                           {userData.user.email.charAt(0).toUpperCase()}
