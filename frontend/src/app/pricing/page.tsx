@@ -34,8 +34,8 @@ const YEARLY_DISCOUNT = 0.15;
 
 /** Monthly prices by region. Backend resolves PayPal plan IDs by region. */
 const MONTHLY_PRICES_BY_REGION: Record<PricingRegionKey, Record<string, number>> = {
-  global: { starter: 12, creator: 35, pro: 99 },
-  mea: { starter: 9, creator: 30, pro: 90 },
+  global: { starter: 35, creator: 79, pro: 149 },
+  mea: { starter: 42, creator: 69, pro: 129 },
 };
 
 function yearlyFromMonthly(monthly: number): number {
@@ -57,7 +57,7 @@ function buildPlansForRegion(region: PricingRegionKey): Plan[] {
   });
 }
 
-const SINGLE_SHOT = { id: 'single-shot', name: 'AI Single Shot', type: 'one-time' as const, videosIncluded: 1, price: 10 };
+
 
 // Feature bullets must match final spec; first line (videos per month) is shown from API.
 const subscriptionFeatures: Record<PlanId, string[]> = {
@@ -219,6 +219,7 @@ export default function PricingPage() {
 
   const regionKey: PricingRegionKey = pricingRegion?.region ?? "global";
   const plans = useMemo(() => buildPlansForRegion(regionKey), [regionKey]);
+  const SINGLE_SHOT = { id: 'single-shot', name: 'AI Single Shot', type: 'one-time' as const, videosIncluded: 1, price: regionKey==='mea'?15:18 };
   const singleShot = SINGLE_SHOT;
 
   const getSingleShotFeatures = () => [
