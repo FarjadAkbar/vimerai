@@ -34,8 +34,8 @@ const YEARLY_DISCOUNT = 0.15;
 
 /** Monthly prices by region. Backend resolves PayPal plan IDs by region. */
 const MONTHLY_PRICES_BY_REGION: Record<PricingRegionKey, Record<string, number>> = {
-  global: { starter: 35, creator: 79, pro: 149 },
-  mea: { starter: 42, creator: 69, pro: 129 },
+  global: { starter: 42, creator: 79, pro: 149 },
+  mea: { starter: 35, creator: 69, pro: 129 },
 };
 
 function yearlyFromMonthly(monthly: number): number {
