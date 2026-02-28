@@ -460,13 +460,13 @@ export function Generator({
                   />
                 </p>
               </div>
-              {!isPreviewGeneration && (
+              {/* {!isPreviewGeneration && (
                 <Link href="/my-videos">
                   <Button size="sm" variant="outline">
                     View Status
                   </Button>
-                </Link>
-              )}
+                </Link> 
+              )} */}
             </div>
           </div>
         )}

@@ -34,8 +34,8 @@ const YEARLY_DISCOUNT = 0.15;
 
 /** Monthly prices by region. Backend resolves PayPal plan IDs by region. */
 const MONTHLY_PRICES_BY_REGION: Record<PricingRegionKey, Record<string, number>> = {
-  global: { starter: 12, creator: 35, pro: 99 },
-  mea: { starter: 9, creator: 30, pro: 90 },
+  global: { starter: 42, creator: 79, pro: 149 },
+  mea: { starter: 35, creator: 69, pro: 129 },
 };
 
 function yearlyFromMonthly(monthly: number): number {
@@ -57,46 +57,29 @@ function buildPlansForRegion(region: PricingRegionKey): Plan[] {
   });
 }
 
-const SINGLE_SHOT = { id: 'single-shot', name: 'AI Single Shot', type: 'one-time' as const, videosIncluded: 1, price: 10 };
+
 
 // Feature bullets must match final spec; first line (videos per month) is shown from API.
 const subscriptionFeatures: Record<PlanId, string[]> = {
   starter: [
-    "Create short-form videos optimized for social media",
-    "Video length up to 5 seconds",
-    "HD output (up to 720p)",
+    "25 videos per month",
+    "Up to 5 seconds per video",
+    "HD output (720p)",
     "Standard processing speed",
-    "Access to basic AI styles",
-    "One retry per video (technical failure only)",
-    "Watermark-free videos",
-    "Social media usage rights",
-    "Simple monthly quota",
+    "No watermark",
   ],
   creator: [
-    "Create short-form videos optimized for social platforms",
-    "Video length up to 10 seconds",
-    "Full HD output (up to 1080p)",
-    "Fast processing speed",
-    "Access to advanced AI styles",
-    "Built-in sound & effects library",
-    "Enhanced visual quality",
-    "One retry per video",
-    "Watermark-free videos",
-    "Full publishing & commercial usage rights",
-    "Priority customer support",
+    "35 videos per month",
+    "Up to 10 seconds per video",
+    "Full HD output (1080p)",
+    "No watermark",
+    "Priority processing queue",
   ],
   pro: [
-    "Create high-impact short-form videos for ads & campaigns",
-    "Video length up to 15 seconds",
-    "Premium Full HD output (up to 1080p)",
-    "Ultra-fast processing speed",
-    "Access to cinematic AI styles",
-    "Full sound & effects library",
-    "Enhanced visual quality for professional use",
-    "One retry per video",
-    "Watermark-free videos",
-    "Full commercial usage rights",
-    "VIP customer support",
+    "60 videos per month",
+    "Up to 15 seconds per video",
+    "Full HD output (1080p)",
+    "No watermark",
   ],
   singleShot: []
 };
@@ -219,17 +202,14 @@ export default function PricingPage() {
 
   const regionKey: PricingRegionKey = pricingRegion?.region ?? "global";
   const plans = useMemo(() => buildPlansForRegion(regionKey), [regionKey]);
+  const SINGLE_SHOT = { id: 'single-shot', name: 'AI Single Shot', type: 'one-time' as const, videosIncluded: 1, price: regionKey==='mea'?15:18 };
   const singleShot = SINGLE_SHOT;
 
   const getSingleShotFeatures = () => [
-    "1 credit = 1 video; buy multiple times, credits stack",
-    "Video length up to 10 seconds",
-    "HD output (up to 720p)",
-    "Standard processing speed",
-    "Access to basic AI styles",
-    "No free retry",
-    "Watermark-free video",
-    "Full usage rights"
+    "1 video generation",
+    "Up to 10 seconds",
+    "HD output (720p)",
+    "No watermark",
   ];
 
   const handleSubscribe = async (planId: string) => {

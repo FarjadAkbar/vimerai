@@ -81,7 +81,7 @@ export function GeneratorForm({
                   <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between pointer-events-none">
                     <div className="flex items-center gap-1.5 text-sm text-muted-foreground pointer-events-none">
                       <span className="font-medium text-foreground/80">Fast Mode</span>
-                      <span className="text-muted-foreground/60 text-xs hidden sm:inline">— ready in minutes</span>
+                      <span className="text-muted-foreground/60 ml-2 text-xs hidden sm:inline">{"    "}Instant Results</span>
                     </div>
                     <div className="pointer-events-auto">
                       <RainbowButton
