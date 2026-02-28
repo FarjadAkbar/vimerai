@@ -62,41 +62,24 @@ function buildPlansForRegion(region: PricingRegionKey): Plan[] {
 // Feature bullets must match final spec; first line (videos per month) is shown from API.
 const subscriptionFeatures: Record<PlanId, string[]> = {
   starter: [
-    "Create short-form videos optimized for social media",
-    "Video length up to 5 seconds",
-    "HD output (up to 720p)",
+    "25 videos per month",
+    "Up to 5 seconds per video",
+    "HD output (720p)",
     "Standard processing speed",
-    "Access to basic AI styles",
-    "One retry per video (technical failure only)",
-    "Watermark-free videos",
-    "Social media usage rights",
-    "Simple monthly quota",
+    "No watermark",
   ],
   creator: [
-    "Create short-form videos optimized for social platforms",
-    "Video length up to 10 seconds",
-    "Full HD output (up to 1080p)",
-    "Fast processing speed",
-    "Access to advanced AI styles",
-    "Built-in sound & effects library",
-    "Enhanced visual quality",
-    "One retry per video",
-    "Watermark-free videos",
-    "Full publishing & commercial usage rights",
-    "Priority customer support",
+    "35 videos per month",
+    "Up to 10 seconds per video",
+    "Full HD output (1080p)",
+    "No watermark",
+    "Priority processing queue",
   ],
   pro: [
-    "Create high-impact short-form videos for ads & campaigns",
-    "Video length up to 15 seconds",
-    "Premium Full HD output (up to 1080p)",
-    "Ultra-fast processing speed",
-    "Access to cinematic AI styles",
-    "Full sound & effects library",
-    "Enhanced visual quality for professional use",
-    "One retry per video",
-    "Watermark-free videos",
-    "Full commercial usage rights",
-    "VIP customer support",
+    "60 videos per month",
+    "Up to 15 seconds per video",
+    "Full HD output (1080p)",
+    "No watermark",
   ],
   singleShot: []
 };
@@ -223,14 +206,10 @@ export default function PricingPage() {
   const singleShot = SINGLE_SHOT;
 
   const getSingleShotFeatures = () => [
-    "1 credit = 1 video; buy multiple times, credits stack",
-    "Video length up to 10 seconds",
-    "HD output (up to 720p)",
-    "Standard processing speed",
-    "Access to basic AI styles",
-    "No free retry",
-    "Watermark-free video",
-    "Full usage rights"
+    "1 video generation",
+    "Up to 10 seconds",
+    "HD output (720p)",
+    "No watermark",
   ];
 
   const handleSubscribe = async (planId: string) => {
