@@ -86,7 +86,7 @@ export const subscriptionApi = {
         const country =  data.country_code ?? null;
 
   
-  if (!country) return { region: 'global'} ;
+  if (!country) return { region: 'mea'} ;
     
   const region = MEA_COUNTRY_CODES.has(country.toUpperCase()) ? 'mea' : 'global';
   return { region };
