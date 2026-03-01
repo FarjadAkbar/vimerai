@@ -244,7 +244,6 @@ export default function PromptStudioPage() {
                       className="gap-2"
                       onClick={() => handleUseInGenerator(prompt.template)}
                     >
-                      <Send className="w-4 h-4" />
                       Use in Generator
                       <ArrowRight className="w-4 h-4" />
                     </Button>

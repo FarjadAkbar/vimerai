@@ -53,52 +53,53 @@ const Header = () => {
             <div className="logo-fallback hidden w-8 h-8 flex items-center justify-center rounded-lg bg-primary">
               <LayoutGrid className="w-5 h-5 text-primary-foreground" />
             </div>
-           {/* Logo + Nav wrapper */}
-<div className="flex items-center gap-6">
-  <img
-    src="/platform/logo-vimera.png"
-    alt="Vimera"
-    className="h-6 sm:h-9 md:h-9 w-auto object-contain"
-  />
-</div>
-</Link>
-<div className="flex items-center gap-3">
-  {userData?.user ? (
-    <>
-      {/* Desktop Nav */}
-      <div className="hidden md:flex items-center gap-2">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={(e) => handleNavigation("/", e)}
-        >
-          Generator
-        </Button>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={(e) => handleNavigation("/my-videos", e)}
-        >
-          My Videos
-        </Button>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={(e) => handleNavigation("/prompt-studio", e)}
-        >
-          Prompt Studio
-        </Button>
-        <Button
-          variant="ghost"
-          size="sm"
-          className="text-white"
-          onClick={(e) => handleNavigation("/pricing", e)}
-        >
-          Pricing
-        </Button>
-      </div>
+            {/* Logo + Nav wrapper */}
+            <div className="flex items-center gap-6">
+              <img
+                src="/platform/logo-vimera.png"
+                alt="Vimera"
+                className="h-6 sm:h-9 md:h-9 w-auto object-contain"
+              />
+            </div>
+          </Link>
 
-                {/* Mobile Hamburger */}
+          <div className="flex items-center gap-3">
+            {userData?.user ? (
+              <>
+                {/* Desktop Nav (logged in) */}
+                <div className="hidden md:flex items-center gap-2">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={(e) => handleNavigation("/", e)}
+                  >
+                    Generator
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={(e) => handleNavigation("/my-videos", e)}
+                  >
+                    My Videos
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={(e) => handleNavigation("/prompt-studio", e)}
+                  >
+                    Prompt Studio
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-white"
+                    onClick={(e) => handleNavigation("/pricing", e)}
+                  >
+                    Pricing
+                  </Button>
+                </div>
+
+                {/* Mobile Hamburger (logged in) */}
                 <Button
                   variant="ghost"
                   size="icon"
@@ -114,12 +115,12 @@ const Header = () => {
                 </Button>
 
                 {/* Avatar Dropdown */}
-                <DropdownMenu >
+                <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="rounded-full bg-gray-600 w-7 h-7 "
+                      className="rounded-full bg-gray-600 w-7 h-7"
                     >
                       <Avatar className="w-6 h-6">
                         <AvatarImage alt="shadcn" />
@@ -224,6 +225,20 @@ const Header = () => {
                   >
                     Pricing
                   </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={(e) => handleNavigation("/login", e)}
+                  >
+                    Sign In
+                  </Button>
+                  <Button
+                    size="sm"
+                    onClick={(e) => handleNavigation("/signup", e)}
+                    className="bg-primary hover:bg-primary/90"
+                  >
+                    Create Account
+                  </Button>
                 </div>
 
                 {/* Mobile Hamburger (logged out) */}
@@ -239,21 +254,6 @@ const Header = () => {
                   ) : (
                     <Menu className="w-5 h-5" />
                   )}
-                </Button>
-
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={(e) => handleNavigation("/login", e)}
-                >
-                  Sign In
-                </Button>
-                <Button
-                  size="sm"
-                  onClick={(e) => handleNavigation("/signup", e)}
-                  className="bg-primary hover:bg-primary/90"
-                >
-                  Create Account
                 </Button>
               </>
             )}
@@ -306,6 +306,23 @@ const Header = () => {
                 >
                   Pricing
                 </button>
+                {/* Divider */}
+                <div className="border-t border-border my-1" />
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full justify-center"
+                  onClick={(e) => handleNavigation("/login", e)}
+                >
+                  Sign In
+                </Button>
+                <Button
+                  size="sm"
+                  className="w-full justify-center mt-2 bg-primary hover:bg-primary/90"
+                  onClick={(e) => handleNavigation("/signup", e)}
+                >
+                  Create Account
+                </Button>
               </>
             )}
           </div>
