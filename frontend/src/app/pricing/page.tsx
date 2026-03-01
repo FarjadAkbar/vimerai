@@ -65,7 +65,6 @@ const subscriptionFeatures: Record<PlanId, string[]> = {
     "25 videos per month",
     "Up to 5 seconds per video",
     "HD output (720p)",
-    "Standard processing speed",
     "No watermark",
   ],
   creator: [
@@ -73,7 +72,6 @@ const subscriptionFeatures: Record<PlanId, string[]> = {
     "Up to 10 seconds per video",
     "Full HD output (1080p)",
     "No watermark",
-    "Priority processing queue",
   ],
   pro: [
     "60 videos per month",
