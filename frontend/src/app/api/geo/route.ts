@@ -2,7 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(req: NextRequest) {
   if (req.headers.get("x-vercel-ip-country")) {
-    return { country_code: req.headers.get("x-vercel-ip-country"), source: "vercel" };
+    return NextResponse.json({
+      country_code: req.headers.get("x-vercel-ip-country"),
+      source: "vercel",
+    });
   }
 
   const response = await fetch("https://ipapi.co/json", {
