@@ -9,20 +9,20 @@ export const PAYPAL_PLAN_IDS_BY_REGION: Record<
   Record<string, string>
 > = {
   global: {
-    'starter-monthly': 'P-5RB13907GD995821JNGIBRNY',
-    'starter-yearly': 'P-47G2072900228090SNGIBRVQ',
-    'creator-monthly': 'P-2NY89093PP844033WNGIBR3I',
-    'creator-yearly': 'P-84P92151Y06445051NGIBSCQ',
-    'pro-monthly': 'P-2436777566582301GNGIBSII',
-    'pro-yearly': '', // Add when Pro Yearly is created in PayPal
+    'starter-monthly': 'P-75882301ND5681332NGRKOXA',
+    'starter-yearly': 'P-6DY751180M643744MNGRKQPY',
+    'creator-monthly': 'P-7Y517839V5545894MNGRKU5Y',
+    'creator-yearly': 'P-1H4124281G8816200NGRKTTI',
+    'pro-monthly': 'P-12788584S1812424DNGRKVTY',
+    'pro-yearly': 'P-4RV53746V8610891XNGRKXGI', // Add when Pro Yearly is created in PayPal
   },
   mea: {
-    'starter-monthly': 'P-9XX436710M2019608NGMY6SI',
-    'starter-yearly': 'P-6CE45123R0141430BNGMY6PI',
-    'creator-monthly': 'P-3KU15133MU8595837NGMY6MI',
-    'creator-yearly': 'P-2B2535621A749143CNGMY6JA',
-    'pro-monthly': 'P-01W64641HT0541055NGMY6DQ',
-    'pro-yearly': 'P-656176366S7907807NGMY57Y',
+    'starter-monthly': 'P-59697990383382252NGRKPMI',
+    'starter-yearly': 'P-1F79038650783411XNGRKRCY',
+    'creator-monthly': 'P-1A6018685X745000MNGRKUMQ',
+    'creator-yearly': 'P-3US52302RD616225KNGRKT6A',
+    'pro-monthly': 'P-09T053911R890533CNGRKV5A',
+    'pro-yearly': 'P-3UY68319TA620063UNGRKWWA',
   },
 };
 
