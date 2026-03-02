@@ -48,7 +48,7 @@ const Header = () => {
   return (
     <>
       <nav className="sticky top-0 z-50 border-b border-border backdrop-blur-md">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 sm:py-4 flex items-center justify-between gap-4">
+        <div className="max-w-8xl mx-auto px-4 sm:px-6 lg:px-8 py-3 sm:py-4 flex items-center justify-between gap-4">
           <Link href="/" className="flex items-center gap-2">
             <div className="logo-fallback hidden w-8 h-8 flex items-center justify-center rounded-lg bg-primary">
               <LayoutGrid className="w-5 h-5 text-primary-foreground" />
@@ -131,17 +131,18 @@ const Header = () => {
                     </Button>
                   </DropdownMenuTrigger>
 
-                  <DropdownMenuContent className="w-80 p-0 mr-4 md:mr-20 my-3 rounded-2xl border border-border overflow-hidden">
+                  <DropdownMenuContent className="w-72 relative bottom-1 p-0 mr-4 md:mr-4 my-3 rounded-2xl border border-border overflow-hidden">
                     {/* Email Section */}
                     <div className="p-4 border-b border-border">
-                      <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-3  rounded-2xl ">
                         <div className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center">
-                          <Mail className="w-5 h-5 text-muted-foreground" />
+                          <Mail className="w-5 h-5 text-muted-foreground text-yellow-600"  />
                         </div>
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-medium text-foreground truncate">
                             {userData.user.email}
                           </p>
+                          
                           {subscription?.plan !== "free" && (
                             <span className="text-sm font-semibold text-yellow-600">
                               {subscription?.plan &&
@@ -185,7 +186,7 @@ const Header = () => {
                         </div>
                         {subscription?.plan !== "free" && (
                           <Progress
-                            className="bg-gray-400 [&>div]:bg-green-600"
+                            className="bg-gray-400  [&>div]:bg-green-600"
                             value={progressValue}
                           />
                         )}
