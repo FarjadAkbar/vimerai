@@ -65,7 +65,6 @@ const subscriptionFeatures: Record<PlanId, string[]> = {
     "25 videos per month",
     "Up to 5 seconds per video",
     "HD output (720p)",
-    "Standard processing speed",
     "No watermark",
   ],
   creator: [
@@ -73,7 +72,6 @@ const subscriptionFeatures: Record<PlanId, string[]> = {
     "Up to 10 seconds per video",
     "Full HD output (1080p)",
     "No watermark",
-    "Priority processing queue",
   ],
   pro: [
     "60 videos per month",
@@ -437,12 +435,6 @@ export default function PricingPage() {
                   </Button>
 
                   <ul className="space-y-3 flex-1">
-                    <li className="flex items-start gap-3">
-                      <Check className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
-                      <span className="text-sm">
-                        {plan.videosPerMonth} video generations/month
-                      </span>
-                    </li>
                     {getFeatures(plan.id).map((feature, fIdx) => (
                       <li key={fIdx} className="flex items-start gap-3">
                         <Check className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
