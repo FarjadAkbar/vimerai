@@ -53,13 +53,11 @@ export function Generator({
   const [notification, setNotification] = useState<NotificationState | null>(null);
   const [blockedModal, setBlockedModal] = useState<NotificationState | null>(null);
 
-  // Check if user has already used preview (only for preview mode)
   const hasUsedPreview = useMemo(
     () => mode === "preview" && storage.getUsedPreview(),
     [mode]
   );
 
-  // Poll for status if there's a jobId
   const { data: statusData } = useGenerationStatus(
     jobId,
     !!jobId && isLoggedIn
@@ -72,21 +70,95 @@ export function Generator({
       mode: "fast",
     },
   });
+
   const delay = (ms: number) => new Promise(res => setTimeout(res, ms));
+
+  // ─── FIXED: Single shot aur subscription wale bhi generate kar sakein ───
+  const canGenerate = useMemo(() => {
+    if (mode === "preview") {
+      // Agar logged in hai aur credits hain toh allow karo
+      if (isLoggedIn && !subscriptionLoading) {
+        const singleShotCredits = subscription?.singleShotCredits ?? 0;
+        const subscriptionCredits = subscription?.videosRemaining ?? 0;
+        if (singleShotCredits > 0 || subscriptionCredits > 0) return true;
+      }
+      // Warna free preview check karo
+      return !hasUsedPreview;
+    }
+    // Full mode
+    if (!isLoggedIn) return false;
+    if (subscriptionLoading) return true;
+    const subscriptionCredits = subscription?.videosRemaining ?? 0;
+    const singleShotCredits = subscription?.singleShotCredits ?? 0;
+    return subscriptionCredits > 0 || singleShotCredits > 0;
+  }, [mode, hasUsedPreview, subscriptionLoading, subscription, isLoggedIn]);
 
   const onSubmit = useCallback(
     async (data: GenerateVideoInput) => {
-      // If user is not authenticated and preview mode, redirect to signup
-
-      // For preview mode, check if user has already used preview
       if (mode === "preview") {
-        if (!hasUsedPreview) {
-            await delay(1000);
-            setPreviewUrl("https://lorem.video/720p");
-            storage.setUsedPreview(true);
+        const singleShotCredits = subscription?.singleShotCredits ?? 0;
+        const subscriptionCredits = subscription?.videosRemaining ?? 0;
+        const hasPaidCredits = isLoggedIn && (singleShotCredits > 0 || subscriptionCredits > 0);
+
+        if (hasPaidCredits) {
+          // ─── Paid user: actual generation karo ───
+          generateVideo.mutate(
+            {
+              data: {
+                prompt: data.prompt,
+                mode: data.mode,
+              },
+              type: "full",
+            },
+            {
+              onSuccess: (response) => {
+                setJobId(response.jobId);
+                onSuccess?.(response.jobId);
+              },
+              onError: (error: unknown) => {
+                const message =
+                  (error as { response?: { data?: { message?: string } } })
+                    ?.response?.data?.message ||
+                  "Failed to generate video. Please try again.";
+
+                if (message.includes("limit reached") || message.includes("limit")) {
+                  setNotification({
+                    type: "warning",
+                    title: "Generation Limit Reached",
+                    message: "You've reached your video generation limit. Please upgrade your plan to continue.",
+                    action: {
+                      label: "View Pricing",
+                      onClick: () => {
+                        setNotification(null);
+                        router.push("/pricing");
+                      },
+                    },
+                  });
+                } else {
+                  setNotification({
+                    type: "error",
+                    title: "Video Generation Failed",
+                    message: message,
+                    action: {
+                      label: "Try Again",
+                      onClick: () => {
+                        setNotification(null);
+                        form.reset();
+                      },
+                    },
+                  });
+                }
+              },
+            }
+          );
+        } else if (!hasUsedPreview) {
+          // ─── Free preview: pehli baar fake preview ───
+          await delay(1000);
+          setPreviewUrl("https://lorem.video/720p");
+          storage.setUsedPreview(true);
         }
       } else {
-        // Full video generation mode
+        // ─── Full mode ───
         generateVideo.mutate(
           {
             data: {
@@ -105,12 +177,8 @@ export function Generator({
                 (error as { response?: { data?: { message?: string } } })
                   ?.response?.data?.message ||
                 "Failed to generate video. Please try again.";
-              
-              // If limit reached, show notification with pricing CTA
-              if (
-                message.includes("limit reached") ||
-                message.includes("limit")
-              ) {
+
+              if (message.includes("limit reached") || message.includes("limit")) {
                 setNotification({
                   type: "warning",
                   title: "Generation Limit Reached",
@@ -142,28 +210,26 @@ export function Generator({
         );
       }
     },
-    [isLoggedIn, hasUsedPreview, generateVideo, router, form, mode, onSuccess]
+    [isLoggedIn, hasUsedPreview, generateVideo, router, form, mode, onSuccess, subscription]
   );
 
   const handlePreviewClose = useCallback(() => {
     setPreviewUrl(null);
   }, []);
 
+  useEffect(() => {
+    const savedPrompt = storage.getGeneratorPrompt();
+    if (savedPrompt) {
+      form.setValue("prompt", savedPrompt);
+    }
 
-    useEffect(() => {
-      const savedPrompt = storage.getGeneratorPrompt();
-      if (savedPrompt) {
-        form.setValue("prompt", savedPrompt);
-      }
-    
-      const subscription = form.watch((value) => {
-        storage.setGeneratorPrompt(value.prompt ?? "");
-      });
-    
-      return () => subscription.unsubscribe();
-    }, [form]);
+    const subscription = form.watch((value) => {
+      storage.setGeneratorPrompt(value.prompt ?? "");
+    });
 
-  // Restore pending prompt after signup/login and auto-submit (preview mode only)
+    return () => subscription.unsubscribe();
+  }, [form]);
+
   useEffect(() => {
     if (mode === "preview") {
       const pendingPrompt = storage.getPendingPrompt();
@@ -180,7 +246,6 @@ export function Generator({
     }
   }, [isLoggedIn, form, mode, onSubmit]);
 
-  // Handle completion/failure: refresh data, show toast, show preview/video
   useEffect(() => {
     if (!jobId || !statusData?.status) return;
 
@@ -188,14 +253,11 @@ export function Generator({
     const isFailed = statusData.status === "failed";
 
     if (isCompleted) {
-      // For preview mode, wait for completion then refresh and show
       if (mode === "preview") {
         const previewUrlFromStatus = statusData?.previewUrl || null;
         const videoUrlFromStatus = statusData?.videoUrl || null;
 
-        // Only show preview if there's a previewUrl and no videoUrl, and we haven't shown this preview yet
         if (previewUrlFromStatus && !videoUrlFromStatus && previewUrlFromStatus !== previewUrl) {
-          // First, refresh all data and wait for it to complete
           const refreshData = async () => {
             if (isLoggedIn) {
               await Promise.all([
@@ -203,23 +265,17 @@ export function Generator({
                 queryClient.refetchQueries({ queryKey: ["subscription", "current"] }),
               ]);
             }
-            
-            // After data refresh, show preview
             setPreviewUrl(previewUrlFromStatus);
           };
-
           refreshData();
         }
-      }
-      // For full mode, refresh data
-      else if (mode === "full") {
+      } else if (mode === "full") {
         if (isLoggedIn) {
           queryClient.refetchQueries({ queryKey: ["videos"] });
           queryClient.refetchQueries({ queryKey: ["subscription", "current"] });
           queryClient.refetchQueries({ queryKey: ["generation-status", jobId] });
 
-          // Defer state update to avoid cascading renders
-      setTimeout(() => {
+          setTimeout(() => {
             setNotification({
               type: "success",
               title: "Video Generated!",
@@ -232,11 +288,10 @@ export function Generator({
                 },
               },
             });
-      }, 0);
+          }, 0);
         }
       }
     } else if (isFailed) {
-      // Auto-hide preview overlay if generation failed (preview mode only)
       if (previewUrl && mode === "preview") {
         const hideTimer = setTimeout(() => {
           handlePreviewClose();
@@ -263,57 +318,40 @@ export function Generator({
     (!!jobId &&
       statusData?.status !== "completed" &&
       statusData?.status !== "failed");
-  // Reset form after successful generation and data refresh
+
   useEffect(() => {
     if (statusData?.status === "completed") {
-      // Wait a bit for data refresh to complete before resetting form
       const resetTimer = setTimeout(() => {
         form.reset({
           prompt: "",
           mode: "fast",
         });
-        // Clear jobId and toast ref after form reset to allow new generation
         setJobId(null);
-      }, 1500); // Wait 1.5 seconds to ensure data is refreshed
+      }, 1500);
       return () => clearTimeout(resetTimer);
     }
   }, [statusData?.status, form]);
 
   const isPreviewGeneration = mode === "preview";
 
-  // For full mode, check subscription or Single Shot credits (Smart Preview never consumes credits)
-  const canGenerate = useMemo(() => {
-    if (mode === "preview") {
-      return !hasUsedPreview;
-    }
-    if (!isLoggedIn) return false;
-    if (subscriptionLoading) return true;
-    const subscriptionCredits = subscription?.videosRemaining ?? 0;
-    const singleShotCredits = subscription?.singleShotCredits ?? 0;
-    return subscriptionCredits > 0 || singleShotCredits > 0;
-  }, [mode, hasUsedPreview, subscriptionLoading, subscription, isLoggedIn]);
-
-  // Get blocked state message and CTA
+  // ─── FIXED: getBlockedStateInfo ───
   const getBlockedStateInfo = useMemo(() => {
-    // if (canGenerate) return null;
+    if (canGenerate) return null; // Credits hain toh block mat karo
 
     if (mode === "preview") {
-      // if (!isLoggedIn) {
-      //   return {
-      //     message: "Smart preview is available after signup. Full generation requires an active plan.",
-      //     cta: { text: "Sign Up", href: "/signup" },
-      //     variant: "default" as const,
-      //   };
-      // }
-      // if (hasUsedPreview && !previewUrl) {
+      if (!isLoggedIn) {
         return {
-          message: "You've already used your smart preview. Subscribe to generate more videos.",
-          cta: { text: "Upgrade Plan", href: "/pricing" },
+          message: "Smart preview is available after signup. Full generation requires an active plan.",
+          cta: { text: "Sign Up", href: "/signup" },
           variant: "default" as const,
         };
-      // }
+      }
+      return {
+        message: "You've already used your smart preview. Subscribe to generate more videos.",
+        cta: { text: "Upgrade Plan", href: "/pricing" },
+        variant: "default" as const,
+      };
     } else {
-      // Full mode
       if (!isLoggedIn) {
         return {
           message: "Please sign up to generate videos. Full video generation requires an active subscription plan.",
@@ -340,14 +378,13 @@ export function Generator({
       }
     }
     return null;
-  }, [canGenerate, mode, hasUsedPreview, previewUrl, subscriptionLoading, subscription, isLoggedIn]);
+  }, [canGenerate, mode, isLoggedIn, subscriptionLoading, subscription]);
 
   return (
     <>
       <div className={className}>
         {header}
 
-        {/* Subscription Info */}
         {showSubscriptionInfo &&
           !subscriptionLoading &&
           subscription &&
@@ -359,8 +396,7 @@ export function Generator({
               showCreditSource={mode === "full"}
             />
           )}
-          
-        {/* Generator Form */}
+
         <GeneratorForm
           form={form}
           onSubmit={onSubmit}
@@ -374,7 +410,6 @@ export function Generator({
           } : null}
           onBlockedClick={() => {
             if (getBlockedStateInfo) {
-              // Determine appropriate title based on the blocked reason
               let title = "Generation Blocked";
               if (mode === "preview" && hasUsedPreview) {
                 title = "Smart Preview Already Used";
@@ -402,18 +437,17 @@ export function Generator({
           }}
         />
 
-        {/* Status Display for Processing Videos - Always show while generating */}
         {isGenerating && (
-            <div className="mt-6 p-4 rounded-xl border border-border bg-card">
-              <div className="flex items-center gap-3">
-                <Clock className="w-5 h-5 animate-spin text-primary" />
-                <div className="flex-1">
-                  <p className="font-medium">
-                    {isPreviewGeneration
-                      ? "Preview Generation in Progress"
-                      : "Video Generation in Progress"}
-                  </p>
-                  <p className="text-sm text-muted-foreground">
+          <div className="mt-6 p-4 rounded-xl border border-border bg-card">
+            <div className="flex items-center gap-3">
+              <Clock className="w-5 h-5 animate-spin text-primary" />
+              <div className="flex-1">
+                <p className="font-medium">
+                  {isPreviewGeneration
+                    ? "Preview Generation in Progress"
+                    : "Video Generation in Progress"}
+                </p>
+                <p className="text-sm text-muted-foreground">
                   <WordRotate
                     words={[
                       "Analyzing your prompt",
@@ -424,20 +458,19 @@ export function Generator({
                     ]}
                     duration={2000}
                   />
-                  </p>
-                </div>
-                {!isPreviewGeneration && (
-                <Link href="/my-videos">
-                    <Button size="sm" variant="outline">
-                      View Status
-                    </Button>
-                  </Link>
-                )}
+                </p>
               </div>
+              {/* {!isPreviewGeneration && (
+                <Link href="/my-videos">
+                  <Button size="sm" variant="outline">
+                    View Status
+                  </Button>
+                </Link> 
+              )} */}
+            </div>
           </div>
         )}
 
-        {/* Info Text (preview mode only) */}
         {mode === "preview" && (
           <p className="text-center text-sm text-muted-foreground mt-6">
             {!isLoggedIn ? (
@@ -446,7 +479,7 @@ export function Generator({
                 <Link href="/signup" className="text-primary hover:underline">
                   signup
                 </Link>
-                . Full generation requires an active{" "}
+                {" "}Full generation requires an active{" "}
                 <Link href="/pricing" className="text-primary hover:underline">
                   subscription
                 </Link>
@@ -464,7 +497,6 @@ export function Generator({
           </p>
         )}
 
-        {/* Recent Videos - Show for logged-in users */}
         {showRecentVideos && isLoggedIn && videosData && videosData.videos && videosData.videos.length > 0 && (
           <div className="mt-16">
             <div className="flex items-center justify-between mb-6">
@@ -487,14 +519,14 @@ export function Generator({
           </div>
         )}
       </div>
-      {/* Smart Preview Modal */}
+
       {previewUrl && (
         <SmartPreviewModal
           previewUrl={previewUrl}
           onClose={handlePreviewClose}
         />
       )}
-      {/* Notification Modal */}
+
       {notification && (
         <NotificationModal
           open={!!notification}
@@ -506,7 +538,7 @@ export function Generator({
           autoClose={notification.type === "success" ? 5000 : 0}
         />
       )}
-      {/* Blocked State Modal */}
+
       {blockedModal && (
         <NotificationModal
           open={!!blockedModal}

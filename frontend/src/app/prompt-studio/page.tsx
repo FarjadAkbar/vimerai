@@ -146,29 +146,16 @@ export default function PromptStudioPage() {
               Prompt Studio
             </h1>
             <p className="text-muted-foreground text-sm sm:text-base max-w-2xl">
-              Create, save, and reuse prompts for faster video generation.
+              Create, save, and reuse prompts for faster video generation
             </p>
           </section>
           <Card className="border-border/80">
             <CardHeader>
-              <div className="flex justify-center mb-2">
-                <div className="w-14 h-14 rounded-xl bg-primary/10 flex items-center justify-center">
-                  <Sparkles className="w-7 h-7 text-primary" />
-                </div>
-              </div>
               <CardTitle className="text-center">Sign in to use Prompt Studio</CardTitle>
               <CardDescription className="text-center">
                 Save and manage your prompts, then send them to the generator in one click.
               </CardDescription>
             </CardHeader>
-            <CardContent className="flex justify-center gap-3">
-              <Button asChild variant="default">
-                <Link href="/login">Log in</Link>
-              </Button>
-              <Button asChild variant="outline">
-                <Link href="/signup">Sign up</Link>
-              </Button>
-            </CardContent>
           </Card>
         </div>
       </div>
@@ -177,7 +164,7 @@ export default function PromptStudioPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-20">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 md:pt-16 pb-20">
         <section className="mb-10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
             <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-foreground mb-2">
@@ -257,7 +244,6 @@ export default function PromptStudioPage() {
                       className="gap-2"
                       onClick={() => handleUseInGenerator(prompt.template)}
                     >
-                      <Send className="w-4 h-4" />
                       Use in Generator
                       <ArrowRight className="w-4 h-4" />
                     </Button>

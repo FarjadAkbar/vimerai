@@ -17,7 +17,7 @@ class ApiClient {
   }
 
   private setupInterceptors() {
-    const publicRoutes = ['/auth/login', '/auth/register', '/auth/password-reset'];
+    const publicRoutes = ['/auth/login', '/auth/signup', '/auth/password-reset'];
 
     // Request interceptor - add auth token
     this.client.interceptors.request.use(

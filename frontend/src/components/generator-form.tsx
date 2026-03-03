@@ -69,10 +69,9 @@ export function GeneratorForm({
             <FormItem>
               <FormLabel>Video Description</FormLabel>
               <FormControl>
-                {/* Glassmorphism textarea wrapper */}
-                <div className="relative rounded-xl overflow-hidden border border-border/80 bg-muted/30 dark:bg-muted/20 backdrop-blur-xl shadow-lg">
+              <div className="relative rounded-xl overflow-hidden border border-border/80 bg-muted/30 dark:bg-muted/20 backdrop-blur-xl shadow-lg">
                   <Textarea
-                    placeholder="E.g., A professional product launch video for a new smartphone showing features like camera, battery life, and design"
+                    placeholder="5-second TikTok product ad for a trending kitchen gadget that slices vegetables faster and saves time"
                     className="min-h-40 resize-none pb-16 border-0 bg-transparent focus-visible:ring-ring/30 placeholder:text-muted-foreground/80"
                     {...field}
                     disabled={isGenerating || (mode === "full" && !canGenerate)}
@@ -80,10 +79,9 @@ export function GeneratorForm({
 
                   {/* Bottom bar: Fast mode left, submit button right */}
                   <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between pointer-events-none">
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground pointer-events-none">
-                      <Zap className="w-4 h-4 text-foreground/70" />
-                      <span className="font-medium text-foreground">Fast mode</span>
-                      <span>2–5 min generation</span>
+                    <div className="flex items-center gap-1.5 text-sm text-muted-foreground pointer-events-none">
+                      <span className="font-medium text-foreground/80">Fast Mode</span>
+                      <span className="text-muted-foreground/60 ml-2 text-xs hidden sm:inline">{"    "}Instant Results</span>
                     </div>
                     <div className="pointer-events-auto">
                       <RainbowButton
@@ -114,9 +112,6 @@ export function GeneratorForm({
                 </div>
               </FormControl>
               <FormMessage />
-              <p className="text-xs text-muted-foreground">
-                Be as detailed as possible for best results (10-1000 characters)
-              </p>
             </FormItem>
           )}
         />

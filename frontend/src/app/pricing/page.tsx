@@ -34,8 +34,8 @@ const YEARLY_DISCOUNT = 0.15;
 
 /** Monthly prices by region. Backend resolves PayPal plan IDs by region. */
 const MONTHLY_PRICES_BY_REGION: Record<PricingRegionKey, Record<string, number>> = {
-  global: { starter: 12, creator: 35, pro: 99 },
-  mea: { starter: 9, creator: 30, pro: 90 },
+  global: { starter: 42, creator: 79, pro: 149 },
+  mea: { starter: 35, creator: 69, pro: 129 },
 };
 
 function yearlyFromMonthly(monthly: number): number {
@@ -57,50 +57,31 @@ function buildPlansForRegion(region: PricingRegionKey): Plan[] {
   });
 }
 
-const SINGLE_SHOT = { id: 'single-shot', name: 'AI Single Shot', type: 'one-time' as const, videosIncluded: 1, price: 10 };
+
 
 // Feature bullets must match final spec; first line (videos per month) is shown from API.
 const subscriptionFeatures: Record<PlanId, string[]> = {
   starter: [
-    "Create short-form videos optimized for social media",
-    "Video length up to 5 seconds",
-    "HD output (up to 720p)",
+    "25 videos per month",
+    "Up to 5 seconds per video",
+    "HD output (720p)",
     "Standard processing speed",
-    "Access to basic AI styles",
-    "One retry per video (technical failure only)",
-    "Watermark-free videos",
-    "Social media usage rights",
-    "Simple monthly quota",
+    "No watermark",
   ],
   creator: [
-    "Create short-form videos optimized for social platforms",
-    "Video length up to 10 seconds",
-    "Full HD output (up to 1080p)",
-    "Fast processing speed",
-    "Access to advanced AI styles",
-    "Built-in sound & effects library",
-    "Enhanced visual quality",
-    "One retry per video",
-    "Watermark-free videos",
-    "Full publishing & commercial usage rights",
-    "Priority customer support",
+    "35 videos per month",
+    "Up to 10 seconds per video",
+    "Full HD output (1080p)",
+    "No watermark",
+    "Priority processing queue",
   ],
   pro: [
-    "Create high-impact short-form videos for ads & campaigns",
-    "Video length up to 15 seconds",
-    "Premium Full HD output (up to 1080p)",
-    "Ultra-fast processing speed",
-    "Access to cinematic AI styles",
-    "Full sound & effects library",
-    "Enhanced visual quality for professional use",
-    "One retry per video",
-    "Watermark-free videos",
-    "Full commercial usage rights",
-    "VIP customer support",
+    "60 videos per month",
+    "Up to 15 seconds per video",
+    "Full HD output (1080p)",
+    "No watermark",
   ],
-  singleShot: [
-
-  ],
+  singleShot: []
 };
 
 /** Show rounded prices only (no decimals like 1009.8). */
@@ -221,12 +202,14 @@ export default function PricingPage() {
 
   const regionKey: PricingRegionKey = pricingRegion?.region ?? "global";
   const plans = useMemo(() => buildPlansForRegion(regionKey), [regionKey]);
+  const SINGLE_SHOT = { id: 'single-shot', name: 'AI Single Shot', type: 'one-time' as const, videosIncluded: 1, price: regionKey==='mea'?15:18 };
   const singleShot = SINGLE_SHOT;
 
   const getSingleShotFeatures = () => [
-    "One video generation",
-    "No expiration",
-    "Consumed only when generation is executed",
+    "1 video generation",
+    "Up to 10 seconds",
+    "HD output (720p)",
+    "No watermark",
   ];
 
   const handleSubscribe = async (planId: string) => {
@@ -319,11 +302,6 @@ export default function PricingPage() {
                 ? "Stack plans to add more videos to your account"
                 : "Choose the plan that fits your needs"}
             </p>
-            {pricingRegion?.region === "mea" && (
-              <p className="text-sm text-muted-foreground/80 mt-2">
-                Prices for Middle East & Africa
-              </p>
-            )}
             {currentSubscription?.plan && currentSubscription.plan !== "free" && (
               <div className="mt-4 inline-block px-4 py-2 bg-primary/10 text-primary rounded-lg">
                 <span className="font-medium">Current Plan: </span>
@@ -403,10 +381,10 @@ export default function PricingPage() {
               return (
                 <div
                   key={plan.id}
-                  className={`relative rounded-xl border-2 p-6 flex flex-col ${
+                  className={`relative rounded-xl border p-6 flex flex-col transition-all duration-300 ${
                     isCurrentPlan
-                      ? "border-[#63489c] border-4"
-                      : "border-border bg-card"
+                      ? "border-[#470BC1]/50 bg-[#470BC1]/5 ring-1 ring-[#470BC1]/20"
+                      : "border-border bg-card hover:border-border/80"
                   }`}
                 >
                   {plan.popular && (
@@ -420,7 +398,7 @@ export default function PricingPage() {
                     />
                   )}
                   {isCurrentPlan && (
-                    <div className="absolute -top-4 right-4 px-3 py-1 bg-[#63489c] text-white text-xs font-medium rounded-full z-10">
+                    <div className="absolute -top-3 right-4 px-3 py-1 bg-[#470BC1] text-white text-[10px] font-bold uppercase tracking-wider rounded-full z-10 shadow-lg">
                       Active
                     </div>
                   )}
@@ -442,18 +420,20 @@ export default function PricingPage() {
                     </span>
                   </div>
 
-                  <Button
-                    className={`w-full mb-6 bg-white text-black hover:bg-gray-100 ${
-                      isCurrentPlan ? "bg-white text-black" : ""
+                   <Button
+                    className={`w-full mb-6 font-semibold transition-all duration-300 ${
+                      isCurrentPlan 
+                        ? "bg-secondary text-secondary-foreground cursor-default" 
+                        : "bg-white text-black hover:bg-[#470BC1] hover:text-white"
                     }`}
                     onClick={() => handleSubscribe(plan.id)}
                     disabled={activatingPlanId !== null || !!isCurrentPlan}
                   >
                     {activatingPlanId === plan.id
-                      ? "Redirecting to checkout..."
+                      ? "Redirecting..."
                       : isCurrentPlan
-                        ? "Current Plan"
-                        : "Subscribe"}
+                        ? "Active Plan"
+                        : "Subscribe Now"}
                   </Button>
 
                   <ul className="space-y-3 flex-1">
@@ -478,7 +458,7 @@ export default function PricingPage() {
           {/* Single Shot card — outside grid so it can be centered */}
           {singleShot && (
             <div className="flex justify-center mt-6">
-              <div className="relative rounded-xl border-2 border-blue-400 bg-card p-6 flex flex-col w-full max-w-sm">
+              <div className="relative rounded-xl border-2 border-[#470BC1] bg-card p-6 flex flex-col w-full max-w-sm">
                 {(currentSubscription?.singleShotCredits ?? 0) > 0 && (
                   <div className="absolute -top-4 right-4 px-3 py-1 bg-green-500 text-white text-xs font-medium rounded-full z-10">
                     {currentSubscription?.singleShotCredits} Credits
@@ -488,7 +468,7 @@ export default function PricingPage() {
                 <h3 className="text-xl font-bold mb-2">{singleShot.name}</h3>
 
                 <p className="text-muted-foreground text-sm mb-6 min-h-[40px]">
-                  One-time purchase. One short-form video, no expiration.
+                  One-time purchase. One short-form video, no expiration
                 </p>
 
                 <div className="mb-6">
@@ -499,13 +479,13 @@ export default function PricingPage() {
                 </div>
 
                 <Button
-                  className="w-full mb-6 bg-white text-black hover:bg-gray-100"
+                  className="w-full mb-6 bg-white text-black hover:bg-[#470BC1] hover:text-white font-semibold transition-all duration-300"
                   onClick={handlePurchaseSingleShot}
                   disabled={createSingleShotCheckout.isPending}
                 >
                   {createSingleShotCheckout.isPending
-                    ? "Redirecting to checkout..."
-                    : "Purchase"}
+                    ? "Redirecting..."
+                    : "Purchase Credit"}
                 </Button>
 
                 <ul className="space-y-3 flex-1">

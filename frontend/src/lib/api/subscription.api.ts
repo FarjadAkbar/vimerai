@@ -69,28 +69,25 @@ export const subscriptionApi = {
   },
 
   getPricingRegion: async (): Promise<PricingRegionResponse> => {
-        const MEA_COUNTRY_CODES = new Set<string>([
-          'DZ', 'AO', 'BJ', 'BW', 'BF', 'BI', 'CV', 'CM', 'CF', 'TD', 'KM', 'CG', 'CD',
-          'DJ', 'EG', 'GQ', 'ER', 'SZ', 'ET', 'GA', 'GM', 'GH', 'GN', 'GW', 'CI', 'KE',
-          'LS', 'LR', 'LY', 'MG', 'MW', 'ML', 'MR', 'MU', 'MA', 'MZ', 'NA', 'NE', 'NG',
-          'RW', 'ST', 'SN', 'SC', 'SL', 'SO', 'ZA', 'SS', 'SD', 'TZ', 'TG', 'TN', 'UG',
-          'ZM', 'ZW',
-          // Middle East
-          'BH', 'CY', 'IR', 'IQ', 'IL', 'JO', 'KW', 'LB', 'OM', 'PS', 'QA', 'SA', 'SY',
-          'TR', 'AE', 'YE',
-        ]);
-        
-        const res = await fetch(`https://ipapi.co/json`);
-        const data = await res.json();
-        console.log(data)
-        const country =  data.country_code ?? null;
+    const MEA_COUNTRY_CODES = new Set<string>([
+      'DZ', 'AO', 'BJ', 'BW', 'BF', 'BI', 'CV', 'CM', 'CF', 'TD', 'KM', 'CG', 'CD',
+      'DJ', 'EG', 'GQ', 'ER', 'SZ', 'ET', 'GA', 'GM', 'GH', 'GN', 'GW', 'CI', 'KE',
+      'LS', 'LR', 'LY', 'MG', 'MW', 'ML', 'MR', 'MU', 'MA', 'MZ', 'NA', 'NE', 'NG',
+      'RW', 'ST', 'SN', 'SC', 'SL', 'SO', 'ZA', 'SS', 'SD', 'TZ', 'TG', 'TN', 'UG',
+      'ZM', 'ZW',
+      // Middle East
+      'BH', 'CY', 'IR', 'IQ', 'IL', 'JO', 'KW', 'LB', 'OM', 'PS', 'QA', 'SA', 'SY',
+      'TR', 'AE', 'YE',
+    ]);
 
-  
-  if (!country) return { region: 'global'} ;
-    
-  const region = MEA_COUNTRY_CODES.has(country.toUpperCase()) ? 'mea' : 'global';
-  return { region };
+    const res = await fetch('/api/geo');
+    const data = await res.json();
+    const country = data.country_code ?? null;
 
+    if (!country) return { region: 'global' };
+
+    const region = MEA_COUNTRY_CODES.has(country.toUpperCase()) ? 'mea' : 'global';
+    return { region };
   },
 
   activateSubscription: async (
