@@ -37,12 +37,13 @@ export class MockVideoGenerationProvider implements IVideoGenerationProvider {
     request: GenerateVideoRequest,
   ): Promise<GenerateVideoResponse> {
     // Use provided jobId if available, otherwise generate one
-    const jobId = await request.jobId || `mock_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-    
+    const jobId =
+      request.jobId ||
+      `mock_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
     // Get a random sample video
-    const randomVideo = this.SAMPLE_VIDEOS[
-      Math.floor(Math.random() * this.SAMPLE_VIDEOS.length)
-    ];
+    const randomVideo =
+      this.SAMPLE_VIDEOS[Math.floor(Math.random() * this.SAMPLE_VIDEOS.length)];
 
     // Initialize job as pending
     this.jobStatuses.set(jobId, {
@@ -67,34 +68,37 @@ export class MockVideoGenerationProvider implements IVideoGenerationProvider {
     };
   }
 
-  getGenerationStatus(jobId: string): GenerateVideoResponse {
+  getGenerationStatus(jobId: string): Promise<GenerateVideoResponse> {
     const job = this.jobStatuses.get(jobId);
 
     if (!job) {
-      return {
+      return Promise.resolve({
         jobId,
         status: 'failed',
         error: 'Job not found',
-      };
+      });
     }
 
-    return {
+    return Promise.resolve({
       jobId,
       status: job.status,
       videoUrl: job.videoUrl,
       previewUrl: job.previewUrl,
-    };
+    });
   }
 
-  async generatePreview(prompt: string, jobId?: string): Promise<GenerateVideoResponse> {
+  generatePreview(
+    prompt: string,
+    jobId?: string,
+  ): Promise<GenerateVideoResponse> {
     // Use provided jobId if available, otherwise generate one
-    const previewJobId = jobId || `mock_preview_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-    
+    const previewJobId =
+      jobId ||
+      `mock_preview_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
     // Get a random sample video for preview
     const previewUrl =
-      this.SAMPLE_VIDEOS[
-        Math.floor(Math.random() * this.SAMPLE_VIDEOS.length)
-      ];
+      this.SAMPLE_VIDEOS[Math.floor(Math.random() * this.SAMPLE_VIDEOS.length)];
 
     // Initialize job as pending
     this.jobStatuses.set(previewJobId, {
@@ -103,33 +107,29 @@ export class MockVideoGenerationProvider implements IVideoGenerationProvider {
     });
 
     // Simulate async preview processing (shorter delay than full video)
-    this.processPreviewGeneration(previewJobId, previewUrl).catch(
-      (error) => {
-        console.error('Mock preview generation error:', error);
-        this.jobStatuses.set(previewJobId, {
-          status: 'failed',
-          createdAt: Date.now(),
-        });
-      },
-    );
+    this.processPreviewGeneration(previewJobId, previewUrl).catch((error) => {
+      console.error('Mock preview generation error:', error);
+      this.jobStatuses.set(previewJobId, {
+        status: 'failed',
+        createdAt: Date.now(),
+      });
+    });
 
-    return {
+    return Promise.resolve({
       jobId: previewJobId,
       status: 'pending',
-    };
+    });
   }
 
   /**
    * Simulates preview generation with realistic delays (shorter than full video)
    */
-  private async processPreviewGeneration(
+  private processPreviewGeneration(
     jobId: string,
     previewUrl: string,
   ): Promise<void> {
-    // Preview is faster - 2 seconds delay
-    const delay = 2000;
+    const delayMs = 2000;
 
-    // Update to processing after 0.5 seconds
     setTimeout(() => {
       const job = this.jobStatuses.get(jobId);
       if (job) {
@@ -140,17 +140,19 @@ export class MockVideoGenerationProvider implements IVideoGenerationProvider {
       }
     }, 500);
 
-    // Complete after the delay
-    setTimeout(() => {
-      const job = this.jobStatuses.get(jobId);
-      if (job) {
-        this.jobStatuses.set(jobId, {
-          ...job,
-          status: 'completed',
-          previewUrl,
-        });
-      }
-    }, delay);
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        const job = this.jobStatuses.get(jobId);
+        if (job) {
+          this.jobStatuses.set(jobId, {
+            ...job,
+            status: 'completed',
+            previewUrl,
+          });
+        }
+        resolve();
+      }, delayMs);
+    });
   }
 
   async downloadVideo(videoId: string): Promise<Buffer> {
@@ -188,21 +190,18 @@ export class MockVideoGenerationProvider implements IVideoGenerationProvider {
   /**
    * Simulates video generation with realistic delays
    */
-  private async processVideoGeneration(
+  private processVideoGeneration(
     jobId: string,
     videoUrl: string,
     mode: GenerationMode,
   ): Promise<void> {
-    // Simulate processing delay based on mode
     const delays: Record<GenerationMode, number> = {
-      [GenerationMode.FAST]: 3000, // 3 seconds for fast mode
-      [GenerationMode.CINEMATIC]: 8000, // 8 seconds for cinematic
-      [GenerationMode.AVATAR]: 5000, // 5 seconds for avatar
+      [GenerationMode.FAST]: 3000,
+      [GenerationMode.CINEMATIC]: 8000,
+      [GenerationMode.AVATAR]: 5000,
     };
+    const delayMs = delays[mode] || 3000;
 
-    const delay = delays[mode] || 3000;
-
-    // Update to processing after 1 second
     setTimeout(() => {
       const job = this.jobStatuses.get(jobId);
       if (job) {
@@ -213,18 +212,19 @@ export class MockVideoGenerationProvider implements IVideoGenerationProvider {
       }
     }, 1000);
 
-    // Complete after the delay
-    setTimeout(() => {
-      const job = this.jobStatuses.get(jobId);
-      if (job) {
-        this.jobStatuses.set(jobId, {
-          ...job,
-          status: 'completed',
-          videoUrl,
-          previewUrl: videoUrl, // Use same URL for preview
-        });
-      }
-    }, delay);
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        const job = this.jobStatuses.get(jobId);
+        if (job) {
+          this.jobStatuses.set(jobId, {
+            ...job,
+            status: 'completed',
+            videoUrl,
+            previewUrl: videoUrl,
+          });
+        }
+        resolve();
+      }, delayMs);
+    });
   }
 }
-
