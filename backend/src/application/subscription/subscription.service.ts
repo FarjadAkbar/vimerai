@@ -245,6 +245,7 @@ export class SubscriptionService implements ISubscriptionService {
     const videosLimit = await this.getPlanLimit(result.plan);
 
     if (!subscription) {
+      // Naya subscription banao
       subscription = Subscription.create(
         uuidv4(),
         result.userId,
@@ -258,6 +259,13 @@ export class SubscriptionService implements ISubscriptionService {
       const active = subscription.updateActiveStatus(true);
       await this.subscriptionRepository.createSubscription(active);
     } else {
+      // ✅ FIX: Agar same PayPal subscriptionId already save hai, dobara add mat karo
+      if (subscription.paypalSubscriptionId === result.paypalSubscriptionId) {
+     
+        return { plan: result.plan };
+      }
+
+      // Naya plan stack karo (existing remaining + naya limit)
       const currentRemaining = subscription.getRemaining();
       const totalVideos = currentRemaining + videosLimit;
 
@@ -404,6 +412,12 @@ export class SubscriptionService implements ISubscriptionService {
           const active = subscription.updateActiveStatus(true);
           await this.subscriptionRepository.createSubscription(active);
         } else {
+          // ✅ FIX: Webhook bhi idempotent hona chahiye
+          if (subscription.paypalSubscriptionId === subscriptionId) {
+            
+            return;
+          }
+
           const updated = subscription
             .updatePlan(plan, videosLimit)
             .updatePaypalSubscriptionId(subscriptionId)
