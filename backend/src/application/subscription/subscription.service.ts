@@ -261,9 +261,7 @@ export class SubscriptionService implements ISubscriptionService {
     } else {
       // ✅ FIX: Agar same PayPal subscriptionId already save hai, dobara add mat karo
       if (subscription.paypalSubscriptionId === result.paypalSubscriptionId) {
-        this.logger.log(
-          `Subscription ${subscriptionId} already activated for user ${result.userId}, skipping duplicate activation.`,
-        );
+     
         return { plan: result.plan };
       }
 
@@ -416,9 +414,7 @@ export class SubscriptionService implements ISubscriptionService {
         } else {
           // ✅ FIX: Webhook bhi idempotent hona chahiye
           if (subscription.paypalSubscriptionId === subscriptionId) {
-            this.logger.log(
-              `Webhook: Subscription ${subscriptionId} already activated, skipping.`,
-            );
+            
             return;
           }
 

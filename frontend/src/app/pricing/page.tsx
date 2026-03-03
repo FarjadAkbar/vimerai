@@ -427,7 +427,7 @@ export default function PricingPage() {
                     onClick={() => handleSubscribe(plan.id)}
                     disabled={activatingPlanId !== null || !!isCurrentPlan}
                   >
-                    {activatingPlanId === plan.id 
+                    {activatingPlanId === plan.id
                       ? "Redirecting..."
                       : isCurrentPlan
                         ? "Active Plan"
