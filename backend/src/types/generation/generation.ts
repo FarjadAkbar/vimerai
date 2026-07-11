@@ -84,6 +84,9 @@ export const LENGTH_TIER_CREDIT_WEIGHT = {
   promo: 4,
 } as const;
 
+/** Extra Generation credits when Post image mode is AI (not free like text regen). */
+export const AI_POST_IMAGE_CREDIT_SURCHARGE = 1;
+
 export const PROMO_BEATS = [
   'hook',
   'attention',
