@@ -78,6 +78,21 @@ export interface RetryFailedArmsInput {
 /** Default fair-use cap of free text section regenerates per Generation. */
 export const DEFAULT_TEXT_SECTION_REGEN_LIMIT = 20;
 
+/** Weighted Generation credits by Length Tier (ADR 0013). */
+export const LENGTH_TIER_CREDIT_WEIGHT = {
+  teaser: 1,
+  promo: 4,
+} as const;
+
+export const PROMO_BEATS = [
+  'hook',
+  'attention',
+  'product_display',
+  'viewer_connection',
+] as const;
+
+export type PromoBeat = (typeof PROMO_BEATS)[number];
+
 export type GenerationArm =
   | 'creative-brief'
   | 'social-post'

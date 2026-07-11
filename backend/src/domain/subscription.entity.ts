@@ -50,12 +50,12 @@ export class Subscription {
     );
   }
 
-  incrementUsage(): Subscription {
+  incrementUsage(credits = 1): Subscription {
     return new Subscription(
       this.id,
       this.userId,
       this.plan,
-      this.videosUsed + 1,
+      this.videosUsed + Math.max(1, credits),
       this.videosLimit,
       this.isActive,
       this.stripeCustomerId,
@@ -157,8 +157,8 @@ export class Subscription {
     );
   }
 
-  canGenerate(): boolean {
-    return this.isActive && this.videosUsed < this.videosLimit;
+  canGenerate(creditsNeeded = 1): boolean {
+    return this.isActive && this.getRemaining() >= Math.max(1, creditsNeeded);
   }
 
   getRemaining(): number {

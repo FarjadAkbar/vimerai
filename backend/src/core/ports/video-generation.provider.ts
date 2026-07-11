@@ -26,4 +26,6 @@ export interface IVideoGenerationProvider {
   getGenerationStatus(jobId: string): Promise<GenerateVideoResponse>;
   generatePreview(prompt: string, jobId?: string): Promise<GenerateVideoResponse>;
   downloadVideo(videoId: string): Promise<Buffer>;
+  /** Concatenate ordered clip URLs into one Promo Video. */
+  stitchClips(clipUrls: string[]): Promise<GenerateVideoResponse>;
 }

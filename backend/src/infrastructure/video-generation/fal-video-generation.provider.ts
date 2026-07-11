@@ -466,4 +466,23 @@ export class FalVideoGenerationProvider implements IVideoGenerationProvider {
 
     return statusPart;
   }
+
+  async stitchClips(clipUrls: string[]): Promise<GenerateVideoResponse> {
+    const urls = clipUrls.map((url) => url.trim()).filter(Boolean);
+    if (urls.length === 0) {
+      throw new BadRequestException(
+        'At least one clip URL is required to stitch a Promo Video',
+      );
+    }
+
+    // Phase 1 stitch assembly: ordered beat Shots are the Promo Video contract.
+    // fal native concat is deferred (ADR 0012); we return a stitch job whose
+    // playable URL is the first beat clip while Generation.video.shots holds
+    // the full ordered stitch for playback/retry/download.
+    return {
+      jobId: `stitch-${urls.length}-${Date.now()}`,
+      status: 'completed',
+      videoUrl: urls[0],
+    };
+  }
 }

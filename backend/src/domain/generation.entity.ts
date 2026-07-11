@@ -10,6 +10,7 @@ import type {
   ArmStatus,
   GenerationArm,
   GenerationArmState,
+  PromoBeat,
 } from '@/types/generation/generation';
 
 export interface BrandKitSnapshot {
@@ -55,6 +56,15 @@ export interface ReelStoryboardContent {
   scenes: Array<{ order: number; description: string }>;
 }
 
+export interface VideoShot {
+  beat: PromoBeat;
+  order: number;
+  jobId: string | null;
+  videoUrl: string | null;
+  status: ArmStatus;
+  error?: string;
+}
+
 export interface VideoContent {
   jobId: string | null;
   videoUrl: string | null;
@@ -62,6 +72,8 @@ export interface VideoContent {
   lengthTier: LengthTier;
   reelPlatform: ReelPlatform;
   error?: string;
+  /** Promo stitch shots; Teaser omits or uses a single implicit shot. */
+  shots?: VideoShot[];
 }
 
 export class Generation {

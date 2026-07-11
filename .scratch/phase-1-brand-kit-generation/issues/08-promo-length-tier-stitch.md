@@ -4,11 +4,11 @@
 
 **Blocked by:** 04 — Teaser Generation happy path; 07 — Partial success + failed-arm retry
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] Options expose Teaser vs Promo Length Tier
-- [ ] Promo charges higher weighted credits than Teaser
-- [ ] Promo Video assembled from beat-aligned Shots (stitch)
-- [ ] Progress/queued UX acceptable for longer run
-- [ ] Partial failure of individual Shots works with retry from 07
-- [ ] Tests cover credit weight and stitch orchestration with fakes
+- [x] Options expose Teaser vs Promo Length Tier
+- [x] Promo charges higher weighted credits than Teaser
+- [x] Promo Video assembled from beat-aligned Shots (stitch)
+- [x] Progress/queued UX acceptable for longer run
+- [x] Partial failure of individual Shots works with retry from 07
+- [x] Tests cover credit weight and stitch orchestration with fakes

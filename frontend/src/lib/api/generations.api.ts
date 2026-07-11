@@ -99,12 +99,26 @@ export interface GenerationRecord {
     lengthTier: LengthTier;
     reelPlatform: ReelPlatform;
     error?: string;
+    shots?: Array<{
+      beat: 'hook' | 'attention' | 'product_display' | 'viewer_connection';
+      order: number;
+      jobId: string | null;
+      videoUrl: string | null;
+      status: ArmStatus;
+      error?: string;
+    }>;
   } | null;
   status: GenerationStatus;
   textSectionRegenCount: number;
   createdAt: string;
   updatedAt: string;
 }
+
+/** Mirrors backend LENGTH_TIER_CREDIT_WEIGHT. */
+export const LENGTH_TIER_CREDIT_WEIGHT = {
+  teaser: 1,
+  promo: 4,
+} as const;
 
 export type TextSectionKey =
   | 'social.headline'
