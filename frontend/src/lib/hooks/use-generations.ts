@@ -9,8 +9,20 @@ import {
 } from '@/lib/api/generations.api';
 
 export const useCreateGeneration = () => {
+  const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (data: CreateGenerationRequest) => generationsApi.create(data),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['generations', 'list'] });
+    },
+  });
+};
+
+export const useGenerations = (enabled = true) => {
+  return useQuery({
+    queryKey: ['generations', 'list'],
+    queryFn: () => generationsApi.list(),
+    enabled,
   });
 };
 
@@ -34,6 +46,7 @@ export const useUpdateGeneration = () => {
     }) => generationsApi.update(id, data),
     onSuccess: (result) => {
       queryClient.setQueryData(['generations', result.generation.id], result);
+      void queryClient.invalidateQueries({ queryKey: ['generations', 'list'] });
     },
   });
 };
@@ -50,6 +63,7 @@ export const useRegenerateSection = () => {
     }) => generationsApi.regenerateSection(id, data),
     onSuccess: (result) => {
       queryClient.setQueryData(['generations', result.generation.id], result);
+      void queryClient.invalidateQueries({ queryKey: ['generations', 'list'] });
     },
   });
 };
@@ -66,6 +80,7 @@ export const useRegenerateShot = () => {
     }) => generationsApi.regenerateShot(id, data),
     onSuccess: (result) => {
       queryClient.setQueryData(['generations', result.generation.id], result);
+      void queryClient.invalidateQueries({ queryKey: ['generations', 'list'] });
     },
   });
 };
@@ -82,6 +97,7 @@ export const useRetryFailedArms = () => {
     }) => generationsApi.retryFailedArms(id, data),
     onSuccess: (result) => {
       queryClient.setQueryData(['generations', result.generation.id], result);
+      void queryClient.invalidateQueries({ queryKey: ['generations', 'list'] });
     },
   });
 };

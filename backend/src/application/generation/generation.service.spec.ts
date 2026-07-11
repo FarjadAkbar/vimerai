@@ -1471,3 +1471,207 @@ describe('GenerationService.regenerateShot', () => {
     expect(videoCalls).toBe(1);
   });
 });
+
+describe('GenerationService.listGenerations', () => {
+  let brandKits: IBrandKitRepository;
+  let products: IProductRepository;
+  let generations: InMemoryGenerationRepository;
+  let text: FakeTextGenerationProvider;
+  let subscription: ISubscriptionService;
+  let video: IVideoGenerationProvider;
+  let service: GenerationService;
+
+  beforeEach(async () => {
+    brandKits = new InMemoryBrandKitRepository();
+    products = new InMemoryProductRepository();
+    generations = new InMemoryGenerationRepository();
+
+    subscription = {
+      canGenerate: async () => true,
+      recordVideoGeneration: async () => undefined,
+    } as unknown as ISubscriptionService;
+
+    video = {
+      generateVideo: async () => ({
+        jobId: 'fal-job-1',
+        status: 'completed',
+        videoUrl: 'https://cdn.example.com/teaser.mp4',
+      }),
+      getGenerationStatus: async () => ({
+        jobId: 'fal-job-1',
+        status: 'completed',
+        videoUrl: 'https://cdn.example.com/teaser.mp4',
+      }),
+      generatePreview: async () => ({
+        jobId: 'fal-job-1',
+        status: 'completed',
+      }),
+      stitchClips: async () => ({
+        jobId: 'stitch-1',
+        status: 'completed',
+        videoUrl: 'https://cdn.example.com/promo-stitched.mp4',
+      }),
+      downloadVideo: async () => Buffer.from(''),
+    };
+
+    text = new FakeTextGenerationProvider({
+      'creative-brief': JSON.stringify({
+        hook: 'Stop scrolling',
+        attention: 'Glow up',
+        productDisplay: 'Bottle hero',
+        viewerConnection: 'Made for you',
+        cta: 'Shop now',
+      }),
+      'social-post': JSON.stringify({
+        headline: 'Hydration elevated',
+        body: 'Feel the difference.',
+        cta: 'Shop now',
+        caption: 'Luxury moisture in every drop.',
+        hashtags: ['#serum', '#glow'],
+      }),
+      'reel-storyboard': JSON.stringify({
+        hook: '0-3s hook',
+        attention: 'problem',
+        productDisplay: 'product shot',
+        viewerConnection: 'testimonial vibe',
+        scenes: [{ order: 1, description: 'Close-up bottle' }],
+      }),
+      'reel-caption': 'Watch this glow-up. Link in bio.',
+    });
+
+    await brandKits.create(
+      BrandKit.create(
+        'kit-1',
+        'user-1',
+        'Nitro',
+        'https://cdn.example.com/logo.png',
+        { primary: '#111', secondary: '#c9a' },
+        'luxury',
+        'Premium buyers',
+        'Slang',
+      ),
+    );
+    await brandKits.create(
+      BrandKit.create(
+        'kit-2',
+        'user-2',
+        'Other Brand',
+        'https://cdn.example.com/logo2.png',
+        { primary: '#000', secondary: '#fff' },
+        'bold',
+        'Gen Z',
+        'None',
+      ),
+    );
+    await products.create(
+      Product.create(
+        'prod-1',
+        'user-1',
+        'Serum',
+        'Hydrating serum',
+        ['https://cdn.example.com/product.jpg'],
+        'https://shop.example.com/serum',
+        ['kit-1'],
+        '49',
+      ),
+    );
+    await products.create(
+      Product.create(
+        'prod-2',
+        'user-2',
+        'Cream',
+        'Night cream',
+        ['https://cdn.example.com/cream.jpg'],
+        'https://shop.example.com/cream',
+        ['kit-2'],
+        '59',
+      ),
+    );
+
+    service = new GenerationService(
+      text,
+      { generateImage: async () => ({ imageUrl: '' }) },
+      video,
+      generations,
+      products,
+      brandKits,
+      subscription,
+    );
+  });
+
+  it('lists only the owner Generations with status summary, newest first', async () => {
+    const first = await service.createGeneration('user-1', {
+      productId: 'prod-1',
+      goal: 'increase_sales',
+    });
+    const second = await service.createGeneration('user-1', {
+      productId: 'prod-1',
+      goal: 'brand_awareness',
+      lengthTier: 'promo',
+    });
+    await service.createGeneration('user-2', {
+      productId: 'prod-2',
+      goal: 'product_launch',
+    });
+
+    const listed = await service.listGenerations('user-1');
+
+    expect(listed.generations).toHaveLength(2);
+    expect(listed.generations.map((item) => item.id)).toEqual([
+      second.generationId,
+      first.generationId,
+    ]);
+    expect(listed.generations[0]).toMatchObject({
+      id: second.generationId,
+      status: 'completed',
+      goal: 'brand_awareness',
+      lengthTier: 'promo',
+      productName: 'Serum',
+      brandKitName: 'Nitro',
+    });
+    expect(listed.generations[0].arms.length).toBeGreaterThan(0);
+    expect(listed.generations.every((item) => item.id !== undefined)).toBe(
+      true,
+    );
+  });
+
+  it('returns an empty library when the user has no Generations', async () => {
+    const listed = await service.listGenerations('user-1');
+    expect(listed.generations).toEqual([]);
+  });
+
+  it('reopens a listed Generation with snapshot and Content Outputs', async () => {
+    const created = await service.createGeneration('user-1', {
+      productId: 'prod-1',
+      goal: 'increase_sales',
+    });
+
+    const listed = await service.listGenerations('user-1');
+    expect(listed.generations[0].id).toBe(created.generationId);
+
+    const opened = await service.getGeneration(
+      'user-1',
+      listed.generations[0].id,
+    );
+    expect(opened.generation.snapshot.product.name).toBe('Serum');
+    expect(opened.generation.snapshot.brandKit.name).toBe('Nitro');
+    expect(opened.generation.socialPost?.headline).toBeTruthy();
+    expect(opened.generation.video?.videoUrl).toContain('teaser.mp4');
+  });
+
+  it('forbids reopening another user Generation from the library path', async () => {
+    const other = await service.createGeneration('user-2', {
+      productId: 'prod-2',
+      goal: 'product_launch',
+    });
+
+    const listed = await service.listGenerations('user-1');
+    expect(listed.generations.map((item) => item.id)).not.toContain(
+      other.generationId,
+    );
+
+    await expect(
+      service.getGeneration('user-1', other.generationId),
+    ).rejects.toBeInstanceOf(ForbiddenException);
+  });
+});

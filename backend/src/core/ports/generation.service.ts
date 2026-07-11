@@ -1,6 +1,7 @@
 import type {
   CreateGenerationInput,
   CreateGenerationResult,
+  GenerationLibraryItem,
   ManualEditGenerationInput,
   RegenerateSectionInput,
   RegenerateShotInput,
@@ -13,6 +14,7 @@ export interface IGenerationService {
     userId: string,
     input: CreateGenerationInput,
   ): Promise<CreateGenerationResult>;
+  listGenerations(userId: string): Promise<{ generations: GenerationLibraryItem[] }>;
   getGeneration(
     userId: string,
     generationId: string,
