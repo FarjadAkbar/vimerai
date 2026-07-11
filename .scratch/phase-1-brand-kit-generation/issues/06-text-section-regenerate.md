@@ -4,10 +4,10 @@
 
 **Blocked by:** 05 — Manual edit + Export
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] Section regenerate updates only the chosen section
-- [ ] Uses live Brand Kit/Product (not only snapshot) for the rewrite
-- [ ] No Generation credit charge for text section regen (fair-use limited)
-- [ ] Invokes text provider only
-- [ ] Tests cover section targeting and fair-use/credit behavior
+- [x] Section regenerate updates only the chosen section
+- [x] Uses live Brand Kit/Product (not only snapshot) for the rewrite
+- [x] No Generation credit charge for text section regen (fair-use limited)
+- [x] Invokes text provider only
+- [x] Tests cover section targeting and fair-use/credit behavior

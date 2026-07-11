@@ -1,4 +1,5 @@
 import type { ITextGenerationProvider } from '@/core/ports/text-generation.provider';
+import type { TextSectionKey } from '@/types/generation/generation';
 import type {
   TextArtifactKind,
   TextGenerationRequest,
@@ -10,16 +11,28 @@ export class FakeTextGenerationProvider implements ITextGenerationProvider {
 
   constructor(
     private readonly responses: Partial<Record<TextArtifactKind, string>> = {},
+    private readonly sectionResponses: Partial<
+      Record<TextSectionKey, string>
+    > = {},
   ) {}
 
   async generateText(
     request: TextGenerationRequest,
   ): Promise<TextGenerationResult> {
     this.calls.push(request);
-    const text = this.responses[request.artifact];
+    let text: string | undefined;
+    if (request.artifact === 'section-regenerate') {
+      text =
+        this.sectionResponses[request.sectionKey ?? ''] ??
+        this.responses['section-regenerate'];
+    } else {
+      text = this.responses[request.artifact];
+    }
     if (text === undefined) {
       throw new Error(
-        `FakeTextGenerationProvider has no response for artifact: ${request.artifact}`,
+        `FakeTextGenerationProvider has no response for artifact: ${request.artifact}${
+          request.sectionKey ? ` section: ${request.sectionKey}` : ''
+        }`,
       );
     }
     return {

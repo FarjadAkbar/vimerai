@@ -1,3 +1,5 @@
+import type { TextSectionKey } from '@/types/generation/generation';
+
 export type TextArtifactKind =
   | 'creative-brief'
   | 'social-post'
@@ -17,7 +19,7 @@ export interface TextGenerationRequest {
   artifact: TextArtifactKind;
   layers: PromptLayers;
   /** When regenerating one section, names the target field/scene. */
-  sectionKey?: string;
+  sectionKey?: TextSectionKey;
 }
 
 export interface TextGenerationResult {
