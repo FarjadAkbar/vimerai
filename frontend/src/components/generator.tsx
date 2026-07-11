@@ -421,7 +421,7 @@ export function Generator({
   );
 
   const getBlockedStateInfo = useMemo(() => {
-    if (canGenerate) return null;
+    if (canGenerate) return null; // Credits hain toh block mat karo
 
     if (mode === "preview") {
       if (!isLoggedIn) {
