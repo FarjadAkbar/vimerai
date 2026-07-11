@@ -12,6 +12,7 @@ import type { IVideoGenerationProvider } from '@/core/ports/video-generation.pro
 import { InMemoryBrandKitRepository } from '@/testing/fakes/in-memory-brand-kit.repository';
 import { InMemoryGenerationRepository } from '@/testing/fakes/in-memory-generation.repository';
 import { InMemoryProductRepository } from '@/testing/fakes/in-memory-product.repository';
+import { FakeImageGenerationProvider } from '@/testing/fakes/fake-image-generation.provider';
 import { FakeTextGenerationProvider } from '@/testing/fakes/fake-text-generation.provider';
 
 describe('GenerationService.createGeneration', () => {
@@ -1041,5 +1042,176 @@ describe('GenerationService Promo Length Tier', () => {
     expect(stitchCalls).toBe(1);
     expect(retried.generation.status).toBe('completed');
     expect(retried.generation.video?.videoUrl).toContain('promo-stitched');
+  });
+});
+
+describe('GenerationService AI Post image', () => {
+  let brandKits: IBrandKitRepository;
+  let products: IProductRepository;
+  let generations: InMemoryGenerationRepository;
+  let text: FakeTextGenerationProvider;
+  let images: FakeImageGenerationProvider;
+  let usageIncrements: number;
+  let subscription: ISubscriptionService;
+  let video: IVideoGenerationProvider;
+  let service: GenerationService;
+
+  beforeEach(async () => {
+    brandKits = new InMemoryBrandKitRepository();
+    products = new InMemoryProductRepository();
+    generations = new InMemoryGenerationRepository();
+    usageIncrements = 0;
+    images = new FakeImageGenerationProvider(
+      'https://cdn.example.com/ai-post.jpg',
+    );
+
+    subscription = {
+      canGenerate: async (_userId?: string, creditsNeeded = 1) =>
+        creditsNeeded <= 10,
+      recordVideoGeneration: async (_userId?: string, creditsNeeded = 1) => {
+        usageIncrements += creditsNeeded;
+      },
+    } as unknown as ISubscriptionService;
+
+    video = {
+      generateVideo: async () => ({
+        jobId: 'fal-job-1',
+        status: 'completed',
+        videoUrl: 'https://cdn.example.com/teaser.mp4',
+      }),
+      getGenerationStatus: async () => ({
+        jobId: 'fal-job-1',
+        status: 'completed',
+        videoUrl: 'https://cdn.example.com/teaser.mp4',
+      }),
+      generatePreview: async () => ({
+        jobId: 'fal-job-1',
+        status: 'completed',
+      }),
+      stitchClips: async () => ({
+        jobId: 'stitch-1',
+        status: 'completed',
+        videoUrl: 'https://cdn.example.com/promo-stitched.mp4',
+      }),
+      downloadVideo: async () => Buffer.from(''),
+    };
+
+    text = new FakeTextGenerationProvider({
+      'creative-brief': JSON.stringify({
+        hook: 'Stop scrolling',
+        attention: 'Glow up',
+        productDisplay: 'Bottle hero',
+        viewerConnection: 'Made for you',
+        cta: 'Shop now',
+      }),
+      'social-post': JSON.stringify({
+        headline: 'Hydration elevated',
+        body: 'Feel the difference.',
+        cta: 'Shop now',
+        caption: 'Luxury moisture in every drop.',
+        hashtags: ['#serum', '#glow'],
+      }),
+      'reel-storyboard': JSON.stringify({
+        hook: '0-3s hook',
+        attention: 'problem',
+        productDisplay: 'product shot',
+        viewerConnection: 'testimonial vibe',
+        scenes: [{ order: 1, description: 'Close-up bottle' }],
+      }),
+      'reel-caption': 'Watch this glow-up. Link in bio.',
+    });
+
+    await brandKits.create(
+      BrandKit.create(
+        'kit-1',
+        'user-1',
+        'Nitro',
+        'https://cdn.example.com/logo.png',
+        { primary: '#111', secondary: '#c9a' },
+        'luxury',
+        'Premium buyers',
+        'Slang',
+      ),
+    );
+    await products.create(
+      Product.create(
+        'prod-1',
+        'user-1',
+        'Serum',
+        'Hydrating serum',
+        ['https://cdn.example.com/product.jpg'],
+        'https://shop.example.com/serum',
+        ['kit-1'],
+        '49',
+      ),
+    );
+
+    service = new GenerationService(
+      text,
+      images,
+      video,
+      generations,
+      products,
+      brandKits,
+      subscription,
+    );
+  });
+
+  it('defaults to Product photo without calling the image provider or surcharge', async () => {
+    const created = await service.createGeneration('user-1', {
+      productId: 'prod-1',
+      goal: 'increase_sales',
+    });
+
+    expect(created.status).toBe('completed');
+    expect(usageIncrements).toBe(1);
+    expect(images.calls).toHaveLength(0);
+
+    const stored = await service.getGeneration('user-1', created.generationId);
+    expect(stored.generation.postImageMode).toBe('product_photo');
+    expect(stored.generation.socialPost?.postImageUrl).toContain('product.jpg');
+  });
+
+  it('charges AI Post image surcharge and conditions on Product images', async () => {
+    const created = await service.createGeneration('user-1', {
+      productId: 'prod-1',
+      goal: 'brand_awareness',
+      postImageMode: 'ai_image',
+    });
+
+    expect(created.status).toBe('completed');
+    expect(usageIncrements).toBe(2);
+    expect(images.calls).toHaveLength(1);
+    expect(images.calls[0].productImageUrls).toEqual([
+      'https://cdn.example.com/product.jpg',
+    ]);
+    expect(images.calls[0].prompt.length).toBeGreaterThan(0);
+
+    const stored = await service.getGeneration('user-1', created.generationId);
+    expect(stored.generation.postImageMode).toBe('ai_image');
+    expect(stored.generation.socialPost?.postImageUrl).toBe(
+      'https://cdn.example.com/ai-post.jpg',
+    );
+  });
+
+  it('keeps Social Post copy when AI image fails (partial success)', async () => {
+    images.failNext = true;
+
+    const created = await service.createGeneration('user-1', {
+      productId: 'prod-1',
+      goal: 'brand_awareness',
+      postImageMode: 'ai_image',
+    });
+
+    expect(created.status).toBe('partial');
+    expect(usageIncrements).toBe(2);
+    expect(images.calls).toHaveLength(1);
+
+    const stored = await service.getGeneration('user-1', created.generationId);
+    expect(stored.generation.socialPost?.caption.length).toBeGreaterThan(0);
+    expect(stored.generation.socialPost?.postImageUrl).toContain('product.jpg');
+    expect(
+      stored.generation.arms.find((arm) => arm.arm === 'social-post')?.status,
+    ).toBe('failed');
   });
 });
