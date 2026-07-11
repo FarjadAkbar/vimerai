@@ -16,6 +16,10 @@ export class FakeTextGenerationProvider implements ITextGenerationProvider {
     > = {},
   ) {}
 
+  setResponse(artifact: TextArtifactKind, text: string) {
+    this.responses[artifact] = text;
+  }
+
   async generateText(
     request: TextGenerationRequest,
   ): Promise<TextGenerationResult> {

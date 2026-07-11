@@ -582,3 +582,247 @@ describe('GenerationService.regenerateSection', () => {
     expect(usageIncrements).toBe(0);
   });
 });
+
+describe('GenerationService.retryFailedArms', () => {
+  let brandKits: IBrandKitRepository;
+  let products: IProductRepository;
+  let generations: InMemoryGenerationRepository;
+  let text: FakeTextGenerationProvider;
+  let videoCalls: number;
+  let usageIncrements: number;
+  let failVideo: boolean;
+  let subscription: ISubscriptionService;
+  let video: IVideoGenerationProvider;
+  let service: GenerationService;
+
+  const defaultTextResponses = {
+    'creative-brief': JSON.stringify({
+      hook: 'Stop scrolling',
+      attention: 'Glow up',
+      productDisplay: 'Bottle hero',
+      viewerConnection: 'Made for you',
+      cta: 'Shop now',
+    }),
+    'social-post': JSON.stringify({
+      headline: 'Hydration elevated',
+      body: 'Feel the difference.',
+      cta: 'Shop now',
+      caption: 'Luxury moisture in every drop.',
+      hashtags: ['#serum', '#glow'],
+    }),
+    'reel-storyboard': JSON.stringify({
+      hook: '0-3s hook',
+      attention: 'problem',
+      productDisplay: 'product shot',
+      viewerConnection: 'testimonial vibe',
+      scenes: [
+        { order: 1, description: 'Close-up bottle' },
+        { order: 2, description: 'Skin glow' },
+      ],
+    }),
+    'reel-caption': 'Watch this glow-up. Link in bio.',
+  };
+
+  beforeEach(async () => {
+    brandKits = new InMemoryBrandKitRepository();
+    products = new InMemoryProductRepository();
+    generations = new InMemoryGenerationRepository();
+    videoCalls = 0;
+    usageIncrements = 0;
+    failVideo = true;
+
+    subscription = {
+      canGenerate: async () => true,
+      recordVideoGeneration: async () => {
+        usageIncrements += 1;
+      },
+    } as unknown as ISubscriptionService;
+
+    video = {
+      generateVideo: async () => {
+        videoCalls += 1;
+        if (failVideo) {
+          throw new Error('fal down');
+        }
+        return {
+          jobId: 'fal-job-retry',
+          status: 'completed',
+          videoUrl: 'https://cdn.example.com/teaser-retry.mp4',
+        };
+      },
+      getGenerationStatus: async () => ({
+        jobId: 'fal-job-retry',
+        status: 'completed',
+        videoUrl: 'https://cdn.example.com/teaser-retry.mp4',
+      }),
+      generatePreview: async () => ({
+        jobId: 'fal-job-retry',
+        status: 'completed',
+      }),
+      downloadVideo: async () => Buffer.from(''),
+    };
+
+    text = new FakeTextGenerationProvider({ ...defaultTextResponses });
+
+    await brandKits.create(
+      BrandKit.create(
+        'kit-1',
+        'user-1',
+        'Nitro',
+        'https://cdn.example.com/logo.png',
+        { primary: '#111', secondary: '#c9a' },
+        'luxury',
+        'Premium buyers',
+        'Slang',
+      ),
+    );
+    await products.create(
+      Product.create(
+        'prod-1',
+        'user-1',
+        'Serum',
+        'Hydrating serum',
+        ['https://cdn.example.com/product.jpg'],
+        'https://shop.example.com/serum',
+        ['kit-1'],
+        '49',
+      ),
+    );
+
+    service = new GenerationService(
+      text,
+      { generateImage: async () => ({ imageUrl: '' }) },
+      video,
+      generations,
+      products,
+      brandKits,
+      subscription,
+    );
+  });
+
+  it('keeps successful Content Outputs when video fails (partial success)', async () => {
+    const created = await service.createGeneration('user-1', {
+      productId: 'prod-1',
+      goal: 'increase_sales',
+    });
+
+    expect(created.status).toBe('partial');
+    expect(usageIncrements).toBe(1);
+    expect(videoCalls).toBe(1);
+
+    const stored = await service.getGeneration('user-1', created.generationId);
+    expect(stored.generation.socialPost?.headline).toBe('Hydration elevated');
+    expect(stored.generation.reelStoryboard?.hook).toBeTruthy();
+    expect(stored.generation.reelCaption).toContain('glow');
+    expect(stored.generation.video?.status).toBe('failed');
+    expect(
+      stored.generation.arms.find((arm) => arm.arm === 'video')?.status,
+    ).toBe('failed');
+    expect(
+      stored.generation.arms.find((arm) => arm.arm === 'social-post')?.status,
+    ).toBe('completed');
+  });
+
+  it('retries failed video arm without charging again for completed arms', async () => {
+    const created = await service.createGeneration('user-1', {
+      productId: 'prod-1',
+      goal: 'increase_sales',
+    });
+    expect(created.status).toBe('partial');
+    expect(usageIncrements).toBe(1);
+    const socialHeadline = (
+      await service.getGeneration('user-1', created.generationId)
+    ).generation.socialPost!.headline;
+
+    failVideo = false;
+    usageIncrements = 0;
+    videoCalls = 0;
+    text.calls.length = 0;
+
+    const retried = await service.retryFailedArms(
+      'user-1',
+      created.generationId,
+      { arms: ['video'] },
+    );
+
+    expect(usageIncrements).toBe(0);
+    expect(videoCalls).toBe(1);
+    expect(text.calls).toHaveLength(0);
+    expect(retried.generation.status).toBe('completed');
+    expect(retried.generation.video?.videoUrl).toContain('teaser-retry.mp4');
+    expect(retried.generation.socialPost?.headline).toBe(socialHeadline);
+    expect(
+      retried.generation.arms.find((arm) => arm.arm === 'video')?.status,
+    ).toBe('completed');
+  });
+
+  it('retries a failed text arm without recharging', async () => {
+    text = new FakeTextGenerationProvider({
+      'creative-brief': defaultTextResponses['creative-brief'],
+      'reel-storyboard': defaultTextResponses['reel-storyboard'],
+      'reel-caption': defaultTextResponses['reel-caption'],
+    });
+    failVideo = false;
+    service = new GenerationService(
+      text,
+      { generateImage: async () => ({ imageUrl: '' }) },
+      video,
+      generations,
+      products,
+      brandKits,
+      subscription,
+    );
+
+    const created = await service.createGeneration('user-1', {
+      productId: 'prod-1',
+      goal: 'brand_awareness',
+    });
+    expect(created.status).toBe('partial');
+    const stored = await service.getGeneration('user-1', created.generationId);
+    expect(stored.generation.socialPost).toBeNull();
+    expect(
+      stored.generation.arms.find((arm) => arm.arm === 'social-post')?.status,
+    ).toBe('failed');
+
+    text.setResponse(
+      'social-post',
+      JSON.stringify({
+        headline: 'Retried headline',
+        body: 'Retried body',
+        cta: 'Buy',
+        caption: 'Retried caption',
+        hashtags: ['#retry'],
+      }),
+    );
+    usageIncrements = 0;
+    videoCalls = 0;
+
+    const retried = await service.retryFailedArms(
+      'user-1',
+      created.generationId,
+      { arms: ['social-post'] },
+    );
+
+    expect(usageIncrements).toBe(0);
+    expect(videoCalls).toBe(0);
+    expect(retried.generation.socialPost?.headline).toBe('Retried headline');
+    expect(
+      retried.generation.arms.find((arm) => arm.arm === 'social-post')?.status,
+    ).toBe('completed');
+  });
+
+  it('rejects retrying an arm that is not failed', async () => {
+    failVideo = false;
+    const created = await service.createGeneration('user-1', {
+      productId: 'prod-1',
+      goal: 'increase_sales',
+    });
+    expect(created.status).toBe('completed');
+
+    await expect(
+      service.retryFailedArms('user-1', created.generationId, {
+        arms: ['social-post'],
+      }),
+    ).rejects.toBeInstanceOf(BadRequestException);
+  });
+});

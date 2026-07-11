@@ -70,6 +70,11 @@ export interface RegenerateSectionInput {
   sceneOrder?: number;
 }
 
+export interface RetryFailedArmsInput {
+  /** When omitted, retries every failed arm. */
+  arms?: GenerationArm[];
+}
+
 /** Default fair-use cap of free text section regenerates per Generation. */
 export const DEFAULT_TEXT_SECTION_REGEN_LIMIT = 20;
 

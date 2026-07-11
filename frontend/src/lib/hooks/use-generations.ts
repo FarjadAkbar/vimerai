@@ -4,6 +4,7 @@ import {
   type CreateGenerationRequest,
   type ManualEditGenerationRequest,
   type RegenerateSectionRequest,
+  type RetryFailedArmsRequest,
 } from '@/lib/api/generations.api';
 
 export const useCreateGeneration = () => {
@@ -46,6 +47,22 @@ export const useRegenerateSection = () => {
       id: string;
       data: RegenerateSectionRequest;
     }) => generationsApi.regenerateSection(id, data),
+    onSuccess: (result) => {
+      queryClient.setQueryData(['generations', result.generation.id], result);
+    },
+  });
+};
+
+export const useRetryFailedArms = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      id,
+      data,
+    }: {
+      id: string;
+      data?: RetryFailedArmsRequest;
+    }) => generationsApi.retryFailedArms(id, data),
     onSuccess: (result) => {
       queryClient.setQueryData(['generations', result.generation.id], result);
     },

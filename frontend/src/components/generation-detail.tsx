@@ -5,14 +5,23 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { useUpdateGeneration, useRegenerateSection } from "@/lib/hooks/use-generations";
+import { useUpdateGeneration, useRegenerateSection, useRetryFailedArms } from "@/lib/hooks/use-generations";
 import {
   getApiErrorMessage,
+  type GenerationArm,
   type GenerationRecord,
   type ManualEditStoryboardSceneRequest,
   type TextSectionKey,
   TEXT_SECTION_REGEN_LIMIT,
 } from "@/lib/api/generations.api";
+
+const ARM_LABELS: Record<GenerationArm, string> = {
+  "creative-brief": "Creative Brief",
+  "social-post": "Social Post",
+  "reel-storyboard": "Reel Storyboard",
+  "reel-caption": "Reel caption",
+  video: "Video",
+};
 
 async function copyText(text: string): Promise<boolean> {
   try {
@@ -61,6 +70,7 @@ export function GenerationDetail({
 }) {
   const updateGeneration = useUpdateGeneration();
   const regenerateSection = useRegenerateSection();
+  const retryFailedArms = useRetryFailedArms();
   const [headline, setHeadline] = useState("");
   const [body, setBody] = useState("");
   const [cta, setCta] = useState("");
@@ -296,6 +306,97 @@ export function GenerationDetail({
           </Button>
         </div>
       </div>
+
+      {generation.arms?.length > 0 && (
+        <section className="space-y-3">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <h3 className="text-sm font-medium uppercase tracking-wide text-muted-foreground">
+              Arms
+            </h3>
+            {generation.arms.some((arm) => arm.status === "failed") && (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={retryFailedArms.isPending}
+                onClick={() => {
+                  setError(null);
+                  setMessage(null);
+                  retryFailedArms.mutate(
+                    { id: generation.id },
+                    {
+                      onSuccess: () =>
+                        setMessage("Failed arms retried (no extra credit)"),
+                      onError: (err) =>
+                        setError(
+                          getApiErrorMessage(err, "Could not retry failed arms"),
+                        ),
+                    },
+                  );
+                }}
+              >
+                {retryFailedArms.isPending
+                  ? "Retrying…"
+                  : "Retry all failed arms"}
+              </Button>
+            )}
+          </div>
+          <ul className="space-y-2">
+            {generation.arms.map((arm) => (
+              <li
+                key={arm.arm}
+                className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-border/60 px-3 py-2 text-sm"
+              >
+                <div>
+                  <span className="font-medium text-foreground">
+                    {ARM_LABELS[arm.arm] ?? arm.arm}
+                  </span>
+                  <span className="ml-2 capitalize text-muted-foreground">
+                    {arm.status}
+                  </span>
+                  {arm.error ? (
+                    <p className="text-xs text-destructive">{arm.error}</p>
+                  ) : null}
+                </div>
+                {arm.status === "failed" && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 px-2 text-xs"
+                    disabled={retryFailedArms.isPending}
+                    onClick={() => {
+                      setError(null);
+                      setMessage(null);
+                      retryFailedArms.mutate(
+                        {
+                          id: generation.id,
+                          data: { arms: [arm.arm] },
+                        },
+                        {
+                          onSuccess: () =>
+                            setMessage(
+                              `${ARM_LABELS[arm.arm] ?? arm.arm} retried`,
+                            ),
+                          onError: (err) =>
+                            setError(
+                              getApiErrorMessage(
+                                err,
+                                "Could not retry this arm",
+                              ),
+                            ),
+                        },
+                      );
+                    }}
+                  >
+                    Retry
+                  </Button>
+                )}
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       {generation.socialPost && (
         <section className="space-y-3">
