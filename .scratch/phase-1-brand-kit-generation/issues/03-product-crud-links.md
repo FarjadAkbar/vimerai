@@ -4,10 +4,10 @@
 
 **Blocked by:** 02 — Brand Kit CRUD
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] Cannot create Product without at least one Brand Kit
-- [ ] Single Brand Kit → new Product linked by default
-- [ ] Multi Brand Kit → user can link Product to one or more
-- [ ] Product images upload and list
-- [ ] API + UI + tests for ownership, gate, and links
+- [x] Cannot create Product without at least one Brand Kit
+- [x] Single Brand Kit → new Product linked by default
+- [x] Multi Brand Kit → user can link Product to one or more
+- [x] Product images upload and list
+- [x] API + UI + tests for ownership, gate, and links

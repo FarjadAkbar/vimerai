@@ -16,3 +16,5 @@ export const IMAGE_GENERATION_PROVIDER_TOKEN = 'IImageGenerationProvider';
 export const GENERATION_SERVICE_TOKEN = 'IGenerationService';
 export const BRAND_KIT_REPOSITORY_TOKEN = 'IBrandKitRepository';
 export const BRAND_KIT_SERVICE_TOKEN = 'IBrandKitService';
+export const PRODUCT_REPOSITORY_TOKEN = 'IProductRepository';
+export const PRODUCT_SERVICE_TOKEN = 'IProductService';
