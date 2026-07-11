@@ -126,10 +126,14 @@ export class SubscriptionService implements ISubscriptionService {
     };
   }
 
-  async canGenerate(userId: string): Promise<boolean> {
+  async canGenerate(
+    userId: string,
+    creditsNeeded = 1,
+  ): Promise<boolean> {
+    const needed = Math.max(1, creditsNeeded);
     const user = await this.userRepository.getUserById(userId);
     const singleShotCredits = user?.singleShotCredits ?? 0;
-    if (singleShotCredits > 0) {
+    if (singleShotCredits >= needed) {
       return true;
     }
 
@@ -139,15 +143,19 @@ export class SubscriptionService implements ISubscriptionService {
       return false;
     }
 
-    return subscription.canGenerate();
+    return subscription.canGenerate(needed);
   }
 
-  async recordVideoGeneration(userId: string): Promise<void> {
+  async recordVideoGeneration(
+    userId: string,
+    creditsNeeded = 1,
+  ): Promise<void> {
+    const needed = Math.max(1, creditsNeeded);
     const user = await this.userRepository.getUserById(userId);
     const singleShotCredits = user?.singleShotCredits ?? 0;
 
-    if (user && singleShotCredits > 0) {
-      const updatedUser = user.consumeSingleShotCredit();
+    if (user && singleShotCredits >= needed) {
+      const updatedUser = user.consumeSingleShotCredits(needed);
       await this.userRepository.updateUser(updatedUser);
       return;
     }
@@ -158,7 +166,7 @@ export class SubscriptionService implements ISubscriptionService {
       return;
     }
 
-    const updated = subscription.incrementUsage();
+    const updated = subscription.incrementUsage(needed);
     await this.subscriptionRepository.updateSubscription(updated);
   }
 

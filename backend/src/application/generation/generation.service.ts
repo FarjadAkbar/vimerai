@@ -30,6 +30,7 @@ import {
   type ReelStoryboardContent,
   type SocialPostContent,
   type VideoContent,
+  type VideoShot,
 } from '@/domain/generation.entity';
 import { Product } from '@/domain/product.entity';
 import { GenerationMode } from '@/domain/video.entity';
@@ -42,6 +43,8 @@ import type {
 } from '@/types/generation/enums';
 import {
   DEFAULT_TEXT_SECTION_REGEN_LIMIT,
+  LENGTH_TIER_CREDIT_WEIGHT,
+  PROMO_BEATS,
   type CreateGenerationInput,
   type CreateGenerationResult,
   type GenerationArm,
@@ -110,13 +113,11 @@ export class GenerationService implements IGenerationService {
     const postImageMode: PostImageMode =
       input.postImageMode ?? 'product_photo';
 
-    if (lengthTier !== 'teaser') {
-      throw new BadRequestException(
-        'Only Teaser Length Tier is available in this release',
-      );
-    }
-
-    const canGenerate = await this.subscriptionService.canGenerate(userId);
+    const creditWeight = LENGTH_TIER_CREDIT_WEIGHT[lengthTier];
+    const canGenerate = await this.subscriptionService.canGenerate(
+      userId,
+      creditWeight,
+    );
     if (!canGenerate) {
       throw new BadRequestException('Generation credit limit reached');
     }
@@ -135,7 +136,7 @@ export class GenerationService implements IGenerationService {
       snapshot,
     });
     await this.generationRepository.create(generation);
-    await this.subscriptionService.recordVideoGeneration(userId);
+    await this.subscriptionService.recordVideoGeneration(userId, creditWeight);
 
     const layers = this.buildLayers(snapshot, input.goal, {
       lengthTier,
@@ -184,7 +185,7 @@ export class GenerationService implements IGenerationService {
         artifact: 'reel-storyboard',
         layers: {
           ...layers,
-          outputSchema: `Creative Brief: ${briefContext}. Return JSON: hook, attention, productDisplay, viewerConnection, scenes[{order,description}] for a Teaser reel`,
+          outputSchema: `Creative Brief: ${briefContext}. Return JSON: hook, attention, productDisplay, viewerConnection, scenes[{order,description}] for a ${lengthTier === 'promo' ? 'Promo (~60s)' : 'Teaser (~8-10s)'} reel`,
         },
       }),
       this.textGenerationProvider.generateText({
@@ -266,42 +267,20 @@ export class GenerationService implements IGenerationService {
 
     let videoContent: VideoContent | null = null;
     try {
-      const videoPrompt = [
-        `Brand: ${brandKit.name}. Tone: ${brandKit.tone}.`,
-        `Product: ${product.name}. ${product.description}`,
-        `Goal: ${input.goal}. Teaser ~8-10s.`,
-        briefContext,
-        'Beats: hook, attention, product display, viewer connection. Product visibility first.',
-      ].join(' ');
-
-      const videoResult = await this.waitForVideo(
-        await this.videoGenerationProvider.generateVideo({
-          prompt: videoPrompt,
-          mode: GenerationMode.FAST,
-          useImageConditioning: product.imageUrls.length > 0,
-          productAssetUrls: product.imageUrls,
-          negativePrompt: brandKit.thingsToAvoid,
-        }),
-      );
-
-      videoContent = {
-        jobId: videoResult.jobId,
-        videoUrl: videoResult.videoUrl ?? null,
-        status:
-          videoResult.status === 'failed'
-            ? ('failed' as const)
-            : videoResult.status === 'completed'
-              ? ('completed' as const)
-              : ('processing' as const),
+      videoContent = await this.renderVideoArm({
         lengthTier,
         reelPlatform,
-        error: videoResult.error,
-      };
+        brandKit,
+        product,
+        goal: input.goal,
+        briefContext,
+        snapshot,
+      });
       this.setArm(
         arms,
         'video',
         videoContent.status === 'failed' ? 'failed' : videoContent.status,
-        videoResult.error,
+        videoContent.error,
       );
     } catch (error) {
       videoContent = {
@@ -311,6 +290,7 @@ export class GenerationService implements IGenerationService {
         lengthTier,
         reelPlatform,
         error: error instanceof Error ? error.message : 'Video failed',
+        shots: lengthTier === 'promo' ? [] : undefined,
       };
       this.setArm(arms, 'video', 'failed', videoContent.error);
     }
@@ -671,42 +651,30 @@ export class GenerationService implements IGenerationService {
     if (retrySet.has('video')) {
       try {
         this.setArm(arms, 'video', 'processing');
-        const videoPrompt = [
-          `Brand: ${snapshot.brandKit.name}. Tone: ${snapshot.brandKit.tone}.`,
-          `Product: ${snapshot.product.name}. ${snapshot.product.description}`,
-          `Goal: ${generation.goal}. Teaser ~8-10s.`,
-          briefContext,
-          'Beats: hook, attention, product display, viewer connection. Product visibility first.',
-        ].join(' ');
-
-        const videoResult = await this.waitForVideo(
-          await this.videoGenerationProvider.generateVideo({
-            prompt: videoPrompt,
-            mode: GenerationMode.FAST,
-            useImageConditioning: snapshot.product.imageUrls.length > 0,
-            productAssetUrls: snapshot.product.imageUrls,
-            negativePrompt: snapshot.brandKit.thingsToAvoid,
-          }),
-        );
-
-        videoContent = {
-          jobId: videoResult.jobId,
-          videoUrl: videoResult.videoUrl ?? null,
-          status:
-            videoResult.status === 'failed'
-              ? ('failed' as const)
-              : videoResult.status === 'completed'
-                ? ('completed' as const)
-                : ('processing' as const),
+        videoContent = await this.renderVideoArm({
           lengthTier: generation.lengthTier,
           reelPlatform: generation.reelPlatform,
-          error: videoResult.error,
-        };
+          brandKit: {
+            name: snapshot.brandKit.name,
+            tone: snapshot.brandKit.tone,
+            thingsToAvoid: snapshot.brandKit.thingsToAvoid,
+          },
+          product: {
+            name: snapshot.product.name,
+            description: snapshot.product.description,
+            imageUrls: snapshot.product.imageUrls,
+          },
+          goal: generation.goal,
+          briefContext,
+          snapshot,
+          existingShots: generation.video?.shots,
+          retryFailedShotsOnly: true,
+        });
         this.setArm(
           arms,
           'video',
           videoContent.status === 'failed' ? 'failed' : videoContent.status,
-          videoResult.error,
+          videoContent.error,
         );
       } catch (error) {
         videoContent = {
@@ -716,6 +684,7 @@ export class GenerationService implements IGenerationService {
           lengthTier: generation.lengthTier,
           reelPlatform: generation.reelPlatform,
           error: error instanceof Error ? error.message : 'Video failed',
+          shots: generation.video?.shots,
         };
         this.setArm(arms, 'video', 'failed', videoContent.error);
       }
@@ -1012,6 +981,180 @@ export class GenerationService implements IGenerationService {
       return JSON.parse(text) as T;
     } catch {
       return null;
+    }
+  }
+
+  private async renderVideoArm(input: {
+    lengthTier: LengthTier;
+    reelPlatform: ReelPlatform;
+    brandKit: { name: string; tone: string; thingsToAvoid: string };
+    product: { name: string; description: string; imageUrls: string[] };
+    goal: Goal;
+    briefContext: string;
+    snapshot: GenerationSnapshot;
+    existingShots?: VideoShot[];
+    retryFailedShotsOnly?: boolean;
+  }): Promise<VideoContent> {
+    if (input.lengthTier === 'promo') {
+      return this.renderPromoVideo(input);
+    }
+    return this.renderTeaserVideo(input);
+  }
+
+  private async renderTeaserVideo(input: {
+    lengthTier: LengthTier;
+    reelPlatform: ReelPlatform;
+    brandKit: { name: string; tone: string; thingsToAvoid: string };
+    product: { name: string; description: string; imageUrls: string[] };
+    goal: Goal;
+    briefContext: string;
+  }): Promise<VideoContent> {
+    const videoPrompt = [
+      `Brand: ${input.brandKit.name}. Tone: ${input.brandKit.tone}.`,
+      `Product: ${input.product.name}. ${input.product.description}`,
+      `Goal: ${input.goal}. Teaser ~8-10s.`,
+      input.briefContext,
+      'Beats: hook, attention, product display, viewer connection. Product visibility first.',
+    ].join(' ');
+
+    const videoResult = await this.waitForVideo(
+      await this.videoGenerationProvider.generateVideo({
+        prompt: videoPrompt,
+        mode: GenerationMode.FAST,
+        useImageConditioning: input.product.imageUrls.length > 0,
+        productAssetUrls: input.product.imageUrls,
+        negativePrompt: input.brandKit.thingsToAvoid,
+      }),
+    );
+
+    return {
+      jobId: videoResult.jobId,
+      videoUrl: videoResult.videoUrl ?? null,
+      status:
+        videoResult.status === 'failed'
+          ? 'failed'
+          : videoResult.status === 'completed'
+            ? 'completed'
+            : 'processing',
+      lengthTier: input.lengthTier,
+      reelPlatform: input.reelPlatform,
+      error: videoResult.error,
+    };
+  }
+
+  private async renderPromoVideo(input: {
+    lengthTier: LengthTier;
+    reelPlatform: ReelPlatform;
+    brandKit: { name: string; tone: string; thingsToAvoid: string };
+    product: { name: string; description: string; imageUrls: string[] };
+    goal: Goal;
+    briefContext: string;
+    existingShots?: VideoShot[];
+    retryFailedShotsOnly?: boolean;
+  }): Promise<VideoContent> {
+    const prior =
+      input.retryFailedShotsOnly && input.existingShots?.length
+        ? input.existingShots
+        : null;
+
+    const shots: VideoShot[] = [];
+    for (let index = 0; index < PROMO_BEATS.length; index += 1) {
+      const beat = PROMO_BEATS[index];
+      const existing = prior?.find((shot) => shot.beat === beat);
+      if (existing && existing.status === 'completed' && existing.videoUrl) {
+        shots.push(existing);
+        continue;
+      }
+
+      try {
+        const shotPrompt = [
+          `Brand: ${input.brandKit.name}. Tone: ${input.brandKit.tone}.`,
+          `Product: ${input.product.name}. ${input.product.description}`,
+          `Goal: ${input.goal}. Promo beat shot (~12-15s).`,
+          `Beat: ${beat}.`,
+          input.briefContext,
+          'Product visibility first. Part of a ~60s Promo stitch.',
+        ].join(' ');
+
+        const shotResult = await this.waitForVideo(
+          await this.videoGenerationProvider.generateVideo({
+            prompt: shotPrompt,
+            mode: GenerationMode.FAST,
+            useImageConditioning: input.product.imageUrls.length > 0,
+            productAssetUrls: input.product.imageUrls,
+            negativePrompt: input.brandKit.thingsToAvoid,
+          }),
+        );
+
+        shots.push({
+          beat,
+          order: index + 1,
+          jobId: shotResult.jobId,
+          videoUrl: shotResult.videoUrl ?? null,
+          status:
+            shotResult.status === 'failed'
+              ? 'failed'
+              : shotResult.status === 'completed'
+                ? 'completed'
+                : 'processing',
+          error: shotResult.error,
+        });
+      } catch (error) {
+        shots.push({
+          beat,
+          order: index + 1,
+          jobId: null,
+          videoUrl: null,
+          status: 'failed',
+          error: error instanceof Error ? error.message : 'Shot failed',
+        });
+      }
+    }
+
+    const completedUrls = shots
+      .filter((shot) => shot.status === 'completed' && shot.videoUrl)
+      .map((shot) => shot.videoUrl!);
+
+    if (completedUrls.length < PROMO_BEATS.length) {
+      return {
+        jobId: null,
+        videoUrl: null,
+        status: 'failed',
+        lengthTier: 'promo',
+        reelPlatform: input.reelPlatform,
+        error: 'One or more Promo Shots failed',
+        shots,
+      };
+    }
+
+    try {
+      const stitch = await this.videoGenerationProvider.stitchClips(
+        completedUrls,
+      );
+      return {
+        jobId: stitch.jobId,
+        videoUrl: stitch.videoUrl ?? null,
+        status:
+          stitch.status === 'failed'
+            ? 'failed'
+            : stitch.status === 'completed'
+              ? 'completed'
+              : 'processing',
+        lengthTier: 'promo',
+        reelPlatform: input.reelPlatform,
+        error: stitch.error,
+        shots,
+      };
+    } catch (error) {
+      return {
+        jobId: null,
+        videoUrl: null,
+        status: 'failed',
+        lengthTier: 'promo',
+        reelPlatform: input.reelPlatform,
+        error: error instanceof Error ? error.message : 'Promo stitch failed',
+        shots,
+      };
     }
   }
 

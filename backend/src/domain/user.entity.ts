@@ -59,6 +59,23 @@ export class User {
     );
   }
 
+  consumeSingleShotCredits(amount: number): User {
+    const needed = Math.max(1, amount);
+    if (this.singleShotCredits < needed) {
+      return this;
+    }
+    return new User(
+      this.id,
+      this.email,
+      this.passwordHash,
+      this.createdAt,
+      new Date(),
+      this.passwordResetToken,
+      this.passwordResetExpires,
+      this.singleShotCredits - needed,
+    );
+  }
+
   updatePasswordResetToken(token: string | null, expiresAt: Date | null): User {
     return new User(
       this.id,
