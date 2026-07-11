@@ -222,7 +222,21 @@ export function GenerationDetail({
             Generation ready
           </h2>
           <p className="text-sm text-muted-foreground capitalize">
-            {generation.status} · Manual edits free · AI rewrite fair-use{" "}
+            {generation.status} · {generation.lengthTier} ·{" "}
+            {generation.goal.replaceAll("_", " ")}
+          </p>
+          <p className="text-sm text-muted-foreground">
+            Snapshot · Brand Kit {generation.snapshot.brandKit.name} (
+            {generation.snapshot.brandKit.tone}) · Product{" "}
+            {generation.snapshot.product.name}
+            {generation.snapshot.product.price
+              ? ` · ${generation.snapshot.product.price}`
+              : ""}{" "}
+            · Colors {generation.snapshot.brandKit.colors.primary}/
+            {generation.snapshot.brandKit.colors.secondary}
+          </p>
+          <p className="text-sm text-muted-foreground">
+            Manual edits free · AI rewrite fair-use{" "}
             {generation.textSectionRegenCount ?? 0}/{TEXT_SECTION_REGEN_LIMIT}
           </p>
         </div>

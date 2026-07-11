@@ -78,6 +78,13 @@ const Header = () => {
                   <Button
                     variant="ghost"
                     size="sm"
+                    onClick={(e) => handleNavigation("/generations", e)}
+                  >
+                    Library
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
                     onClick={(e) => handleNavigation("/my-videos", e)}
                   >
                     My Videos
@@ -286,6 +293,12 @@ const Header = () => {
                   onClick={(e) => handleNavigation("/", e)}
                 >
                   Generator
+                </button>
+                <button
+                  className="text-left px-3 py-2.5 rounded-xl hover:bg-secondary transition-colors text-sm font-medium"
+                  onClick={(e) => handleNavigation("/generations", e)}
+                >
+                  Library
                 </button>
                 <button
                   className="text-left px-3 py-2.5 rounded-xl hover:bg-secondary transition-colors text-sm font-medium"

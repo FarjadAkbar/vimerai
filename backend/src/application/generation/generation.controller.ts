@@ -34,6 +34,11 @@ export class GenerationController {
     return this.generationService.createGeneration(user.userId, dto);
   }
 
+  @Get()
+  async list(@CurrentUser() user: { userId: string }) {
+    return this.generationService.listGenerations(user.userId);
+  }
+
   @Get(':id')
   async get(
     @CurrentUser() user: { userId: string },
