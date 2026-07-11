@@ -4,13 +4,13 @@
 
 **Blocked by:** 01 — Prefactor: Generation seam + modality ports; 03 — Product CRUD + Brand–Product links
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] Generate blocked until Brand Kit + Product exist; empty states guide setup
-- [ ] Happy path only requires Product + Goal; defaults apply
-- [ ] Bundle: Social Post + Reel Storyboard + Video + Reel caption
-- [ ] Brand Kit/Product snapshot stored on Generation
-- [ ] Teaser weighted credit charged before/on create
-- [ ] Structured prompt layers used for text arms (OpenAI)
-- [ ] Teaser Video via video provider (fal); Product images condition when applicable
-- [ ] Tests via Generation seam with faked providers
+- [x] Generate blocked until Brand Kit + Product exist; empty states guide setup
+- [x] Happy path only requires Product + Goal; defaults apply
+- [x] Bundle: Social Post + Reel Storyboard + Video + Reel caption
+- [x] Brand Kit/Product snapshot stored on Generation
+- [x] Teaser weighted credit charged before/on create
+- [x] Structured prompt layers used for text arms (OpenAI)
+- [x] Teaser Video via video provider (fal); Product images condition when applicable
+- [x] Tests via Generation seam with faked providers

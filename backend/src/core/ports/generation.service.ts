@@ -2,14 +2,15 @@ import type {
   CreateGenerationInput,
   CreateGenerationResult,
 } from '@/types/generation/generation';
+import type { Generation } from '@/domain/generation.entity';
 
-/**
- * Primary application seam for Brand Kit–driven Generations.
- * Prefactor: injectable; createGeneration implemented in later tickets.
- */
 export interface IGenerationService {
   createGeneration(
     userId: string,
     input: CreateGenerationInput,
   ): Promise<CreateGenerationResult>;
+  getGeneration(
+    userId: string,
+    generationId: string,
+  ): Promise<{ generation: Generation }>;
 }
