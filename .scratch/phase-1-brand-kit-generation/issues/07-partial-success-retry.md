@@ -4,10 +4,10 @@
 
 **Blocked by:** 04 — Teaser Generation happy path
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] Per-arm status visible on Generation
-- [ ] Successful arms remain available when another fails
-- [ ] Retry failed arm does not re-charge for completed arms
-- [ ] UI supports retry on failed arms
-- [ ] Tests simulate mixed success/failure with fakes
+- [x] Per-arm status visible on Generation
+- [x] Successful arms remain available when another fails
+- [x] Retry failed arm does not re-charge for completed arms
+- [x] UI supports retry on failed arms
+- [x] Tests simulate mixed success/failure with fakes

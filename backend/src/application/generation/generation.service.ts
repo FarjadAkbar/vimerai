@@ -44,9 +44,11 @@ import {
   DEFAULT_TEXT_SECTION_REGEN_LIMIT,
   type CreateGenerationInput,
   type CreateGenerationResult,
+  type GenerationArm,
   type GenerationArmState,
   type ManualEditGenerationInput,
   type RegenerateSectionInput,
+  type RetryFailedArmsInput,
   type TextSectionKey,
 } from '@/types/generation/generation';
 import type { PromptLayers } from '@/types/generation/text-generation';
@@ -474,6 +476,259 @@ export class GenerationService implements IGenerationService {
     const updated = generation.withUpdates({
       ...updatedContent,
       textSectionRegenCount: generation.textSectionRegenCount + 1,
+    });
+    await this.generationRepository.update(updated);
+    return { generation: updated };
+  }
+
+  async retryFailedArms(
+    userId: string,
+    generationId: string,
+    input: RetryFailedArmsInput = {},
+  ): Promise<{ generation: Generation }> {
+    const { generation } = await this.getGeneration(userId, generationId);
+    const failedArms = generation.arms.filter((arm) => arm.status === 'failed');
+    if (failedArms.length === 0) {
+      throw new BadRequestException('No failed arms to retry');
+    }
+
+    const requested = input.arms?.length
+      ? input.arms
+      : failedArms.map((arm) => arm.arm);
+    const retrySet = new Set(requested);
+
+    for (const arm of requested) {
+      const state = generation.arms.find((item) => item.arm === arm);
+      if (!state || state.status !== 'failed') {
+        throw new BadRequestException(
+          `Arm "${arm}" is not failed and cannot be retried`,
+        );
+      }
+    }
+
+    const brandKit = await this.brandKitRepository.findById(
+      generation.brandKitId,
+    );
+    const product = await this.productRepository.findById(generation.productId);
+    if (!brandKit || brandKit.userId !== userId) {
+      throw new BadRequestException('Brand Kit not found');
+    }
+    if (!product || product.userId !== userId) {
+      throw new BadRequestException('Product not found');
+    }
+
+    const snapshot = generation.snapshot;
+    const layers = this.buildLayers(snapshot, generation.goal, {
+      lengthTier: generation.lengthTier,
+      feedPlatform: generation.feedPlatform,
+      reelPlatform: generation.reelPlatform,
+      postImageMode: generation.postImageMode,
+    });
+
+    const arms: GenerationArmState[] = generation.arms.map((arm) => ({
+      ...arm,
+    }));
+    let creativeBrief = generation.creativeBrief;
+    let socialPost = generation.socialPost;
+    let reelStoryboard = generation.reelStoryboard;
+    let reelCaption = generation.reelCaption;
+    let videoContent = generation.video;
+
+    if (retrySet.has('creative-brief')) {
+      try {
+        this.setArm(arms, 'creative-brief', 'processing');
+        const briefResult = await this.textGenerationProvider.generateText({
+          artifact: 'creative-brief',
+          layers: {
+            ...layers,
+            outputSchema:
+              'Return JSON: hook, attention, productDisplay, viewerConnection, cta',
+          },
+        });
+        creativeBrief = briefResult.text;
+        this.setArm(arms, 'creative-brief', 'completed');
+      } catch (error) {
+        this.setArm(
+          arms,
+          'creative-brief',
+          'failed',
+          error instanceof Error ? error.message : 'Creative Brief failed',
+        );
+      }
+    }
+
+    const briefContext = creativeBrief ?? '';
+
+    if (retrySet.has('social-post')) {
+      try {
+        this.setArm(arms, 'social-post', 'processing');
+        const result = await this.textGenerationProvider.generateText({
+          artifact: 'social-post',
+          layers: {
+            ...layers,
+            outputSchema: `Creative Brief: ${briefContext}. Return JSON: headline, body, cta, caption, hashtags (string array) for ${generation.feedPlatform}`,
+          },
+        });
+        const parsed = this.parseJson<{
+          headline: string;
+          body: string;
+          cta: string;
+          caption: string;
+          hashtags: string[];
+        }>(result.text);
+        if (!parsed?.headline && !parsed?.caption) {
+          this.setArm(
+            arms,
+            'social-post',
+            'failed',
+            'Social Post response was not valid JSON',
+          );
+        } else {
+          socialPost = {
+            headline: parsed?.headline ?? '',
+            body: parsed?.body ?? '',
+            cta: parsed?.cta ?? '',
+            caption: parsed?.caption ?? result.text,
+            hashtags: parsed?.hashtags ?? [],
+            postImageUrl:
+              socialPost?.postImageUrl ??
+              snapshot.product.imageUrls[0] ??
+              '',
+            feedPlatform: generation.feedPlatform,
+          };
+          this.setArm(arms, 'social-post', 'completed');
+        }
+      } catch (error) {
+        this.setArm(
+          arms,
+          'social-post',
+          'failed',
+          error instanceof Error ? error.message : 'Social Post failed',
+        );
+      }
+    }
+
+    if (retrySet.has('reel-storyboard')) {
+      try {
+        this.setArm(arms, 'reel-storyboard', 'processing');
+        const result = await this.textGenerationProvider.generateText({
+          artifact: 'reel-storyboard',
+          layers: {
+            ...layers,
+            outputSchema: `Creative Brief: ${briefContext}. Return JSON: hook, attention, productDisplay, viewerConnection, scenes[{order,description}] for a Teaser reel`,
+          },
+        });
+        const parsed = this.parseJson<ReelStoryboardContent>(result.text);
+        if (!parsed?.hook && !parsed?.scenes?.length) {
+          this.setArm(
+            arms,
+            'reel-storyboard',
+            'failed',
+            'Reel Storyboard response was not valid JSON',
+          );
+        } else {
+          reelStoryboard = {
+            hook: parsed.hook ?? '',
+            attention: parsed.attention ?? '',
+            productDisplay: parsed.productDisplay ?? '',
+            viewerConnection: parsed.viewerConnection ?? '',
+            scenes: parsed.scenes ?? [],
+          };
+          this.setArm(arms, 'reel-storyboard', 'completed');
+        }
+      } catch (error) {
+        this.setArm(
+          arms,
+          'reel-storyboard',
+          'failed',
+          error instanceof Error ? error.message : 'Reel Storyboard failed',
+        );
+      }
+    }
+
+    if (retrySet.has('reel-caption')) {
+      try {
+        this.setArm(arms, 'reel-caption', 'processing');
+        const result = await this.textGenerationProvider.generateText({
+          artifact: 'reel-caption',
+          layers: {
+            ...layers,
+            outputSchema: `Creative Brief: ${briefContext}. Return plain caption text for ${generation.reelPlatform}`,
+          },
+        });
+        reelCaption = result.text.trim();
+        this.setArm(arms, 'reel-caption', 'completed');
+      } catch (error) {
+        this.setArm(
+          arms,
+          'reel-caption',
+          'failed',
+          error instanceof Error ? error.message : 'Reel caption failed',
+        );
+      }
+    }
+
+    if (retrySet.has('video')) {
+      try {
+        this.setArm(arms, 'video', 'processing');
+        const videoPrompt = [
+          `Brand: ${snapshot.brandKit.name}. Tone: ${snapshot.brandKit.tone}.`,
+          `Product: ${snapshot.product.name}. ${snapshot.product.description}`,
+          `Goal: ${generation.goal}. Teaser ~8-10s.`,
+          briefContext,
+          'Beats: hook, attention, product display, viewer connection. Product visibility first.',
+        ].join(' ');
+
+        const videoResult = await this.waitForVideo(
+          await this.videoGenerationProvider.generateVideo({
+            prompt: videoPrompt,
+            mode: GenerationMode.FAST,
+            useImageConditioning: snapshot.product.imageUrls.length > 0,
+            productAssetUrls: snapshot.product.imageUrls,
+            negativePrompt: snapshot.brandKit.thingsToAvoid,
+          }),
+        );
+
+        videoContent = {
+          jobId: videoResult.jobId,
+          videoUrl: videoResult.videoUrl ?? null,
+          status:
+            videoResult.status === 'failed'
+              ? ('failed' as const)
+              : videoResult.status === 'completed'
+                ? ('completed' as const)
+                : ('processing' as const),
+          lengthTier: generation.lengthTier,
+          reelPlatform: generation.reelPlatform,
+          error: videoResult.error,
+        };
+        this.setArm(
+          arms,
+          'video',
+          videoContent.status === 'failed' ? 'failed' : videoContent.status,
+          videoResult.error,
+        );
+      } catch (error) {
+        videoContent = {
+          jobId: null,
+          videoUrl: null,
+          status: 'failed',
+          lengthTier: generation.lengthTier,
+          reelPlatform: generation.reelPlatform,
+          error: error instanceof Error ? error.message : 'Video failed',
+        };
+        this.setArm(arms, 'video', 'failed', videoContent.error);
+      }
+    }
+
+    const updated = generation.withUpdates({
+      arms,
+      creativeBrief,
+      socialPost,
+      reelStoryboard,
+      reelCaption,
+      video: videoContent,
+      status: this.rollupStatus(arms),
     });
     await this.generationRepository.update(updated);
     return { generation: updated };
