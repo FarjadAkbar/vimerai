@@ -1,6 +1,7 @@
 "use client";
 
 import DarkVeil from "@/components/DarkVeil";
+import { BrandGeneration } from "@/components/brand-generation";
 import { Generator } from "@/components/generator";
 import { useAppState } from "@/lib/providers/app-state-provider";
 
@@ -9,7 +10,10 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-[#000000] relative overflow-x-hidden">
-      <div className="fixed  inset-0 h-[500px] md:h-full pointer-events-none z-0 " style={{ backgroundSize: 'cover', backgroundPosition: 'center' }}>
+      <div
+        className="fixed inset-0 h-[500px] md:h-full pointer-events-none z-0"
+        style={{ backgroundSize: "cover", backgroundPosition: "center" }}
+      >
         <DarkVeil
           hueShift={0}
           noiseIntensity={0}
@@ -26,16 +30,22 @@ export default function HomePage() {
             Create scroll-stopping product ads happens within seconds
           </h1>
           <p className="text-base sm:text-lg text-muted-foreground max-w-xl mx-auto leading-relaxed">
-            Turn your product idea into a short, ready-to-post video ad without filming or editing
+            {isLoggedIn
+              ? "Pick a Product and Goal to generate a Social Post, Reel Storyboard, caption, and Teaser video"
+              : "Turn your product idea into a short, ready-to-post video ad without filming or editing"}
           </p>
         </section>
 
         <section className="w-full">
-          <Generator
-            mode={mode}
-            showRecentVideos={isLoggedIn}
-            showSubscriptionInfo={false}
-          />
+          {isLoggedIn ? (
+            <BrandGeneration />
+          ) : (
+            <Generator
+              mode={mode}
+              showRecentVideos={false}
+              showSubscriptionInfo={false}
+            />
+          )}
         </section>
       </div>
     </div>
