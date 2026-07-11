@@ -40,11 +40,14 @@ import type {
   PostImageMode,
   ReelPlatform,
 } from '@/types/generation/enums';
-import type {
-  CreateGenerationInput,
-  CreateGenerationResult,
-  GenerationArmState,
-  ManualEditGenerationInput,
+import {
+  DEFAULT_TEXT_SECTION_REGEN_LIMIT,
+  type CreateGenerationInput,
+  type CreateGenerationResult,
+  type GenerationArmState,
+  type ManualEditGenerationInput,
+  type RegenerateSectionInput,
+  type TextSectionKey,
 } from '@/types/generation/generation';
 import type { PromptLayers } from '@/types/generation/text-generation';
 
@@ -404,6 +407,243 @@ export class GenerationService implements IGenerationService {
     });
     await this.generationRepository.update(updated);
     return { generation: updated };
+  }
+
+  async regenerateSection(
+    userId: string,
+    generationId: string,
+    input: RegenerateSectionInput,
+  ): Promise<{ generation: Generation }> {
+    const { generation } = await this.getGeneration(userId, generationId);
+
+    if (generation.textSectionRegenCount >= DEFAULT_TEXT_SECTION_REGEN_LIMIT) {
+      throw new BadRequestException(
+        `Text section regenerate fair-use limit reached (${DEFAULT_TEXT_SECTION_REGEN_LIMIT} per Generation)`,
+      );
+    }
+
+    if (
+      input.sectionKey === 'storyboard.scene' &&
+      (input.sceneOrder === undefined || input.sceneOrder < 1)
+    ) {
+      throw new BadRequestException(
+        'sceneOrder is required when regenerating a storyboard scene',
+      );
+    }
+
+    const brandKit = await this.brandKitRepository.findById(
+      generation.brandKitId,
+    );
+    const product = await this.productRepository.findById(generation.productId);
+    if (!brandKit || brandKit.userId !== userId) {
+      throw new BadRequestException('Live Brand Kit not found');
+    }
+    if (!product || product.userId !== userId) {
+      throw new BadRequestException('Live Product not found');
+    }
+
+    const liveSnapshot = this.buildSnapshot(brandKit, product);
+    const layers = this.buildLayers(liveSnapshot, generation.goal, {
+      lengthTier: generation.lengthTier,
+      feedPlatform: generation.feedPlatform,
+      reelPlatform: generation.reelPlatform,
+      postImageMode: generation.postImageMode,
+    });
+
+    const currentValue = this.readSectionValue(generation, input);
+
+    const result = await this.textGenerationProvider.generateText({
+      artifact: 'section-regenerate',
+      sectionKey: input.sectionKey,
+      layers: {
+        ...layers,
+        outputSchema: this.sectionOutputSchema(
+          input.sectionKey,
+          currentValue,
+          input.sceneOrder,
+        ),
+      },
+    });
+
+    const updatedContent = this.applySectionResult(
+      generation,
+      input,
+      result.text,
+    );
+
+    const updated = generation.withUpdates({
+      ...updatedContent,
+      textSectionRegenCount: generation.textSectionRegenCount + 1,
+    });
+    await this.generationRepository.update(updated);
+    return { generation: updated };
+  }
+
+  private readSectionValue(
+    generation: Generation,
+    input: RegenerateSectionInput,
+  ): string {
+    const { sectionKey, sceneOrder } = input;
+    switch (sectionKey) {
+      case 'social.headline':
+        return generation.socialPost?.headline ?? '';
+      case 'social.body':
+        return generation.socialPost?.body ?? '';
+      case 'social.cta':
+        return generation.socialPost?.cta ?? '';
+      case 'social.caption':
+        return generation.socialPost?.caption ?? '';
+      case 'social.hashtags':
+        return (generation.socialPost?.hashtags ?? []).join(' ');
+      case 'storyboard.hook':
+        return generation.reelStoryboard?.hook ?? '';
+      case 'storyboard.attention':
+        return generation.reelStoryboard?.attention ?? '';
+      case 'storyboard.productDisplay':
+        return generation.reelStoryboard?.productDisplay ?? '';
+      case 'storyboard.viewerConnection':
+        return generation.reelStoryboard?.viewerConnection ?? '';
+      case 'storyboard.scene': {
+        const scene = generation.reelStoryboard?.scenes.find(
+          (item) => item.order === sceneOrder,
+        );
+        return scene?.description ?? '';
+      }
+      case 'reel.caption':
+        return generation.reelCaption ?? '';
+      default: {
+        const _exhaustive: never = sectionKey;
+        return _exhaustive;
+      }
+    }
+  }
+
+  private sectionOutputSchema(
+    sectionKey: TextSectionKey,
+    currentValue: string,
+    sceneOrder?: number,
+  ): string {
+    const current = currentValue
+      ? `Current value: ${currentValue}`
+      : 'No current value.';
+    switch (sectionKey) {
+      case 'social.hashtags':
+        return `${current}\nRewrite only hashtags. Return a JSON string array of hashtags.`;
+      case 'storyboard.scene':
+        return `${current}\nRewrite only storyboard scene #${sceneOrder}. Return plain scene description text.`;
+      case 'reel.caption':
+        return `${current}\nRewrite only the Reel caption. Return plain caption text.`;
+      default:
+        return `${current}\nRewrite only the ${sectionKey} field. Return plain text for that field only.`;
+    }
+  }
+
+  private applySectionResult(
+    generation: Generation,
+    input: RegenerateSectionInput,
+    text: string,
+  ): {
+    socialPost?: SocialPostContent | null;
+    reelStoryboard?: ReelStoryboardContent | null;
+    reelCaption?: string | null;
+  } {
+    const { sectionKey, sceneOrder } = input;
+    const trimmed = text.trim();
+
+    if (sectionKey.startsWith('social.')) {
+      if (!generation.socialPost) {
+        throw new BadRequestException('Generation has no Social Post');
+      }
+      const socialPost = { ...generation.socialPost };
+      if (sectionKey === 'social.hashtags') {
+        const parsed = this.parseJsonArray(trimmed);
+        socialPost.hashtags =
+          parsed ??
+          trimmed
+            .split(/\s+/)
+            .map((tag) => tag.trim())
+            .filter(Boolean);
+      } else if (sectionKey === 'social.headline') {
+        socialPost.headline = this.stripQuotes(trimmed);
+      } else if (sectionKey === 'social.body') {
+        socialPost.body = this.stripQuotes(trimmed);
+      } else if (sectionKey === 'social.cta') {
+        socialPost.cta = this.stripQuotes(trimmed);
+      } else if (sectionKey === 'social.caption') {
+        socialPost.caption = this.stripQuotes(trimmed);
+      }
+      return { socialPost };
+    }
+
+    if (sectionKey.startsWith('storyboard.')) {
+      if (!generation.reelStoryboard) {
+        throw new BadRequestException('Generation has no Reel Storyboard');
+      }
+      const reelStoryboard = {
+        ...generation.reelStoryboard,
+        scenes: generation.reelStoryboard.scenes.map((scene) => ({
+          ...scene,
+        })),
+      };
+      if (sectionKey === 'storyboard.scene') {
+        const index = reelStoryboard.scenes.findIndex(
+          (scene) => scene.order === sceneOrder,
+        );
+        if (index < 0) {
+          throw new BadRequestException(
+            `Storyboard scene order ${sceneOrder} not found`,
+          );
+        }
+        reelStoryboard.scenes[index] = {
+          ...reelStoryboard.scenes[index],
+          description: this.stripQuotes(trimmed),
+        };
+      } else if (sectionKey === 'storyboard.hook') {
+        reelStoryboard.hook = this.stripQuotes(trimmed);
+      } else if (sectionKey === 'storyboard.attention') {
+        reelStoryboard.attention = this.stripQuotes(trimmed);
+      } else if (sectionKey === 'storyboard.productDisplay') {
+        reelStoryboard.productDisplay = this.stripQuotes(trimmed);
+      } else if (sectionKey === 'storyboard.viewerConnection') {
+        reelStoryboard.viewerConnection = this.stripQuotes(trimmed);
+      }
+      return { reelStoryboard };
+    }
+
+    if (sectionKey === 'reel.caption') {
+      return { reelCaption: this.stripQuotes(trimmed) };
+    }
+
+    throw new BadRequestException(`Unsupported section: ${sectionKey}`);
+  }
+
+  private parseJsonArray(text: string): string[] | null {
+    try {
+      const start = text.indexOf('[');
+      const end = text.lastIndexOf(']');
+      if (start >= 0 && end > start) {
+        const parsed: unknown = JSON.parse(text.slice(start, end + 1));
+        if (
+          Array.isArray(parsed) &&
+          parsed.every((item) => typeof item === 'string')
+        ) {
+          return parsed;
+        }
+      }
+      return null;
+    } catch {
+      return null;
+    }
+  }
+
+  private stripQuotes(text: string): string {
+    if (
+      (text.startsWith('"') && text.endsWith('"')) ||
+      (text.startsWith("'") && text.endsWith("'"))
+    ) {
+      return text.slice(1, -1);
+    }
+    return text;
   }
 
   private async resolveBrandKit(

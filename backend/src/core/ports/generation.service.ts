@@ -2,6 +2,7 @@ import type {
   CreateGenerationInput,
   CreateGenerationResult,
   ManualEditGenerationInput,
+  RegenerateSectionInput,
 } from '@/types/generation/generation';
 import type { Generation } from '@/domain/generation.entity';
 
@@ -18,5 +19,10 @@ export interface IGenerationService {
     userId: string,
     generationId: string,
     input: ManualEditGenerationInput,
+  ): Promise<{ generation: Generation }>;
+  regenerateSection(
+    userId: string,
+    generationId: string,
+    input: RegenerateSectionInput,
   ): Promise<{ generation: Generation }>;
 }

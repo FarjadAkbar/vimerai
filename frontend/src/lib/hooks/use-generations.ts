@@ -3,6 +3,7 @@ import {
   generationsApi,
   type CreateGenerationRequest,
   type ManualEditGenerationRequest,
+  type RegenerateSectionRequest,
 } from '@/lib/api/generations.api';
 
 export const useCreateGeneration = () => {
@@ -29,6 +30,22 @@ export const useUpdateGeneration = () => {
       id: string;
       data: ManualEditGenerationRequest;
     }) => generationsApi.update(id, data),
+    onSuccess: (result) => {
+      queryClient.setQueryData(['generations', result.generation.id], result);
+    },
+  });
+};
+
+export const useRegenerateSection = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      id,
+      data,
+    }: {
+      id: string;
+      data: RegenerateSectionRequest;
+    }) => generationsApi.regenerateSection(id, data),
     onSuccess: (result) => {
       queryClient.setQueryData(['generations', result.generation.id], result);
     },

@@ -5,11 +5,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { useUpdateGeneration } from "@/lib/hooks/use-generations";
+import { useUpdateGeneration, useRegenerateSection } from "@/lib/hooks/use-generations";
 import {
   getApiErrorMessage,
   type GenerationRecord,
   type ManualEditStoryboardSceneRequest,
+  type TextSectionKey,
+  TEXT_SECTION_REGEN_LIMIT,
 } from "@/lib/api/generations.api";
 
 async function copyText(text: string): Promise<boolean> {
@@ -58,6 +60,7 @@ export function GenerationDetail({
   onNewGeneration: () => void;
 }) {
   const updateGeneration = useUpdateGeneration();
+  const regenerateSection = useRegenerateSection();
   const [headline, setHeadline] = useState("");
   const [body, setBody] = useState("");
   const [cta, setCta] = useState("");
@@ -71,6 +74,7 @@ export function GenerationDetail({
   const [reelCaption, setReelCaption] = useState("");
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [regenTarget, setRegenTarget] = useState<string | null>(null);
 
   useEffect(() => {
     setHeadline(generation.socialPost?.headline ?? "");
@@ -92,6 +96,59 @@ export function GenerationDetail({
     setMessage(null);
     setError(null);
   }, [generation]);
+
+  const runSectionRegen = (
+    sectionKey: TextSectionKey,
+    sceneOrder?: number,
+  ) => {
+    const target =
+      sectionKey === "storyboard.scene"
+        ? `${sectionKey}:${sceneOrder}`
+        : sectionKey;
+    setError(null);
+    setMessage(null);
+    setRegenTarget(target);
+    regenerateSection.mutate(
+      {
+        id: generation.id,
+        data: { sectionKey, sceneOrder },
+      },
+      {
+        onSuccess: () =>
+          setMessage("Section regenerated with live Brand Kit/Product"),
+        onError: (err) =>
+          setError(
+            getApiErrorMessage(err, "Could not regenerate this section"),
+          ),
+        onSettled: () => setRegenTarget(null),
+      },
+    );
+  };
+
+  const SectionRegenButton = ({
+    sectionKey,
+    sceneOrder,
+  }: {
+    sectionKey: TextSectionKey;
+    sceneOrder?: number;
+  }) => {
+    const target =
+      sectionKey === "storyboard.scene"
+        ? `${sectionKey}:${sceneOrder}`
+        : sectionKey;
+    return (
+      <Button
+        type="button"
+        variant="ghost"
+        size="sm"
+        className="h-7 px-2 text-xs"
+        disabled={regenerateSection.isPending}
+        onClick={() => runSectionRegen(sectionKey, sceneOrder)}
+      >
+        {regenTarget === target ? "Rewriting…" : "AI rewrite"}
+      </Button>
+    );
+  };
 
   const moveScene = (index: number, direction: -1 | 1) => {
     const nextIndex = index + direction;
@@ -154,7 +211,8 @@ export function GenerationDetail({
             Generation ready
           </h2>
           <p className="text-sm text-muted-foreground capitalize">
-            {generation.status} · Manual edits are free
+            {generation.status} · Manual edits free · AI rewrite fair-use{" "}
+            {generation.textSectionRegenCount ?? 0}/{TEXT_SECTION_REGEN_LIMIT}
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -253,7 +311,10 @@ export function GenerationDetail({
             />
           ) : null}
           <div className="space-y-1.5">
-            <Label htmlFor="headline">Headline</Label>
+            <div className="flex items-center justify-between gap-2">
+              <Label htmlFor="headline">Headline</Label>
+              <SectionRegenButton sectionKey="social.headline" />
+            </div>
             <Input
               id="headline"
               value={headline}
@@ -261,7 +322,10 @@ export function GenerationDetail({
             />
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="body">Body</Label>
+            <div className="flex items-center justify-between gap-2">
+              <Label htmlFor="body">Body</Label>
+              <SectionRegenButton sectionKey="social.body" />
+            </div>
             <Textarea
               id="body"
               value={body}
@@ -270,7 +334,10 @@ export function GenerationDetail({
             />
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="cta">CTA</Label>
+            <div className="flex items-center justify-between gap-2">
+              <Label htmlFor="cta">CTA</Label>
+              <SectionRegenButton sectionKey="social.cta" />
+            </div>
             <Input
               id="cta"
               value={cta}
@@ -278,7 +345,10 @@ export function GenerationDetail({
             />
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="caption">Caption</Label>
+            <div className="flex items-center justify-between gap-2">
+              <Label htmlFor="caption">Caption</Label>
+              <SectionRegenButton sectionKey="social.caption" />
+            </div>
             <Textarea
               id="caption"
               value={caption}
@@ -287,7 +357,10 @@ export function GenerationDetail({
             />
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="hashtags">Hashtags</Label>
+            <div className="flex items-center justify-between gap-2">
+              <Label htmlFor="hashtags">Hashtags</Label>
+              <SectionRegenButton sectionKey="social.hashtags" />
+            </div>
             <Input
               id="hashtags"
               value={hashtags}
@@ -304,7 +377,10 @@ export function GenerationDetail({
             Reel Storyboard
           </h3>
           <div className="space-y-1.5">
-            <Label htmlFor="hook">Hook</Label>
+            <div className="flex items-center justify-between gap-2">
+              <Label htmlFor="hook">Hook</Label>
+              <SectionRegenButton sectionKey="storyboard.hook" />
+            </div>
             <Textarea
               id="hook"
               value={hook}
@@ -313,7 +389,10 @@ export function GenerationDetail({
             />
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="attention">Attention</Label>
+            <div className="flex items-center justify-between gap-2">
+              <Label htmlFor="attention">Attention</Label>
+              <SectionRegenButton sectionKey="storyboard.attention" />
+            </div>
             <Textarea
               id="attention"
               value={attention}
@@ -322,7 +401,10 @@ export function GenerationDetail({
             />
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="productDisplay">Product display</Label>
+            <div className="flex items-center justify-between gap-2">
+              <Label htmlFor="productDisplay">Product display</Label>
+              <SectionRegenButton sectionKey="storyboard.productDisplay" />
+            </div>
             <Textarea
               id="productDisplay"
               value={productDisplay}
@@ -331,7 +413,10 @@ export function GenerationDetail({
             />
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="viewerConnection">Viewer connection</Label>
+            <div className="flex items-center justify-between gap-2">
+              <Label htmlFor="viewerConnection">Viewer connection</Label>
+              <SectionRegenButton sectionKey="storyboard.viewerConnection" />
+            </div>
             <Textarea
               id="viewerConnection"
               value={viewerConnection}
@@ -359,7 +444,11 @@ export function GenerationDetail({
                   rows={2}
                   className="flex-1"
                 />
-                <div className="flex gap-2">
+                <div className="flex flex-wrap gap-2">
+                  <SectionRegenButton
+                    sectionKey="storyboard.scene"
+                    sceneOrder={scene.order}
+                  />
                   <Button
                     type="button"
                     variant="outline"
@@ -387,9 +476,12 @@ export function GenerationDetail({
 
       {generation.reelCaption !== null && (
         <section className="space-y-2">
-          <h3 className="text-sm font-medium uppercase tracking-wide text-muted-foreground">
-            Reel caption
-          </h3>
+          <div className="flex items-center justify-between gap-2">
+            <h3 className="text-sm font-medium uppercase tracking-wide text-muted-foreground">
+              Reel caption
+            </h3>
+            <SectionRegenButton sectionKey="reel.caption" />
+          </div>
           <Textarea
             value={reelCaption}
             onChange={(event) => setReelCaption(event.target.value)}

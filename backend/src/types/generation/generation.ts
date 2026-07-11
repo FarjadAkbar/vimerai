@@ -50,6 +50,29 @@ export interface ManualEditGenerationInput {
   reelCaption?: string;
 }
 
+/** Text section regenerate targets (ticket 06). */
+export type TextSectionKey =
+  | 'social.headline'
+  | 'social.body'
+  | 'social.cta'
+  | 'social.caption'
+  | 'social.hashtags'
+  | 'storyboard.hook'
+  | 'storyboard.attention'
+  | 'storyboard.productDisplay'
+  | 'storyboard.viewerConnection'
+  | 'storyboard.scene'
+  | 'reel.caption';
+
+export interface RegenerateSectionInput {
+  sectionKey: TextSectionKey;
+  /** Required when sectionKey is storyboard.scene */
+  sceneOrder?: number;
+}
+
+/** Default fair-use cap of free text section regenerates per Generation. */
+export const DEFAULT_TEXT_SECTION_REGEN_LIMIT = 20;
+
 export type GenerationArm =
   | 'creative-brief'
   | 'social-post'

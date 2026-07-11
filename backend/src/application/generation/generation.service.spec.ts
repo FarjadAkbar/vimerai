@@ -385,3 +385,200 @@ describe('GenerationService.updateGeneration', () => {
     ).rejects.toBeInstanceOf(ForbiddenException);
   });
 });
+
+describe('GenerationService.regenerateSection', () => {
+  let brandKits: IBrandKitRepository;
+  let products: IProductRepository;
+  let generations: InMemoryGenerationRepository;
+  let text: FakeTextGenerationProvider;
+  let videoCalls: number;
+  let usageIncrements: number;
+  let subscription: ISubscriptionService;
+  let video: IVideoGenerationProvider;
+  let service: GenerationService;
+  let generationId: string;
+
+  beforeEach(async () => {
+    brandKits = new InMemoryBrandKitRepository();
+    products = new InMemoryProductRepository();
+    generations = new InMemoryGenerationRepository();
+    videoCalls = 0;
+    usageIncrements = 0;
+
+    subscription = {
+      canGenerate: async () => true,
+      recordVideoGeneration: async () => {
+        usageIncrements += 1;
+      },
+    } as unknown as ISubscriptionService;
+
+    video = {
+      generateVideo: async () => {
+        videoCalls += 1;
+        return {
+          jobId: 'fal-job-1',
+          status: 'completed',
+          videoUrl: 'https://cdn.example.com/teaser.mp4',
+        };
+      },
+      getGenerationStatus: async () => ({
+        jobId: 'fal-job-1',
+        status: 'completed',
+        videoUrl: 'https://cdn.example.com/teaser.mp4',
+      }),
+      generatePreview: async () => ({
+        jobId: 'fal-job-1',
+        status: 'completed',
+      }),
+      downloadVideo: async () => Buffer.from(''),
+    };
+
+    text = new FakeTextGenerationProvider(
+      {
+        'creative-brief': JSON.stringify({
+          hook: 'Stop scrolling',
+          attention: 'Glow up',
+          productDisplay: 'Bottle hero',
+          viewerConnection: 'Made for you',
+          cta: 'Shop now',
+        }),
+        'social-post': JSON.stringify({
+          headline: 'Hydration elevated',
+          body: 'Feel the difference.',
+          cta: 'Shop now',
+          caption: 'Luxury moisture in every drop.',
+          hashtags: ['#serum', '#glow'],
+        }),
+        'reel-storyboard': JSON.stringify({
+          hook: '0-3s hook',
+          attention: 'problem',
+          productDisplay: 'product shot',
+          viewerConnection: 'testimonial vibe',
+          scenes: [
+            { order: 1, description: 'Close-up bottle' },
+            { order: 2, description: 'Skin glow' },
+          ],
+        }),
+        'reel-caption': 'Watch this glow-up. Link in bio.',
+      },
+      {
+        'social.hashtags': JSON.stringify(['#playful', '#live']),
+        'social.cta': 'Try it today',
+        'storyboard.scene': 'Audience reaction close-up',
+      },
+    );
+
+    await brandKits.create(
+      BrandKit.create(
+        'kit-1',
+        'user-1',
+        'Nitro',
+        'https://cdn.example.com/logo.png',
+        { primary: '#111', secondary: '#c9a' },
+        'luxury',
+        'Premium buyers',
+        'Slang',
+      ),
+    );
+    await products.create(
+      Product.create(
+        'prod-1',
+        'user-1',
+        'Serum',
+        'Hydrating serum',
+        ['https://cdn.example.com/product.jpg'],
+        'https://shop.example.com/serum',
+        ['kit-1'],
+        '49',
+      ),
+    );
+
+    service = new GenerationService(
+      text,
+      { generateImage: async () => ({ imageUrl: '' }) },
+      video,
+      generations,
+      products,
+      brandKits,
+      subscription,
+    );
+
+    const created = await service.createGeneration('user-1', {
+      productId: 'prod-1',
+      goal: 'increase_sales',
+    });
+    generationId = created.generationId;
+    text.calls.length = 0;
+    videoCalls = 0;
+    usageIncrements = 0;
+  });
+
+  it('rewrites only the chosen section via text provider with no credit charge', async () => {
+    const before = await service.getGeneration('user-1', generationId);
+    const originalHeadline = before.generation.socialPost!.headline;
+    const originalBody = before.generation.socialPost!.body;
+
+    const result = await service.regenerateSection('user-1', generationId, {
+      sectionKey: 'social.hashtags',
+    });
+
+    expect(text.calls).toHaveLength(1);
+    expect(text.calls[0].artifact).toBe('section-regenerate');
+    expect(text.calls[0].sectionKey).toBe('social.hashtags');
+    expect(videoCalls).toBe(0);
+    expect(usageIncrements).toBe(0);
+
+    expect(result.generation.socialPost?.hashtags).toEqual([
+      '#playful',
+      '#live',
+    ]);
+    expect(result.generation.socialPost?.headline).toBe(originalHeadline);
+    expect(result.generation.socialPost?.body).toBe(originalBody);
+    expect(result.generation.textSectionRegenCount).toBe(1);
+  });
+
+  it('uses live Brand Kit and Product for section regenerate, not only the snapshot', async () => {
+    const kit = await brandKits.findById('kit-1');
+    await brandKits.update(kit!.update({ tone: 'playful' }));
+    const product = await products.findById('prod-1');
+    await products.update(
+      product!.update({ description: 'Live reformulated serum' }),
+    );
+
+    await service.regenerateSection('user-1', generationId, {
+      sectionKey: 'social.cta',
+    });
+
+    expect(text.calls[0].layers.brandKit).toContain('Tone: playful');
+    expect(text.calls[0].layers.brandKit).not.toContain('Tone: luxury');
+    expect(text.calls[0].layers.product).toContain('Live reformulated serum');
+    expect(text.calls[0].layers.outputSchema).toContain('social.cta');
+  });
+
+  it('regenerates one storyboard scene by order', async () => {
+    const result = await service.regenerateSection('user-1', generationId, {
+      sectionKey: 'storyboard.scene',
+      sceneOrder: 2,
+    });
+
+    expect(result.generation.reelStoryboard?.scenes).toEqual([
+      { order: 1, description: 'Close-up bottle' },
+      { order: 2, description: 'Audience reaction close-up' },
+    ]);
+  });
+
+  it('rejects section regenerate when fair-use limit is reached', async () => {
+    const current = await generations.findById(generationId);
+    await generations.update(
+      current!.withUpdates({ textSectionRegenCount: 20 }),
+    );
+
+    await expect(
+      service.regenerateSection('user-1', generationId, {
+        sectionKey: 'social.hashtags',
+      }),
+    ).rejects.toBeInstanceOf(BadRequestException);
+    expect(text.calls).toHaveLength(0);
+    expect(usageIncrements).toBe(0);
+  });
+});
