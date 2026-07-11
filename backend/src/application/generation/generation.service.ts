@@ -42,6 +42,7 @@ import type {
   ReelPlatform,
 } from '@/types/generation/enums';
 import {
+  AI_POST_IMAGE_CREDIT_SURCHARGE,
   DEFAULT_TEXT_SECTION_REGEN_LIMIT,
   LENGTH_TIER_CREDIT_WEIGHT,
   PROMO_BEATS,
@@ -76,9 +77,7 @@ export class GenerationService implements IGenerationService {
     private readonly brandKitRepository: IBrandKitRepository,
     @Inject(SUBSCRIPTION_SERVICE_TOKEN)
     private readonly subscriptionService: ISubscriptionService,
-  ) {
-    void this.imageGenerationProvider;
-  }
+  ) {}
 
   async createGeneration(
     userId: string,
@@ -113,7 +112,9 @@ export class GenerationService implements IGenerationService {
     const postImageMode: PostImageMode =
       input.postImageMode ?? 'product_photo';
 
-    const creditWeight = LENGTH_TIER_CREDIT_WEIGHT[lengthTier];
+    const creditWeight =
+      LENGTH_TIER_CREDIT_WEIGHT[lengthTier] +
+      (postImageMode === 'ai_image' ? AI_POST_IMAGE_CREDIT_SURCHARGE : 0);
     const canGenerate = await this.subscriptionService.canGenerate(
       userId,
       creditWeight,
@@ -222,7 +223,42 @@ export class GenerationService implements IGenerationService {
           postImageUrl: snapshot.product.imageUrls[0] ?? '',
           feedPlatform,
         };
-        this.setArm(arms, 'social-post', 'completed');
+
+        if (postImageMode === 'ai_image') {
+          try {
+            if (snapshot.product.imageUrls.length === 0) {
+              throw new BadRequestException(
+                'AI Post image requires at least one Product image for conditioning',
+              );
+            }
+            const imageResult =
+              await this.imageGenerationProvider.generateImage({
+                prompt: [
+                  `Brand: ${snapshot.brandKit.name}. Tone: ${snapshot.brandKit.tone}.`,
+                  `Product: ${snapshot.product.name}. ${snapshot.product.description}`,
+                  `Goal: ${input.goal}.`,
+                  `Create a scroll-stopping social feed still for ${feedPlatform}.`,
+                  briefContext,
+                ].join(' '),
+                productImageUrls: snapshot.product.imageUrls,
+                negativePrompt: snapshot.brandKit.thingsToAvoid,
+              });
+            socialPost.postImageUrl = imageResult.imageUrl;
+            this.setArm(arms, 'social-post', 'completed');
+          } catch (error) {
+            this.setArm(
+              arms,
+              'social-post',
+              'failed',
+              error instanceof Error
+                ? error.message
+                : 'AI Post image generation failed',
+            );
+            // Keep finished Social Post copy (partial success); Product photo remains.
+          }
+        } else {
+          this.setArm(arms, 'social-post', 'completed');
+        }
       }
     } else {
       this.setArm(arms, 'social-post', 'failed', String(textJobs[0].reason));

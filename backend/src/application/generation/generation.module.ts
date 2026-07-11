@@ -11,7 +11,7 @@ import {
   TEXT_GENERATION_PROVIDER_TOKEN,
 } from '@/core/tokens/injection.tokens';
 import { OpenAiTextGenerationProvider } from '@/infrastructure/ai/openai-text-generation.provider';
-import { StubImageGenerationProvider } from '@/infrastructure/ai/stub-image-generation.provider';
+import { OpenAiImageGenerationProvider } from '@/infrastructure/ai/openai-image-generation.provider';
 import openaiConfig from '@/infrastructure/config/openai.config';
 import { DatabaseModule } from '@/infrastructure/persistence/database.module';
 import { TypeOrmBrandKitRepository } from '@/infrastructure/persistence/typeorm/repositories/brand-kit.repository';
@@ -19,6 +19,7 @@ import { TypeOrmGenerationRepository } from '@/infrastructure/persistence/typeor
 import { TypeOrmProductRepository } from '@/infrastructure/persistence/typeorm/repositories/product.repository';
 import { SubscriptionModule } from '@/application/subscription/subscription.module';
 import { VideoGenerationModule } from '@/infrastructure/video-generation/video-generation.module';
+import { StorageModule } from '@/infrastructure/storage/storage.module';
 
 @Module({
   imports: [
@@ -26,18 +27,19 @@ import { VideoGenerationModule } from '@/infrastructure/video-generation/video-g
     DatabaseModule,
     SubscriptionModule,
     VideoGenerationModule,
+    StorageModule,
   ],
   controllers: [GenerationController],
   providers: [
     OpenAiTextGenerationProvider,
-    StubImageGenerationProvider,
+    OpenAiImageGenerationProvider,
     {
       provide: TEXT_GENERATION_PROVIDER_TOKEN,
       useExisting: OpenAiTextGenerationProvider,
     },
     {
       provide: IMAGE_GENERATION_PROVIDER_TOKEN,
-      useExisting: StubImageGenerationProvider,
+      useExisting: OpenAiImageGenerationProvider,
     },
     {
       provide: GENERATION_REPOSITORY_TOKEN,

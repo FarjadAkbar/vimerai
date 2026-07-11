@@ -330,9 +330,7 @@ export function BrandGeneration() {
                       <FormControl>
                         <select {...field} className={selectClassName}>
                           <option value="product_photo">Product photo</option>
-                          <option value="ai_image" disabled>
-                            AI image (coming soon)
-                          </option>
+                          <option value="ai_image">AI image (+1 credit)</option>
                         </select>
                       </FormControl>
                     </FormItem>
