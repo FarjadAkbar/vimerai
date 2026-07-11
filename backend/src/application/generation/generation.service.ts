@@ -46,12 +46,15 @@ import {
   DEFAULT_TEXT_SECTION_REGEN_LIMIT,
   LENGTH_TIER_CREDIT_WEIGHT,
   PROMO_BEATS,
+  VIDEO_SHOT_REGEN_CREDIT_COST,
   type CreateGenerationInput,
   type CreateGenerationResult,
   type GenerationArm,
   type GenerationArmState,
   type ManualEditGenerationInput,
+  type PromoBeat,
   type RegenerateSectionInput,
+  type RegenerateShotInput,
   type RetryFailedArmsInput,
   type TextSectionKey,
 } from '@/types/generation/generation';
@@ -492,6 +495,103 @@ export class GenerationService implements IGenerationService {
     const updated = generation.withUpdates({
       ...updatedContent,
       textSectionRegenCount: generation.textSectionRegenCount + 1,
+    });
+    await this.generationRepository.update(updated);
+    return { generation: updated };
+  }
+
+  async regenerateShot(
+    userId: string,
+    generationId: string,
+    input: RegenerateShotInput = {},
+  ): Promise<{ generation: Generation }> {
+    const { generation } = await this.getGeneration(userId, generationId);
+
+    if (!generation.video) {
+      throw new BadRequestException('Generation has no Video to regenerate');
+    }
+
+    let regenerateBeat: PromoBeat | undefined;
+    if (generation.lengthTier === 'promo') {
+      if (!this.isPromoBeat(input.beat)) {
+        throw new BadRequestException(
+          'Promo Shot regenerate requires a valid beat',
+        );
+      }
+      regenerateBeat = input.beat;
+    }
+
+    const canGenerate = await this.subscriptionService.canGenerate(
+      userId,
+      VIDEO_SHOT_REGEN_CREDIT_COST,
+    );
+    if (!canGenerate) {
+      throw new BadRequestException('Generation credit limit reached');
+    }
+
+    const brandKit = await this.brandKitRepository.findById(
+      generation.brandKitId,
+    );
+    const product = await this.productRepository.findById(generation.productId);
+    if (!brandKit || brandKit.userId !== userId) {
+      throw new BadRequestException('Live Brand Kit not found');
+    }
+    if (!product || product.userId !== userId) {
+      throw new BadRequestException('Live Product not found');
+    }
+
+    await this.subscriptionService.recordVideoGeneration(
+      userId,
+      VIDEO_SHOT_REGEN_CREDIT_COST,
+    );
+
+    const liveSnapshot = this.buildSnapshot(brandKit, product);
+    const briefContext = generation.creativeBrief ?? '';
+    const arms: GenerationArmState[] = [...generation.arms];
+    this.setArm(arms, 'video', 'processing');
+
+    const renderInput = {
+      lengthTier: generation.lengthTier,
+      reelPlatform: generation.reelPlatform,
+      brandKit: {
+        name: liveSnapshot.brandKit.name,
+        tone: liveSnapshot.brandKit.tone,
+        thingsToAvoid: liveSnapshot.brandKit.thingsToAvoid,
+      },
+      product: {
+        name: liveSnapshot.product.name,
+        description: liveSnapshot.product.description,
+        imageUrls: liveSnapshot.product.imageUrls,
+      },
+      goal: generation.goal,
+      briefContext,
+      snapshot: liveSnapshot,
+      existingShots: generation.video.shots,
+      regenerateBeat,
+    };
+
+    let videoContent: VideoContent;
+    try {
+      videoContent = await this.renderVideoArm(renderInput);
+      if (videoContent.status === 'completed') {
+        this.setArm(arms, 'video', 'completed');
+      } else {
+        this.setArm(arms, 'video', 'failed', videoContent.error);
+      }
+    } catch (error) {
+      videoContent = {
+        ...generation.video,
+        status: 'failed',
+        error:
+          error instanceof Error ? error.message : 'Shot regenerate failed',
+      };
+      this.setArm(arms, 'video', 'failed', videoContent.error);
+    }
+
+    const updated = generation.withUpdates({
+      video: videoContent,
+      arms,
+      status: this.rollupStatus(arms),
     });
     await this.generationRepository.update(updated);
     return { generation: updated };
@@ -1030,6 +1130,7 @@ export class GenerationService implements IGenerationService {
     snapshot: GenerationSnapshot;
     existingShots?: VideoShot[];
     retryFailedShotsOnly?: boolean;
+    regenerateBeat?: PromoBeat;
   }): Promise<VideoContent> {
     if (input.lengthTier === 'promo') {
       return this.renderPromoVideo(input);
@@ -1087,9 +1188,11 @@ export class GenerationService implements IGenerationService {
     briefContext: string;
     existingShots?: VideoShot[];
     retryFailedShotsOnly?: boolean;
+    regenerateBeat?: PromoBeat;
   }): Promise<VideoContent> {
     const prior =
-      input.retryFailedShotsOnly && input.existingShots?.length
+      (input.retryFailedShotsOnly || input.regenerateBeat) &&
+      input.existingShots?.length
         ? input.existingShots
         : null;
 
@@ -1097,7 +1200,26 @@ export class GenerationService implements IGenerationService {
     for (let index = 0; index < PROMO_BEATS.length; index += 1) {
       const beat = PROMO_BEATS[index];
       const existing = prior?.find((shot) => shot.beat === beat);
-      if (existing && existing.status === 'completed' && existing.videoUrl) {
+
+      if (input.regenerateBeat) {
+        if (beat !== input.regenerateBeat) {
+          shots.push(
+            existing ?? {
+              beat,
+              order: index + 1,
+              jobId: null,
+              videoUrl: null,
+              status: 'failed',
+              error: 'Shot missing',
+            },
+          );
+          continue;
+        }
+      } else if (
+        input.retryFailedShotsOnly &&
+        existing?.status === 'completed' &&
+        existing.videoUrl
+      ) {
         shots.push(existing);
         continue;
       }
@@ -1220,6 +1342,13 @@ export class GenerationService implements IGenerationService {
       status: 'failed',
       error: latest.error ?? 'Video generation timed out',
     };
+  }
+
+  private isPromoBeat(value: string | undefined): value is PromoBeat {
+    return (
+      typeof value === 'string' &&
+      (PROMO_BEATS as readonly string[]).includes(value)
+    );
   }
 
   private setArm(

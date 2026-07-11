@@ -87,6 +87,9 @@ export const LENGTH_TIER_CREDIT_WEIGHT = {
 /** Extra Generation credits when Post image mode is AI (not free like text regen). */
 export const AI_POST_IMAGE_CREDIT_SURCHARGE = 1;
 
+/** Credits charged to regenerate one Video Shot (ADR 0014 / CONTEXT). */
+export const VIDEO_SHOT_REGEN_CREDIT_COST = 1;
+
 export const PROMO_BEATS = [
   'hook',
   'attention',
@@ -95,6 +98,14 @@ export const PROMO_BEATS = [
 ] as const;
 
 export type PromoBeat = (typeof PROMO_BEATS)[number];
+
+export interface RegenerateShotInput {
+  /**
+   * Promo beat to regenerate. Required for Promo; ignored for Teaser
+   * (single shot).
+   */
+  beat?: PromoBeat;
+}
 
 export type GenerationArm =
   | 'creative-brief'
