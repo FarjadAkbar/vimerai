@@ -4,10 +4,10 @@
 
 **Blocked by:** None — can start immediately.
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] Authenticated User can create, list, update a Brand Kit they own
-- [ ] Required fields and Tone enum enforced
-- [ ] Logo Asset upload/attach works
-- [ ] UI for Brand Kit create/edit is usable on existing shell
-- [ ] Tests cover ownership and validation through the service/API seam
+- [x] Authenticated User can create, list, update a Brand Kit they own
+- [x] Required fields and Tone enum enforced
+- [x] Logo Asset upload/attach works
+- [x] UI for Brand Kit create/edit is usable on existing shell
+- [x] Tests cover ownership and validation through the service/API seam

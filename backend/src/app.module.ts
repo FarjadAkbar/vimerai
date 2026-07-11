@@ -6,6 +6,7 @@ import { DatabaseModule } from './infrastructure/persistence/database.module';
 import { AuthModule } from './application/auth/auth.module';
 import { GeneratorModule } from './application/generator/generator.module';
 import { GenerationModule } from './application/generation/generation.module';
+import { BrandKitsModule } from './application/brand-kits/brand-kits.module';
 import { VideosModule } from './application/videos/videos.module';
 import { SubscriptionModule } from './application/subscription/subscription.module';
 import { PromptsModule } from './application/prompts/prompts.module';
@@ -41,6 +42,7 @@ import kitConfig from './infrastructure/config/kit.config';
     AuthModule,
     GeneratorModule,
     GenerationModule,
+    BrandKitsModule,
     VideosModule,
     SubscriptionModule,
     PromptsModule,
