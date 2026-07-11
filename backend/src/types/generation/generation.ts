@@ -22,6 +22,34 @@ export interface CreateGenerationResult {
   status: 'accepted' | 'processing' | 'completed' | 'partial' | 'failed';
 }
 
+export interface ManualEditSocialPostInput {
+  headline?: string;
+  body?: string;
+  cta?: string;
+  caption?: string;
+  hashtags?: string[];
+}
+
+export interface ManualEditStoryboardSceneInput {
+  order: number;
+  description: string;
+}
+
+export interface ManualEditReelStoryboardInput {
+  hook?: string;
+  attention?: string;
+  productDisplay?: string;
+  viewerConnection?: string;
+  /** Full ordered scene list; replaces existing scenes when provided. */
+  scenes?: ManualEditStoryboardSceneInput[];
+}
+
+export interface ManualEditGenerationInput {
+  socialPost?: ManualEditSocialPostInput;
+  reelStoryboard?: ManualEditReelStoryboardInput;
+  reelCaption?: string;
+}
+
 export type GenerationArm =
   | 'creative-brief'
   | 'social-post'

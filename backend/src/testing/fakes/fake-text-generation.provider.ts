@@ -6,6 +6,8 @@ import type {
 } from '@/types/generation/text-generation';
 
 export class FakeTextGenerationProvider implements ITextGenerationProvider {
+  readonly calls: TextGenerationRequest[] = [];
+
   constructor(
     private readonly responses: Partial<Record<TextArtifactKind, string>> = {},
   ) {}
@@ -13,6 +15,7 @@ export class FakeTextGenerationProvider implements ITextGenerationProvider {
   async generateText(
     request: TextGenerationRequest,
   ): Promise<TextGenerationResult> {
+    this.calls.push(request);
     const text = this.responses[request.artifact];
     if (text === undefined) {
       throw new Error(

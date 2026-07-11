@@ -25,9 +25,9 @@ import {
 import { useUser } from "@/lib/hooks/use-user";
 import {
   getApiErrorMessage,
-  type GenerationRecord,
   type Goal,
 } from "@/lib/api/generations.api";
+import { GenerationDetail } from "@/components/generation-detail";
 
 const goals: { value: Goal; label: string }[] = [
   { value: "increase_sales", label: "Increase sales" },
@@ -49,91 +49,6 @@ type FormInput = z.infer<typeof formSchema>;
 
 const selectClassName =
   "flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
-
-function ResultView({ generation }: { generation: GenerationRecord }) {
-  return (
-    <div className="space-y-6 text-left">
-      <div className="flex items-center justify-between gap-3">
-        <h2 className="text-xl font-semibold text-foreground">
-          Generation ready
-        </h2>
-        <span className="text-sm text-muted-foreground capitalize">
-          {generation.status}
-        </span>
-      </div>
-
-      {generation.socialPost && (
-        <section className="space-y-3">
-          <h3 className="text-sm font-medium uppercase tracking-wide text-muted-foreground">
-            Social Post
-          </h3>
-          {generation.socialPost.postImageUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={generation.socialPost.postImageUrl}
-              alt="Post"
-              className="max-h-64 w-full rounded-lg object-cover"
-            />
-          ) : null}
-          <p className="text-lg font-semibold">{generation.socialPost.headline}</p>
-          <p className="text-muted-foreground">{generation.socialPost.body}</p>
-          <p className="text-sm">{generation.socialPost.caption}</p>
-          <p className="text-sm text-muted-foreground">
-            {generation.socialPost.hashtags.join(" ")}
-          </p>
-        </section>
-      )}
-
-      {generation.reelStoryboard && (
-        <section className="space-y-3">
-          <h3 className="text-sm font-medium uppercase tracking-wide text-muted-foreground">
-            Reel Storyboard
-          </h3>
-          <ul className="space-y-2 text-sm text-muted-foreground">
-            <li>
-              <strong className="text-foreground">Hook:</strong>{" "}
-              {generation.reelStoryboard.hook}
-            </li>
-            <li>
-              <strong className="text-foreground">Attention:</strong>{" "}
-              {generation.reelStoryboard.attention}
-            </li>
-            <li>
-              <strong className="text-foreground">Product:</strong>{" "}
-              {generation.reelStoryboard.productDisplay}
-            </li>
-            <li>
-              <strong className="text-foreground">Connection:</strong>{" "}
-              {generation.reelStoryboard.viewerConnection}
-            </li>
-          </ul>
-        </section>
-      )}
-
-      {generation.reelCaption && (
-        <section className="space-y-2">
-          <h3 className="text-sm font-medium uppercase tracking-wide text-muted-foreground">
-            Reel caption
-          </h3>
-          <p className="text-sm">{generation.reelCaption}</p>
-        </section>
-      )}
-
-      {generation.video?.videoUrl && (
-        <section className="space-y-2">
-          <h3 className="text-sm font-medium uppercase tracking-wide text-muted-foreground">
-            Teaser video
-          </h3>
-          <video
-            src={generation.video.videoUrl}
-            controls
-            className="w-full rounded-lg"
-          />
-        </section>
-      )}
-    </div>
-  );
-}
 
 export function BrandGeneration() {
   const router = useRouter();
@@ -230,16 +145,13 @@ export function BrandGeneration() {
   if (generationId && generationData?.generation) {
     return (
       <div className="rounded-2xl border border-border/60 bg-background/70 p-6 sm:p-8 backdrop-blur space-y-6">
-        <ResultView generation={generationData.generation} />
-        <Button
-          variant="outline"
-          onClick={() => {
+        <GenerationDetail
+          generation={generationData.generation}
+          onNewGeneration={() => {
             setGenerationId(null);
             setError(null);
           }}
-        >
-          New Generation
-        </Button>
+        />
       </div>
     );
   }

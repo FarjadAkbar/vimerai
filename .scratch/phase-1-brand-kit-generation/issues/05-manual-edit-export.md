@@ -4,10 +4,10 @@
 
 **Blocked by:** 04 — Teaser Generation happy path
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] Manual edits persist with no provider calls / no credit spend
-- [ ] Scene reorder works on Reel Storyboard
-- [ ] Export/download Video and Post image
-- [ ] Copy feed caption and Reel caption to clipboard (or equivalent)
-- [ ] Tests prove providers are not invoked on manual save
+- [x] Manual edits persist with no provider calls / no credit spend
+- [x] Scene reorder works on Reel Storyboard
+- [x] Export/download Video and Post image
+- [x] Copy feed caption and Reel caption to clipboard (or equivalent)
+- [x] Tests prove providers are not invoked on manual save
