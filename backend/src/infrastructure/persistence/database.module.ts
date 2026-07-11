@@ -3,7 +3,6 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { UserEntity } from './typeorm/entities/user.entity';
 import { VideoEntity } from './typeorm/entities/video.entity';
-import { PromptTemplateEntity } from './typeorm/entities/prompt-template.entity';
 import { SubscriptionEntity } from './typeorm/entities/subscription.entity';
 import { PlanEntity } from './typeorm/entities/plan.entity';
 import { BrandKitEntity } from './typeorm/entities/brand-kit.entity';
@@ -21,7 +20,6 @@ import databaseConfig from '@/infrastructure/config/database.config';
         entities: [
           UserEntity,
           VideoEntity,
-          PromptTemplateEntity,
           SubscriptionEntity,
           PlanEntity,
           BrandKitEntity,
@@ -35,7 +33,6 @@ import databaseConfig from '@/infrastructure/config/database.config';
     TypeOrmModule.forFeature([
       UserEntity,
       VideoEntity,
-      PromptTemplateEntity,
       SubscriptionEntity,
       PlanEntity,
       BrandKitEntity,

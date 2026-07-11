@@ -106,13 +106,6 @@ const Header = () => {
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={(e) => handleNavigation("/prompt-studio", e)}
-                  >
-                    Prompt Studio
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
                     className="text-white"
                     onClick={(e) => handleNavigation("/pricing", e)}
                   >
@@ -317,12 +310,6 @@ const Header = () => {
                   onClick={(e) => handleNavigation("/products", e)}
                 >
                   Products
-                </button>
-                <button
-                  className="text-left px-3 py-2.5 rounded-xl hover:bg-secondary transition-colors text-sm font-medium"
-                  onClick={(e) => handleNavigation("/prompt-studio", e)}
-                >
-                  Prompt Studio
                 </button>
                 <button
                   className="text-left px-3 py-2.5 rounded-xl hover:bg-secondary transition-colors text-sm font-medium"
