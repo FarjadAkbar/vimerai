@@ -176,6 +176,22 @@ export interface RetryFailedArmsRequest {
   arms?: GenerationArm[];
 }
 
+export interface GenerationLibraryItem {
+  id: string;
+  status: GenerationStatus;
+  goal: Goal;
+  lengthTier: LengthTier;
+  productName: string;
+  brandKitName: string;
+  createdAt: string;
+  updatedAt: string;
+  arms: GenerationArmState[];
+}
+
+export interface GenerationLibraryResponse {
+  generations: GenerationLibraryItem[];
+}
+
 export interface GenerationResponse {
   generation: GenerationRecord;
 }
@@ -190,6 +206,11 @@ export const generationsApi = {
       '/generations',
       data,
     );
+    return response.data;
+  },
+
+  list: async (): Promise<GenerationLibraryResponse> => {
+    const response = await api.get<GenerationLibraryResponse>('/generations');
     return response.data;
   },
 

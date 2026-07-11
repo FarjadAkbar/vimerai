@@ -51,6 +51,7 @@ import {
   type CreateGenerationResult,
   type GenerationArm,
   type GenerationArmState,
+  type GenerationLibraryItem,
   type ManualEditGenerationInput,
   type PromoBeat,
   type RegenerateSectionInput,
@@ -347,6 +348,25 @@ export class GenerationService implements IGenerationService {
     await this.generationRepository.update(generation);
 
     return { generationId: generation.id, status };
+  }
+
+  async listGenerations(
+    userId: string,
+  ): Promise<{ generations: GenerationLibraryItem[] }> {
+    const generations = await this.generationRepository.findByUserId(userId);
+    return {
+      generations: generations.map((generation) => ({
+        id: generation.id,
+        status: generation.status,
+        goal: generation.goal,
+        lengthTier: generation.lengthTier,
+        productName: generation.snapshot.product.name,
+        brandKitName: generation.snapshot.brandKit.name,
+        createdAt: generation.createdAt,
+        updatedAt: generation.updatedAt,
+        arms: generation.arms,
+      })),
+    };
   }
 
   async getGeneration(userId: string, generationId: string) {

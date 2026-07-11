@@ -22,6 +22,19 @@ export interface CreateGenerationResult {
   status: 'accepted' | 'processing' | 'completed' | 'partial' | 'failed';
 }
 
+/** Library row: enough to scan status without loading full Content Outputs. */
+export interface GenerationLibraryItem {
+  id: string;
+  status: CreateGenerationResult['status'];
+  goal: Goal;
+  lengthTier: LengthTier;
+  productName: string;
+  brandKitName: string;
+  createdAt: Date;
+  updatedAt: Date;
+  arms: GenerationArmState[];
+}
+
 export interface ManualEditSocialPostInput {
   headline?: string;
   body?: string;

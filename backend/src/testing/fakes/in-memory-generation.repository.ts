@@ -12,6 +12,12 @@ export class InMemoryGenerationRepository implements IGenerationRepository {
     return this.items.get(id) ?? null;
   }
 
+  async findByUserId(userId: string): Promise<Generation[]> {
+    return [...this.items.values()]
+      .filter((generation) => generation.userId === userId)
+      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+  }
+
   async update(generation: Generation): Promise<void> {
     this.items.set(generation.id, generation);
   }

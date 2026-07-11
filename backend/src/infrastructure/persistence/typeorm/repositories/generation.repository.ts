@@ -21,6 +21,14 @@ export class TypeOrmGenerationRepository implements IGenerationRepository {
     return entity ? GenerationEntity.toDomain(entity) : null;
   }
 
+  async findByUserId(userId: string): Promise<Generation[]> {
+    const entities = await this.repository.find({
+      where: { userId },
+      order: { createdAt: 'DESC' },
+    });
+    return entities.map((entity) => GenerationEntity.toDomain(entity));
+  }
+
   async update(generation: Generation): Promise<void> {
     await this.repository.save(GenerationEntity.fromDomain(generation));
   }
