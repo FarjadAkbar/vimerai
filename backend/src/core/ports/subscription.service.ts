@@ -13,7 +13,10 @@ export interface ISubscriptionService {
     limit: number;
     singleShotCredits: number;
   }>;
-  canGenerate(userId: string): Promise<boolean>;
-  recordVideoGeneration(userId: string): Promise<void>;
+  canGenerate(userId: string, creditsNeeded?: number): Promise<boolean>;
+  recordVideoGeneration(
+    userId: string,
+    creditsNeeded?: number,
+  ): Promise<void>;
   purchaseSingleShot(userId: string): Promise<{ singleShotCredits: number }>;
 }

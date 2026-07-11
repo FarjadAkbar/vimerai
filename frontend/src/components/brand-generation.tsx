@@ -26,6 +26,7 @@ import { useUser } from "@/lib/hooks/use-user";
 import {
   getApiErrorMessage,
   type Goal,
+  LENGTH_TIER_CREDIT_WEIGHT,
 } from "@/lib/api/generations.api";
 import { GenerationDetail } from "@/components/generation-detail";
 
@@ -277,9 +278,13 @@ export function BrandGeneration() {
                       <FormLabel>Length</FormLabel>
                       <FormControl>
                         <select {...field} className={selectClassName}>
-                          <option value="teaser">Teaser (~8–10s)</option>
-                          <option value="promo" disabled>
-                            Promo (coming soon)
+                          <option value="teaser">
+                            Teaser (~8–10s, {LENGTH_TIER_CREDIT_WEIGHT.teaser}{" "}
+                            credit)
+                          </option>
+                          <option value="promo">
+                            Promo (~60s stitch, {LENGTH_TIER_CREDIT_WEIGHT.promo}{" "}
+                            credits)
                           </option>
                         </select>
                       </FormControl>
@@ -339,12 +344,24 @@ export function BrandGeneration() {
 
           {error && <p className="text-sm text-destructive">{error}</p>}
 
+          {createGeneration.isPending && (
+            <p className="text-sm text-muted-foreground">
+              {form.watch("lengthTier") === "promo"
+                ? "Queuing Promo (~60s): rendering beat Shots, then stitching. This can take several minutes — keep this page open."
+                : "Generating your Teaser bundle…"}
+            </p>
+          )}
+
           <Button
             type="submit"
             className="w-full"
             disabled={createGeneration.isPending}
           >
-            {createGeneration.isPending ? "Generating…" : "Generate"}
+            {createGeneration.isPending
+              ? form.watch("lengthTier") === "promo"
+                ? "Promo queued…"
+                : "Generating…"
+              : "Generate"}
           </Button>
         </form>
       </Form>

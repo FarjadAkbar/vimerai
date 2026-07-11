@@ -591,16 +591,52 @@ export function GenerationDetail({
         </section>
       )}
 
-      {generation.video?.videoUrl && (
+      {(generation.video?.videoUrl ||
+        (generation.video?.shots && generation.video.shots.length > 0)) && (
         <section className="space-y-2">
           <h3 className="text-sm font-medium uppercase tracking-wide text-muted-foreground">
-            Teaser video
+            {generation.lengthTier === "promo" ? "Promo video" : "Teaser video"}
           </h3>
-          <video
-            src={generation.video.videoUrl}
-            controls
-            className="w-full rounded-lg"
-          />
+          {generation.video?.videoUrl ? (
+            <video
+              src={generation.video.videoUrl}
+              controls
+              className="w-full rounded-lg"
+            />
+          ) : null}
+          {generation.lengthTier === "promo" &&
+            generation.video?.shots &&
+            generation.video.shots.length > 0 && (
+              <div className="space-y-3">
+                <p className="text-sm text-muted-foreground">
+                  Promo stitch — play beat Shots in order (hook → connection).
+                </p>
+                {generation.video.shots.map((shot) =>
+                  shot.videoUrl ? (
+                    <div key={`${shot.beat}-${shot.order}`} className="space-y-1">
+                      <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                        Shot {shot.order}: {shot.beat.replaceAll("_", " ")} (
+                        {shot.status})
+                      </p>
+                      <video
+                        src={shot.videoUrl}
+                        controls
+                        className="w-full rounded-lg"
+                      />
+                    </div>
+                  ) : (
+                    <p
+                      key={`${shot.beat}-${shot.order}`}
+                      className="text-sm text-muted-foreground"
+                    >
+                      Shot {shot.order} ({shot.beat.replaceAll("_", " ")}):{" "}
+                      <span className="capitalize">{shot.status}</span>
+                      {shot.error ? ` — ${shot.error}` : null}
+                    </p>
+                  ),
+                )}
+              </div>
+            )}
         </section>
       )}
 
