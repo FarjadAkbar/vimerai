@@ -1215,3 +1215,259 @@ describe('GenerationService AI Post image', () => {
     ).toBe('failed');
   });
 });
+
+describe('GenerationService.regenerateShot', () => {
+  let brandKits: IBrandKitRepository;
+  let products: IProductRepository;
+  let generations: InMemoryGenerationRepository;
+  let text: FakeTextGenerationProvider;
+  let videoCalls: number;
+  let stitchCalls: number;
+  let usageIncrements: number;
+  let stitchedFrom: string[] | null;
+  let subscription: ISubscriptionService;
+  let video: IVideoGenerationProvider;
+  let service: GenerationService;
+
+  beforeEach(async () => {
+    brandKits = new InMemoryBrandKitRepository();
+    products = new InMemoryProductRepository();
+    generations = new InMemoryGenerationRepository();
+    videoCalls = 0;
+    stitchCalls = 0;
+    usageIncrements = 0;
+    stitchedFrom = null;
+
+    subscription = {
+      canGenerate: async (_userId?: string, creditsNeeded = 1) =>
+        creditsNeeded <= 10,
+      recordVideoGeneration: async (_userId?: string, creditsNeeded = 1) => {
+        usageIncrements += creditsNeeded;
+      },
+    } as unknown as ISubscriptionService;
+
+    video = {
+      generateVideo: async () => {
+        videoCalls += 1;
+        return {
+          jobId: `fal-shot-${videoCalls}`,
+          status: 'completed',
+          videoUrl: `https://cdn.example.com/shot-${videoCalls}.mp4`,
+        };
+      },
+      getGenerationStatus: async (jobId) => ({
+        jobId,
+        status: 'completed',
+        videoUrl: 'https://cdn.example.com/shot.mp4',
+      }),
+      generatePreview: async () => ({
+        jobId: 'preview',
+        status: 'completed',
+      }),
+      stitchClips: async (clipUrls) => {
+        stitchCalls += 1;
+        stitchedFrom = [...clipUrls];
+        return {
+          jobId: `stitch-${stitchCalls}`,
+          status: 'completed',
+          videoUrl: `https://cdn.example.com/promo-stitched-${stitchCalls}.mp4`,
+        };
+      },
+      downloadVideo: async () => Buffer.from(''),
+    };
+
+    text = new FakeTextGenerationProvider({
+      'creative-brief': JSON.stringify({
+        hook: 'Stop scrolling',
+        attention: 'Glow up',
+        productDisplay: 'Bottle hero',
+        viewerConnection: 'Made for you',
+        cta: 'Shop now',
+      }),
+      'social-post': JSON.stringify({
+        headline: 'Hydration elevated',
+        body: 'Feel the difference.',
+        cta: 'Shop now',
+        caption: 'Luxury moisture in every drop.',
+        hashtags: ['#serum', '#glow'],
+      }),
+      'reel-storyboard': JSON.stringify({
+        hook: '0-3s hook',
+        attention: 'problem',
+        productDisplay: 'product shot',
+        viewerConnection: 'testimonial vibe',
+        scenes: [
+          { order: 1, description: 'Close-up bottle' },
+          { order: 2, description: 'Skin glow' },
+          { order: 3, description: 'Product in hand' },
+          { order: 4, description: 'Happy viewer' },
+        ],
+      }),
+      'reel-caption': 'Watch this glow-up. Link in bio.',
+    });
+
+    await brandKits.create(
+      BrandKit.create(
+        'kit-1',
+        'user-1',
+        'Nitro',
+        'https://cdn.example.com/logo.png',
+        { primary: '#111', secondary: '#c9a' },
+        'luxury',
+        'Premium buyers',
+        'Slang',
+      ),
+    );
+    await products.create(
+      Product.create(
+        'prod-1',
+        'user-1',
+        'Serum',
+        'Hydrating serum',
+        ['https://cdn.example.com/product.jpg'],
+        'https://shop.example.com/serum',
+        ['kit-1'],
+        '49',
+      ),
+    );
+
+    service = new GenerationService(
+      text,
+      { generateImage: async () => ({ imageUrl: '' }) },
+      video,
+      generations,
+      products,
+      brandKits,
+      subscription,
+    );
+  });
+
+  it('charges credits and replaces the Teaser Video with one provider call', async () => {
+    const created = await service.createGeneration('user-1', {
+      productId: 'prod-1',
+      goal: 'increase_sales',
+    });
+    expect(usageIncrements).toBe(1);
+    expect(videoCalls).toBe(1);
+    const before = await service.getGeneration('user-1', created.generationId);
+    const priorUrl = before.generation.video?.videoUrl;
+
+    const result = await service.regenerateShot(
+      'user-1',
+      created.generationId,
+    );
+
+    expect(usageIncrements).toBe(2);
+    expect(videoCalls).toBe(2);
+    expect(stitchCalls).toBe(0);
+    expect(result.generation.video?.videoUrl).toBe(
+      'https://cdn.example.com/shot-2.mp4',
+    );
+    expect(result.generation.video?.videoUrl).not.toBe(priorUrl);
+    expect(
+      result.generation.arms.find((arm) => arm.arm === 'video')?.status,
+    ).toBe('completed');
+  });
+
+  it('charges one credit and re-stitches Promo after regenerating a single beat Shot', async () => {
+    const created = await service.createGeneration('user-1', {
+      productId: 'prod-1',
+      goal: 'product_launch',
+      lengthTier: 'promo',
+    });
+    expect(usageIncrements).toBe(4);
+    expect(videoCalls).toBe(4);
+    expect(stitchCalls).toBe(1);
+
+    const before = await service.getGeneration('user-1', created.generationId);
+    const priorShots = before.generation.video?.shots ?? [];
+    const priorAttention = priorShots.find((s) => s.beat === 'attention');
+    const priorHookUrl = priorShots.find((s) => s.beat === 'hook')?.videoUrl;
+
+    const result = await service.regenerateShot(
+      'user-1',
+      created.generationId,
+      { beat: 'attention' },
+    );
+
+    expect(usageIncrements).toBe(5);
+    expect(videoCalls).toBe(5);
+    expect(stitchCalls).toBe(2);
+    expect(result.generation.video?.videoUrl).toContain('promo-stitched-2');
+
+    const attention = result.generation.video?.shots?.find(
+      (s) => s.beat === 'attention',
+    );
+    expect(attention?.videoUrl).toBe('https://cdn.example.com/shot-5.mp4');
+    expect(attention?.videoUrl).not.toBe(priorAttention?.videoUrl);
+    expect(
+      result.generation.video?.shots?.find((s) => s.beat === 'hook')?.videoUrl,
+    ).toBe(priorHookUrl);
+    expect(stitchedFrom).toEqual([
+      priorHookUrl,
+      'https://cdn.example.com/shot-5.mp4',
+      priorShots.find((s) => s.beat === 'product_display')?.videoUrl,
+      priorShots.find((s) => s.beat === 'viewer_connection')?.videoUrl,
+    ]);
+  });
+
+  it('rejects Promo Shot regenerate without a beat', async () => {
+    const created = await service.createGeneration('user-1', {
+      productId: 'prod-1',
+      goal: 'brand_awareness',
+      lengthTier: 'promo',
+    });
+
+    await expect(
+      service.regenerateShot('user-1', created.generationId, {}),
+    ).rejects.toBeInstanceOf(BadRequestException);
+    expect(usageIncrements).toBe(4);
+  });
+
+  it('rejects Shot regenerate when credits are exhausted', async () => {
+    subscription = {
+      canGenerate: async (_userId?: string, creditsNeeded = 1) =>
+        creditsNeeded <= 0,
+      recordVideoGeneration: async (_userId?: string, creditsNeeded = 1) => {
+        usageIncrements += creditsNeeded;
+      },
+    } as unknown as ISubscriptionService;
+    service = new GenerationService(
+      text,
+      { generateImage: async () => ({ imageUrl: '' }) },
+      video,
+      generations,
+      products,
+      brandKits,
+      subscription,
+    );
+
+    // Seed via repo by creating with a permissive subscription first
+    const permissive = {
+      canGenerate: async () => true,
+      recordVideoGeneration: async (_userId?: string, creditsNeeded = 1) => {
+        usageIncrements += creditsNeeded;
+      },
+    } as unknown as ISubscriptionService;
+    const seedService = new GenerationService(
+      text,
+      { generateImage: async () => ({ imageUrl: '' }) },
+      video,
+      generations,
+      products,
+      brandKits,
+      permissive,
+    );
+    const created = await seedService.createGeneration('user-1', {
+      productId: 'prod-1',
+      goal: 'increase_sales',
+    });
+    usageIncrements = 0;
+
+    await expect(
+      service.regenerateShot('user-1', created.generationId),
+    ).rejects.toBeInstanceOf(BadRequestException);
+    expect(usageIncrements).toBe(0);
+    expect(videoCalls).toBe(1);
+  });
+});
