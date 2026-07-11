@@ -44,9 +44,9 @@ function yearlyFromMonthly(monthly: number): number {
 
 // Plan definitions (limits/names). Prices come from MONTHLY_PRICES_BY_REGION based on API region.
 const SUBSCRIPTION_PLANS_BASE: Omit<Plan, 'monthlyPrice' | 'yearlyPrice'>[] = [
-  { id: 'starter', name: 'AI Starter', videosPerMonth: 25, popular: false },
-  { id: 'creator', name: 'AI Creator', videosPerMonth: 35, popular: true },
-  { id: 'pro', name: 'AI Pro Studio', videosPerMonth: 60, popular: false },
+  { id: 'starter', name: 'AI Starter', videosPerMonth: 3, popular: false },
+  { id: 'creator', name: 'AI Creator', videosPerMonth: 6, popular: true },
+  { id: 'pro', name: 'AI Pro Studio', videosPerMonth: 10, popular: false },
 ];
 
 function buildPlansForRegion(region: PricingRegionKey): Plan[] {
@@ -65,6 +65,7 @@ const subscriptionFeatures: Record<PlanId, string[]> = {
     "25 videos per month",
     "Up to 5 seconds per video",
     "HD output (720p)",
+    "Standard processing speed",
     "No watermark",
   ],
   creator: [
@@ -72,6 +73,7 @@ const subscriptionFeatures: Record<PlanId, string[]> = {
     "Up to 10 seconds per video",
     "Full HD output (1080p)",
     "No watermark",
+    "Priority processing queue",
   ],
   pro: [
     "60 videos per month",
@@ -435,6 +437,12 @@ export default function PricingPage() {
                   </Button>
 
                   <ul className="space-y-3 flex-1">
+                    <li className="flex items-start gap-3">
+                      <Check className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
+                      <span className="text-sm">
+                        {plan.videosPerMonth} video generations/month
+                      </span>
+                    </li>
                     {getFeatures(plan.id).map((feature, fIdx) => (
                       <li key={fIdx} className="flex items-start gap-3">
                         <Check className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />

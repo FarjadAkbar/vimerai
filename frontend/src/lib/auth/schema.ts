@@ -40,6 +40,7 @@ export const generateVideoSchema = z.object({
     .min(10, "Prompt must be at least 10 characters")
     .max(1000, "Prompt must be less than 1000 characters"),
   mode: z.enum(["fast", "cinematic", "avatar"]).optional(),
+  shotTemplate: z.enum(["hero", "website", "lifestyle"]).optional(),
 })
 
 export const promptTemplateSchema = z.object({

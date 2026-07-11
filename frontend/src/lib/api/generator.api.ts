@@ -2,9 +2,12 @@ import { api } from './client';
 
 export type GenerationMode = 'fast' | 'cinematic' | 'avatar';
 
+export type ShotTemplate = 'hero' | 'website' | 'lifestyle';
+
 export interface GenerateVideoRequest {
   prompt: string;
   mode?: GenerationMode;
+  shotTemplate?: ShotTemplate;
 }
 
 export interface GenerateVideoResponse {
@@ -16,6 +19,31 @@ export interface GenerationStatusResponse {
   status: string;
   videoUrl?: string;
   previewUrl?: string;
+  error?: string;
+}
+
+export function getApiErrorMessage(error: unknown, fallback: string): string {
+  if (!error || typeof error !== 'object') {
+    return fallback;
+  }
+
+  const responseData = (
+    error as { response?: { data?: { message?: string | string[] } } }
+  ).response?.data;
+
+  const message = responseData?.message;
+  if (Array.isArray(message)) {
+    return message.filter(Boolean).join(', ') || fallback;
+  }
+  if (typeof message === 'string' && message.trim()) {
+    return message;
+  }
+
+  if (error instanceof Error && error.message) {
+    return error.message;
+  }
+
+  return fallback;
 }
 
 export const generatorApi = {
@@ -46,4 +74,3 @@ export const generatorApi = {
     return response.data;
   },
 };
-

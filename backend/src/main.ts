@@ -35,6 +35,11 @@ async function bootstrap() {
     prefix: '/uploads',
   });
 
+  // Serve kit assets (logo, manifest) for local preview
+  app.useStaticAssets(join(process.cwd(), '..', 'kit'), {
+    prefix: '/kit',
+  });
+
   await app.listen(port);
 }
 void bootstrap();

@@ -78,9 +78,6 @@ export const subscriptionApi = {
       // Middle East
       'BH', 'CY', 'IR', 'IQ', 'IL', 'JO', 'KW', 'LB', 'OM', 'PS', 'QA', 'SA', 'SY',
       'TR', 'AE', 'YE',
-
-      // Asia
-      'PK'
     ]);
 
     const res = await fetch('/api/geo');
