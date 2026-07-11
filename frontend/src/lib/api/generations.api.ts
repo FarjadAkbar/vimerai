@@ -105,6 +105,33 @@ export interface GenerationRecord {
   updatedAt: string;
 }
 
+export interface ManualEditSocialPostRequest {
+  headline?: string;
+  body?: string;
+  cta?: string;
+  caption?: string;
+  hashtags?: string[];
+}
+
+export interface ManualEditStoryboardSceneRequest {
+  order: number;
+  description: string;
+}
+
+export interface ManualEditReelStoryboardRequest {
+  hook?: string;
+  attention?: string;
+  productDisplay?: string;
+  viewerConnection?: string;
+  scenes?: ManualEditStoryboardSceneRequest[];
+}
+
+export interface ManualEditGenerationRequest {
+  socialPost?: ManualEditSocialPostRequest;
+  reelStoryboard?: ManualEditReelStoryboardRequest;
+  reelCaption?: string;
+}
+
 export interface GenerationResponse {
   generation: GenerationRecord;
 }
@@ -124,6 +151,17 @@ export const generationsApi = {
 
   get: async (id: string): Promise<GenerationResponse> => {
     const response = await api.get<GenerationResponse>(`/generations/${id}`);
+    return response.data;
+  },
+
+  update: async (
+    id: string,
+    data: ManualEditGenerationRequest,
+  ): Promise<GenerationResponse> => {
+    const response = await api.put<GenerationResponse>(
+      `/generations/${id}`,
+      data,
+    );
     return response.data;
   },
 };

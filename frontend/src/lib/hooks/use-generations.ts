@@ -1,7 +1,8 @@
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   generationsApi,
   type CreateGenerationRequest,
+  type ManualEditGenerationRequest,
 } from '@/lib/api/generations.api';
 
 export const useCreateGeneration = () => {
@@ -15,5 +16,21 @@ export const useGeneration = (id: string | null, enabled = true) => {
     queryKey: ['generations', id],
     queryFn: () => generationsApi.get(id!),
     enabled: enabled && !!id,
+  });
+};
+
+export const useUpdateGeneration = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      id,
+      data,
+    }: {
+      id: string;
+      data: ManualEditGenerationRequest;
+    }) => generationsApi.update(id, data),
+    onSuccess: (result) => {
+      queryClient.setQueryData(['generations', result.generation.id], result);
+    },
   });
 };

@@ -44,6 +44,7 @@ import type {
   CreateGenerationInput,
   CreateGenerationResult,
   GenerationArmState,
+  ManualEditGenerationInput,
 } from '@/types/generation/generation';
 import type { PromptLayers } from '@/types/generation/text-generation';
 
@@ -333,6 +334,76 @@ export class GenerationService implements IGenerationService {
       throw new ForbiddenException('Not authorized to view this Generation');
     }
     return { generation };
+  }
+
+  async updateGeneration(
+    userId: string,
+    generationId: string,
+    input: ManualEditGenerationInput,
+  ): Promise<{ generation: Generation }> {
+    const { generation } = await this.getGeneration(userId, generationId);
+
+    if (
+      !input.socialPost &&
+      !input.reelStoryboard &&
+      input.reelCaption === undefined
+    ) {
+      throw new BadRequestException('No Manual edit fields provided');
+    }
+
+    let socialPost = generation.socialPost;
+    if (input.socialPost) {
+      if (!socialPost) {
+        throw new BadRequestException('Generation has no Social Post to edit');
+      }
+      socialPost = {
+        ...socialPost,
+        headline: input.socialPost.headline ?? socialPost.headline,
+        body: input.socialPost.body ?? socialPost.body,
+        cta: input.socialPost.cta ?? socialPost.cta,
+        caption: input.socialPost.caption ?? socialPost.caption,
+        hashtags: input.socialPost.hashtags ?? socialPost.hashtags,
+      };
+    }
+
+    let reelStoryboard = generation.reelStoryboard;
+    if (input.reelStoryboard) {
+      if (!reelStoryboard) {
+        throw new BadRequestException(
+          'Generation has no Reel Storyboard to edit',
+        );
+      }
+      const scenes =
+        input.reelStoryboard.scenes !== undefined
+          ? input.reelStoryboard.scenes.map((scene, index) => ({
+              order: scene.order ?? index + 1,
+              description: scene.description,
+            }))
+          : reelStoryboard.scenes;
+      reelStoryboard = {
+        hook: input.reelStoryboard.hook ?? reelStoryboard.hook,
+        attention: input.reelStoryboard.attention ?? reelStoryboard.attention,
+        productDisplay:
+          input.reelStoryboard.productDisplay ?? reelStoryboard.productDisplay,
+        viewerConnection:
+          input.reelStoryboard.viewerConnection ??
+          reelStoryboard.viewerConnection,
+        scenes,
+      };
+    }
+
+    const reelCaption =
+      input.reelCaption !== undefined
+        ? input.reelCaption
+        : generation.reelCaption;
+
+    const updated = generation.withUpdates({
+      socialPost,
+      reelStoryboard,
+      reelCaption,
+    });
+    await this.generationRepository.update(updated);
+    return { generation: updated };
   }
 
   private async resolveBrandKit(
