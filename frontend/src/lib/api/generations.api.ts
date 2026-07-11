@@ -1,5 +1,5 @@
 import { api } from './client';
-import { getApiErrorMessage } from './generator.api';
+import { getApiErrorMessage } from './errors';
 
 export type Goal = 'increase_sales' | 'product_launch' | 'brand_awareness';
 export type LengthTier = 'teaser' | 'promo';
