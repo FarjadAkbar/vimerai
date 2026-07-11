@@ -90,6 +90,7 @@ export class Generation {
       | 'failed',
     public readonly createdAt: Date,
     public readonly updatedAt: Date,
+    public readonly textSectionRegenCount: number = 0,
   ) {}
 
   static create(input: {
@@ -135,6 +136,7 @@ export class Generation {
       'accepted',
       now,
       now,
+      0,
     );
   }
 
@@ -146,6 +148,7 @@ export class Generation {
     reelCaption?: string | null;
     video?: VideoContent | null;
     status?: Generation['status'];
+    textSectionRegenCount?: number;
   }): Generation {
     return new Generation(
       this.id,
@@ -171,6 +174,9 @@ export class Generation {
       fields.status ?? this.status,
       this.createdAt,
       new Date(),
+      fields.textSectionRegenCount !== undefined
+        ? fields.textSectionRegenCount
+        : this.textSectionRegenCount,
     );
   }
 }

@@ -74,6 +74,9 @@ export class GenerationEntity {
   @Column()
   status: Generation['status'];
 
+  @Column({ type: 'int', default: 0 })
+  textSectionRegenCount: number;
+
   @CreateDateColumn()
   createdAt: Date;
 
@@ -101,6 +104,7 @@ export class GenerationEntity {
       entity.status,
       entity.createdAt,
       entity.updatedAt,
+      entity.textSectionRegenCount ?? 0,
     );
   }
 
@@ -123,6 +127,7 @@ export class GenerationEntity {
     entity.reelCaption = domain.reelCaption;
     entity.video = domain.video;
     entity.status = domain.status;
+    entity.textSectionRegenCount = domain.textSectionRegenCount;
     if (domain.createdAt) entity.createdAt = domain.createdAt;
     if (domain.updatedAt) entity.updatedAt = domain.updatedAt;
     return entity;

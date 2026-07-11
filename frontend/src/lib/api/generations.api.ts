@@ -101,9 +101,26 @@ export interface GenerationRecord {
     error?: string;
   } | null;
   status: GenerationStatus;
+  textSectionRegenCount: number;
   createdAt: string;
   updatedAt: string;
 }
+
+export type TextSectionKey =
+  | 'social.headline'
+  | 'social.body'
+  | 'social.cta'
+  | 'social.caption'
+  | 'social.hashtags'
+  | 'storyboard.hook'
+  | 'storyboard.attention'
+  | 'storyboard.productDisplay'
+  | 'storyboard.viewerConnection'
+  | 'storyboard.scene'
+  | 'reel.caption';
+
+/** Mirrors backend DEFAULT_TEXT_SECTION_REGEN_LIMIT. */
+export const TEXT_SECTION_REGEN_LIMIT = 20;
 
 export interface ManualEditSocialPostRequest {
   headline?: string;
@@ -130,6 +147,11 @@ export interface ManualEditGenerationRequest {
   socialPost?: ManualEditSocialPostRequest;
   reelStoryboard?: ManualEditReelStoryboardRequest;
   reelCaption?: string;
+}
+
+export interface RegenerateSectionRequest {
+  sectionKey: TextSectionKey;
+  sceneOrder?: number;
 }
 
 export interface GenerationResponse {
@@ -160,6 +182,17 @@ export const generationsApi = {
   ): Promise<GenerationResponse> => {
     const response = await api.put<GenerationResponse>(
       `/generations/${id}`,
+      data,
+    );
+    return response.data;
+  },
+
+  regenerateSection: async (
+    id: string,
+    data: RegenerateSectionRequest,
+  ): Promise<GenerationResponse> => {
+    const response = await api.post<GenerationResponse>(
+      `/generations/${id}/sections/regenerate`,
       data,
     );
     return response.data;
