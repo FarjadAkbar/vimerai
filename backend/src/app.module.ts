@@ -21,6 +21,7 @@ import videoGenerationConfig from './infrastructure/config/video-generation.conf
 import storageConfig from './infrastructure/config/storage.config';
 import emailConfig from './infrastructure/config/email.config';
 import kitConfig from './infrastructure/config/kit.config';
+import openaiConfig from './infrastructure/config/openai.config';
 
 @Module({
   imports: [
@@ -36,6 +37,7 @@ import kitConfig from './infrastructure/config/kit.config';
         storageConfig,
         emailConfig,
         kitConfig,
+        openaiConfig,
       ],
     }),
     DatabaseModule,
