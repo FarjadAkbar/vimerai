@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { useUpdateGeneration, useRegenerateSection, useRetryFailedArms } from "@/lib/hooks/use-generations";
+import { useUpdateGeneration, useRegenerateSection, useRegenerateShot, useRetryFailedArms } from "@/lib/hooks/use-generations";
 import {
   getApiErrorMessage,
   type GenerationArm,
@@ -70,6 +70,7 @@ export function GenerationDetail({
 }) {
   const updateGeneration = useUpdateGeneration();
   const regenerateSection = useRegenerateSection();
+  const regenerateShot = useRegenerateShot();
   const retryFailedArms = useRetryFailedArms();
   const [headline, setHeadline] = useState("");
   const [body, setBody] = useState("");
@@ -594,9 +595,39 @@ export function GenerationDetail({
       {(generation.video?.videoUrl ||
         (generation.video?.shots && generation.video.shots.length > 0)) && (
         <section className="space-y-2">
-          <h3 className="text-sm font-medium uppercase tracking-wide text-muted-foreground">
-            {generation.lengthTier === "promo" ? "Promo video" : "Teaser video"}
-          </h3>
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <h3 className="text-sm font-medium uppercase tracking-wide text-muted-foreground">
+              {generation.lengthTier === "promo" ? "Promo video" : "Teaser video"}
+            </h3>
+            {generation.lengthTier === "teaser" && generation.video ? (
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                disabled={regenerateShot.isPending}
+                onClick={() => {
+                  regenerateShot.mutate(
+                    { id: generation.id },
+                    {
+                      onSuccess: () =>
+                        setMessage("Teaser Shot regenerated (−1 credit)"),
+                      onError: (err) =>
+                        setError(
+                          getApiErrorMessage(
+                            err,
+                            "Could not regenerate Teaser Shot",
+                          ),
+                        ),
+                    },
+                  );
+                }}
+              >
+                {regenerateShot.isPending
+                  ? "Regenerating…"
+                  : "Regenerate Shot (−1 credit)"}
+              </Button>
+            ) : null}
+          </div>
           {generation.video?.videoUrl ? (
             <video
               src={generation.video.videoUrl}
@@ -611,30 +642,57 @@ export function GenerationDetail({
                 <p className="text-sm text-muted-foreground">
                   Promo stitch — play beat Shots in order (hook → connection).
                 </p>
-                {generation.video.shots.map((shot) =>
-                  shot.videoUrl ? (
-                    <div key={`${shot.beat}-${shot.order}`} className="space-y-1">
+                {generation.video.shots.map((shot) => (
+                  <div key={`${shot.beat}-${shot.order}`} className="space-y-2">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
                       <p className="text-xs uppercase tracking-wide text-muted-foreground">
                         Shot {shot.order}: {shot.beat.replaceAll("_", " ")} (
                         {shot.status})
+                        {!shot.videoUrl && shot.error
+                          ? ` — ${shot.error}`
+                          : null}
                       </p>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        disabled={regenerateShot.isPending}
+                        onClick={() => {
+                          regenerateShot.mutate(
+                            {
+                              id: generation.id,
+                              data: { beat: shot.beat },
+                            },
+                            {
+                              onSuccess: () =>
+                                setMessage(
+                                  `Shot “${shot.beat.replaceAll("_", " ")}” regenerated (−1 credit)`,
+                                ),
+                              onError: (err) =>
+                                setError(
+                                  getApiErrorMessage(
+                                    err,
+                                    "Could not regenerate this Shot",
+                                  ),
+                                ),
+                            },
+                          );
+                        }}
+                      >
+                        {regenerateShot.isPending
+                          ? "Regenerating…"
+                          : "Regenerate (−1 credit)"}
+                      </Button>
+                    </div>
+                    {shot.videoUrl ? (
                       <video
                         src={shot.videoUrl}
                         controls
                         className="w-full rounded-lg"
                       />
-                    </div>
-                  ) : (
-                    <p
-                      key={`${shot.beat}-${shot.order}`}
-                      className="text-sm text-muted-foreground"
-                    >
-                      Shot {shot.order} ({shot.beat.replaceAll("_", " ")}):{" "}
-                      <span className="capitalize">{shot.status}</span>
-                      {shot.error ? ` — ${shot.error}` : null}
-                    </p>
-                  ),
-                )}
+                    ) : null}
+                  </div>
+                ))}
               </div>
             )}
         </section>
