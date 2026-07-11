@@ -154,6 +154,10 @@ export interface RegenerateSectionRequest {
   sceneOrder?: number;
 }
 
+export interface RetryFailedArmsRequest {
+  arms?: GenerationArm[];
+}
+
 export interface GenerationResponse {
   generation: GenerationRecord;
 }
@@ -193,6 +197,17 @@ export const generationsApi = {
   ): Promise<GenerationResponse> => {
     const response = await api.post<GenerationResponse>(
       `/generations/${id}/sections/regenerate`,
+      data,
+    );
+    return response.data;
+  },
+
+  retryFailedArms: async (
+    id: string,
+    data: RetryFailedArmsRequest = {},
+  ): Promise<GenerationResponse> => {
+    const response = await api.post<GenerationResponse>(
+      `/generations/${id}/arms/retry`,
       data,
     );
     return response.data;

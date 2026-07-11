@@ -14,6 +14,7 @@ import { GenerationService } from '@/application/generation/generation.service';
 import { CreateGenerationDto } from '@/application/generation/dto/create-generation.dto';
 import { ManualEditGenerationDto } from '@/application/generation/dto/manual-edit-generation.dto';
 import { RegenerateSectionDto } from '@/application/generation/dto/regenerate-section.dto';
+import { RetryFailedArmsDto } from '@/application/generation/dto/retry-failed-arms.dto';
 import { CurrentUser } from '@/infrastructure/auth/current-user.decorator';
 import { JwtAuthGuard } from '@/infrastructure/auth/jwt-auth.guard';
 
@@ -58,5 +59,15 @@ export class GenerationController {
     dto: RegenerateSectionDto,
   ) {
     return this.generationService.regenerateSection(user.userId, id, dto);
+  }
+
+  @Post(':id/arms/retry')
+  async retryFailedArms(
+    @CurrentUser() user: { userId: string },
+    @Param('id') id: string,
+    @Body(new ValidationPipe({ whitelist: true, transform: true }))
+    dto: RetryFailedArmsDto,
+  ) {
+    return this.generationService.retryFailedArms(user.userId, id, dto);
   }
 }

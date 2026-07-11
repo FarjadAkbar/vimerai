@@ -3,6 +3,7 @@ import type {
   CreateGenerationResult,
   ManualEditGenerationInput,
   RegenerateSectionInput,
+  RetryFailedArmsInput,
 } from '@/types/generation/generation';
 import type { Generation } from '@/domain/generation.entity';
 
@@ -24,5 +25,10 @@ export interface IGenerationService {
     userId: string,
     generationId: string,
     input: RegenerateSectionInput,
+  ): Promise<{ generation: Generation }>;
+  retryFailedArms(
+    userId: string,
+    generationId: string,
+    input?: RetryFailedArmsInput,
   ): Promise<{ generation: Generation }>;
 }
