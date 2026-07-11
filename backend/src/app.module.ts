@@ -5,6 +5,7 @@ import { AppService } from './app.service';
 import { DatabaseModule } from './infrastructure/persistence/database.module';
 import { AuthModule } from './application/auth/auth.module';
 import { GeneratorModule } from './application/generator/generator.module';
+import { GenerationModule } from './application/generation/generation.module';
 import { VideosModule } from './application/videos/videos.module';
 import { SubscriptionModule } from './application/subscription/subscription.module';
 import { PromptsModule } from './application/prompts/prompts.module';
@@ -35,6 +36,7 @@ import emailConfig from './infrastructure/config/email.config';
     DatabaseModule,
     AuthModule,
     GeneratorModule,
+    GenerationModule,
     VideosModule,
     SubscriptionModule,
     PromptsModule,
