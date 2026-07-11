@@ -6,7 +6,6 @@ import {
   PayPalWebhookController,
 } from './subscription-webhook.controller';
 import { SubscriptionService } from './subscription.service';
-import { PlanSeedService } from './plan-seed.service';
 import { DatabaseModule } from '@/infrastructure/persistence/database.module';
 import { TypeOrmSubscriptionRepository } from '@/infrastructure/persistence/typeorm/repositories/subscription.repository';
 import { TypeOrmUserRepository } from '@/infrastructure/persistence/typeorm/repositories/user.repository';
@@ -27,7 +26,6 @@ import {
   ],
   providers: [
     SubscriptionService,
-    PlanSeedService,
     {
       provide: 'ISubscriptionRepository',
       useClass: TypeOrmSubscriptionRepository,

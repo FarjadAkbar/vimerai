@@ -6,6 +6,7 @@ import { TypeOrmVideoRepository } from '@/infrastructure/persistence/typeorm/rep
 import { SubscriptionModule } from '../subscription/subscription.module';
 import { StorageModule } from '@/infrastructure/storage/storage.module';
 import { VideoGenerationModule } from '@/infrastructure/video-generation/video-generation.module';
+import { KitsModule } from '@/infrastructure/kit/kits.module';
 
 @Module({
   imports: [
@@ -13,6 +14,7 @@ import { VideoGenerationModule } from '@/infrastructure/video-generation/video-g
     SubscriptionModule,
     StorageModule,
     VideoGenerationModule,
+    KitsModule,
   ],
   controllers: [GeneratorController],
   providers: [

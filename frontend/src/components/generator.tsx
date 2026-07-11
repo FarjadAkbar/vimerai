@@ -1,12 +1,12 @@
 "use client";
 
-import { useEffect, useState, useCallback, useMemo } from "react";
+import { useEffect, useState, useCallback, useMemo, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
-import { Clock } from "lucide-react";
+import { Clock, Download } from "lucide-react";
 import {
   generateVideoSchema,
   type GenerateVideoInput,
@@ -27,6 +27,41 @@ import { GeneratorForm } from "@/components/generator-form";
 import { NotificationModal } from "@/components/notification-modal";
 import type { GeneratorProps, NotificationState } from "@/types/components.types";
 import { storage } from "@/lib/utils/storage";
+import { useActiveKit } from "@/lib/hooks/use-kit";
+import {
+  generatorApi,
+  getApiErrorMessage,
+} from "@/lib/api/generator.api";
+
+function statusLabel(status: string | undefined, isSubmitting: boolean): {
+  title: string;
+  detail: string;
+} {
+  if (isSubmitting && !status) {
+    return {
+      title: "Submitting…",
+      detail: "Sending your prompt to the generator",
+    };
+  }
+
+  switch (status) {
+    case "pending":
+      return {
+        title: "Queued…",
+        detail: "Waiting for an available runner. This can take a few minutes.",
+      };
+    case "processing":
+      return {
+        title: "Generating…",
+        detail: "Your video is being created. Keep this page open.",
+      };
+    default:
+      return {
+        title: "Video generation in progress",
+        detail: "Working on your prompt",
+      };
+  }
+}
 
 export function Generator({
   mode = "preview",
@@ -48,10 +83,17 @@ export function Generator({
     isLoggedIn
   );
   const generateVideo = useGenerateVideo();
+  const { data: activeKit } = useActiveKit(isLoggedIn);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [jobId, setJobId] = useState<string | null>(null);
+  const [resultVideoUrl, setResultVideoUrl] = useState<string | null>(null);
+  const [completedJobId, setCompletedJobId] = useState<string | null>(null);
+  const [playbackUrl, setPlaybackUrl] = useState<string | null>(null);
+  const [isDownloading, setIsDownloading] = useState(false);
   const [notification, setNotification] = useState<NotificationState | null>(null);
   const [blockedModal, setBlockedModal] = useState<NotificationState | null>(null);
+  const handledTerminalJobRef = useRef<string | null>(null);
+  const blobUrlRef = useRef<string | null>(null);
 
   const hasUsedPreview = useMemo(
     () => mode === "preview" && storage.getUsedPreview(),
@@ -71,21 +113,68 @@ export function Generator({
     },
   });
 
-  const delay = (ms: number) => new Promise(res => setTimeout(res, ms));
+  const delay = (ms: number) => new Promise((res) => setTimeout(res, ms));
 
-  // ─── FIXED: Single shot aur subscription wale bhi generate kar sakein ───
+  const revokeBlobUrl = useCallback(() => {
+    if (blobUrlRef.current) {
+      URL.revokeObjectURL(blobUrlRef.current);
+      blobUrlRef.current = null;
+    }
+  }, []);
+
+  const clearResult = useCallback(() => {
+    revokeBlobUrl();
+    setResultVideoUrl(null);
+    setCompletedJobId(null);
+    setPlaybackUrl(null);
+  }, [revokeBlobUrl]);
+
+  const showGenerateError = useCallback(
+    (error: unknown) => {
+      const message = getApiErrorMessage(
+        error,
+        "Failed to generate video. Please try again."
+      );
+
+      if (message.toLowerCase().includes("limit")) {
+        setNotification({
+          type: "warning",
+          title: "Generation Limit Reached",
+          message:
+            "You've reached your video generation limit. Please upgrade your plan to continue.",
+          action: {
+            label: "View Pricing",
+            onClick: () => {
+              setNotification(null);
+              router.push("/pricing");
+            },
+          },
+        });
+        return;
+      }
+
+      setNotification({
+        type: "error",
+        title: "Video Generation Failed",
+        message,
+        action: {
+          label: "Try Again",
+          onClick: () => setNotification(null),
+        },
+      });
+    },
+    [router]
+  );
+
   const canGenerate = useMemo(() => {
     if (mode === "preview") {
-      // Agar logged in hai aur credits hain toh allow karo
       if (isLoggedIn && !subscriptionLoading) {
         const singleShotCredits = subscription?.singleShotCredits ?? 0;
         const subscriptionCredits = subscription?.videosRemaining ?? 0;
         if (singleShotCredits > 0 || subscriptionCredits > 0) return true;
       }
-      // Warna free preview check karo
       return !hasUsedPreview;
     }
-    // Full mode
     if (!isLoggedIn) return false;
     if (subscriptionLoading) return true;
     const subscriptionCredits = subscription?.videosRemaining ?? 0;
@@ -93,129 +182,116 @@ export function Generator({
     return subscriptionCredits > 0 || singleShotCredits > 0;
   }, [mode, hasUsedPreview, subscriptionLoading, subscription, isLoggedIn]);
 
+  const startGeneration = useCallback(
+    (data: GenerateVideoInput) => {
+      clearResult();
+      handledTerminalJobRef.current = null;
+      generateVideo.mutate(
+        {
+          data: {
+            prompt: data.prompt,
+            mode: data.mode,
+            shotTemplate: data.shotTemplate,
+          },
+          type: "full",
+        },
+        {
+          onSuccess: (response) => {
+            setJobId(response.jobId);
+            onSuccess?.(response.jobId);
+          },
+          onError: showGenerateError,
+        }
+      );
+    },
+    [clearResult, generateVideo, onSuccess, showGenerateError]
+  );
+
   const onSubmit = useCallback(
     async (data: GenerateVideoInput) => {
       if (mode === "preview") {
         const singleShotCredits = subscription?.singleShotCredits ?? 0;
         const subscriptionCredits = subscription?.videosRemaining ?? 0;
-        const hasPaidCredits = isLoggedIn && (singleShotCredits > 0 || subscriptionCredits > 0);
+        const hasPaidCredits =
+          isLoggedIn && (singleShotCredits > 0 || subscriptionCredits > 0);
 
         if (hasPaidCredits) {
-          // ─── Paid user: actual generation karo ───
-          generateVideo.mutate(
-            {
-              data: {
-                prompt: data.prompt,
-                mode: data.mode,
-              },
-              type: "full",
-            },
-            {
-              onSuccess: (response) => {
-                setJobId(response.jobId);
-                onSuccess?.(response.jobId);
-              },
-              onError: (error: unknown) => {
-                const message =
-                  (error as { response?: { data?: { message?: string } } })
-                    ?.response?.data?.message ||
-                  "Failed to generate video. Please try again.";
-
-                if (message.includes("limit reached") || message.includes("limit")) {
-                  setNotification({
-                    type: "warning",
-                    title: "Generation Limit Reached",
-                    message: "You've reached your video generation limit. Please upgrade your plan to continue.",
-                    action: {
-                      label: "View Pricing",
-                      onClick: () => {
-                        setNotification(null);
-                        router.push("/pricing");
-                      },
-                    },
-                  });
-                } else {
-                  setNotification({
-                    type: "error",
-                    title: "Video Generation Failed",
-                    message: message,
-                    action: {
-                      label: "Try Again",
-                      onClick: () => {
-                        setNotification(null);
-                        form.reset();
-                      },
-                    },
-                  });
-                }
-              },
-            }
-          );
+          startGeneration(data);
         } else if (!hasUsedPreview) {
-          // ─── Free preview: pehli baar fake preview ───
           await delay(1000);
           setPreviewUrl("https://lorem.video/720p");
           storage.setUsedPreview(true);
         }
-      } else {
-        // ─── Full mode ───
-        generateVideo.mutate(
-          {
-            data: {
-              prompt: data.prompt,
-              mode: data.mode,
-            },
-            type: "full",
-          },
-          {
-            onSuccess: (response) => {
-              setJobId(response.jobId);
-              onSuccess?.(response.jobId);
-            },
-            onError: (error: unknown) => {
-              const message =
-                (error as { response?: { data?: { message?: string } } })
-                  ?.response?.data?.message ||
-                "Failed to generate video. Please try again.";
-
-              if (message.includes("limit reached") || message.includes("limit")) {
-                setNotification({
-                  type: "warning",
-                  title: "Generation Limit Reached",
-                  message: "You've reached your video generation limit. Please upgrade your plan to continue.",
-                  action: {
-                    label: "View Pricing",
-                    onClick: () => {
-                      setNotification(null);
-                      router.push("/pricing");
-                    },
-                  },
-                });
-              } else {
-                setNotification({
-                  type: "error",
-                  title: "Video Generation Failed",
-                  message: message,
-                  action: {
-                    label: "Try Again",
-                    onClick: () => {
-                      setNotification(null);
-                      form.reset();
-                    },
-                  },
-                });
-              }
-            },
-          }
-        );
+        return;
       }
+
+      startGeneration(data);
     },
-    [isLoggedIn, hasUsedPreview, generateVideo, router, form, mode, onSuccess, subscription]
+    [isLoggedIn, hasUsedPreview, mode, startGeneration, subscription]
   );
 
   const handlePreviewClose = useCallback(() => {
     setPreviewUrl(null);
   }, []);
+
+  const handleDownload = useCallback(async () => {
+    const downloadJobId = completedJobId || jobId;
+    if (!downloadJobId) return;
+
+    setIsDownloading(true);
+    try {
+      const blob = await generatorApi.downloadVideo(downloadJobId);
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = `${downloadJobId}.mp4`;
+      document.body.appendChild(anchor);
+      anchor.click();
+      document.body.removeChild(anchor);
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      setNotification({
+        type: "error",
+        title: "Download Failed",
+        message: getApiErrorMessage(
+          error,
+          "Could not download the video. Please try again."
+        ),
+        action: {
+          label: "Dismiss",
+          onClick: () => setNotification(null),
+        },
+      });
+    } finally {
+      setIsDownloading(false);
+    }
+  }, [completedJobId, jobId]);
+
+  const handlePlaybackError = useCallback(async () => {
+    const downloadJobId = completedJobId || jobId;
+    if (!downloadJobId || blobUrlRef.current) return;
+
+    try {
+      const blob = await generatorApi.downloadVideo(downloadJobId);
+      const url = URL.createObjectURL(blob);
+      blobUrlRef.current = url;
+      setPlaybackUrl(url);
+    } catch {
+      setNotification({
+        type: "error",
+        title: "Playback Failed",
+        message:
+          "Could not play the remote video. Try downloading it instead.",
+        action: {
+          label: "Download",
+          onClick: () => {
+            setNotification(null);
+            void handleDownload();
+          },
+        },
+      });
+    }
+  }, [completedJobId, jobId, handleDownload]);
 
   useEffect(() => {
     const savedPrompt = storage.getGeneratorPrompt();
@@ -223,12 +299,18 @@ export function Generator({
       form.setValue("prompt", savedPrompt);
     }
 
-    const subscription = form.watch((value) => {
+    const subscriptionWatch = form.watch((value) => {
       storage.setGeneratorPrompt(value.prompt ?? "");
     });
 
-    return () => subscription.unsubscribe();
+    return () => subscriptionWatch.unsubscribe();
   }, [form]);
+
+  useEffect(() => {
+    return () => {
+      revokeBlobUrl();
+    };
+  }, [revokeBlobUrl]);
 
   useEffect(() => {
     if (mode === "preview") {
@@ -248,69 +330,83 @@ export function Generator({
 
   useEffect(() => {
     if (!jobId || !statusData?.status) return;
+    if (handledTerminalJobRef.current === jobId) return;
 
     const isCompleted = statusData.status === "completed";
     const isFailed = statusData.status === "failed";
 
+    if (!isCompleted && !isFailed) return;
+
+    handledTerminalJobRef.current = jobId;
+
     if (isCompleted) {
-      if (mode === "preview") {
-        const previewUrlFromStatus = statusData?.previewUrl || null;
-        const videoUrlFromStatus = statusData?.videoUrl || null;
+      const mediaUrl =
+        statusData.videoUrl || statusData.previewUrl || null;
 
-        if (previewUrlFromStatus && !videoUrlFromStatus && previewUrlFromStatus !== previewUrl) {
-          const refreshData = async () => {
-            if (isLoggedIn) {
-              await Promise.all([
-                queryClient.refetchQueries({ queryKey: ["videos"] }),
-                queryClient.refetchQueries({ queryKey: ["subscription", "current"] }),
-              ]);
-            }
-            setPreviewUrl(previewUrlFromStatus);
-          };
-          refreshData();
-        }
-      } else if (mode === "full") {
-        if (isLoggedIn) {
-          queryClient.refetchQueries({ queryKey: ["videos"] });
-          queryClient.refetchQueries({ queryKey: ["subscription", "current"] });
-          queryClient.refetchQueries({ queryKey: ["generation-status", jobId] });
+      if (isLoggedIn) {
+        void queryClient.refetchQueries({ queryKey: ["videos"] });
+        void queryClient.refetchQueries({
+          queryKey: ["subscription", "current"],
+        });
+      }
 
-          setTimeout(() => {
-            setNotification({
-              type: "success",
-              title: "Video Generated!",
-              message: "Your video has been generated successfully and is ready to view.",
-              action: {
-                label: "View My Videos",
-                onClick: () => {
-                  setNotification(null);
-                  router.push("/my-videos");
-                },
-              },
-            });
-          }, 0);
-        }
+      if (mode === "preview" && mediaUrl && !statusData.videoUrl) {
+        setPreviewUrl(mediaUrl);
+        setJobId(null);
+        return;
       }
-    } else if (isFailed) {
-      if (previewUrl && mode === "preview") {
-        const hideTimer = setTimeout(() => {
-          handlePreviewClose();
-          router.push("/pricing");
-        }, 2000);
-        return () => clearTimeout(hideTimer);
+
+      if (mediaUrl) {
+        setResultVideoUrl(mediaUrl);
+        setPlaybackUrl(mediaUrl);
+        setCompletedJobId(jobId);
       }
+
+      setNotification({
+        type: "success",
+        title: "Video Generated!",
+        message: "Your video is ready to play and download.",
+        action: {
+          label: "View My Videos",
+          onClick: () => {
+            setNotification(null);
+            router.push("/my-videos");
+          },
+        },
+      });
+
+      form.reset({
+        prompt: "",
+        mode: "fast",
+      });
+      storage.setGeneratorPrompt("");
+      setJobId(null);
+      return;
     }
+
+    setNotification({
+      type: "error",
+      title: "Video Generation Failed",
+      message:
+        statusData.error ||
+        "Generation failed. You can update your prompt and try again.",
+      action: {
+        label: "Try Again",
+        onClick: () => setNotification(null),
+      },
+    });
+    setJobId(null);
   }, [
     jobId,
     statusData?.status,
     statusData?.previewUrl,
     statusData?.videoUrl,
+    statusData?.error,
     mode,
     isLoggedIn,
     queryClient,
-    previewUrl,
-    handlePreviewClose,
     router,
+    form,
   ]);
 
   const isGenerating =
@@ -319,63 +415,57 @@ export function Generator({
       statusData?.status !== "completed" &&
       statusData?.status !== "failed");
 
-  useEffect(() => {
-    if (statusData?.status === "completed") {
-      const resetTimer = setTimeout(() => {
-        form.reset({
-          prompt: "",
-          mode: "fast",
-        });
-        setJobId(null);
-      }, 1500);
-      return () => clearTimeout(resetTimer);
-    }
-  }, [statusData?.status, form]);
+  const progressCopy = statusLabel(
+    statusData?.status,
+    generateVideo.isPending
+  );
 
-  const isPreviewGeneration = mode === "preview";
-
-  // ─── FIXED: getBlockedStateInfo ───
   const getBlockedStateInfo = useMemo(() => {
-    if (canGenerate) return null; // Credits hain toh block mat karo
+    if (canGenerate) return null;
 
     if (mode === "preview") {
       if (!isLoggedIn) {
         return {
-          message: "Smart preview is available after signup. Full generation requires an active plan.",
+          message:
+            "Smart preview is available after signup. Full generation requires an active plan.",
           cta: { text: "Sign Up", href: "/signup" },
           variant: "default" as const,
         };
       }
       return {
-        message: "You've already used your smart preview. Subscribe to generate more videos.",
+        message:
+          "You've already used your smart preview. Subscribe to generate more videos.",
         cta: { text: "Upgrade Plan", href: "/pricing" },
         variant: "default" as const,
       };
-    } else {
-      if (!isLoggedIn) {
-        return {
-          message: "Please sign up to generate videos. Full video generation requires an active subscription plan.",
-          cta: { text: "Sign Up", href: "/signup" },
-          variant: "default" as const,
-        };
-      }
-      if (subscriptionLoading) return null;
-      if (!subscription) {
-        return {
-          message: "Please subscribe to generate videos. Choose a plan to get started.",
-          cta: { text: "Upgrade Plan", href: "/pricing" },
-          variant: "destructive" as const,
-        };
-      }
-      const subscriptionCredits = subscription.videosRemaining ?? 0;
-      const singleShotCredits = subscription.singleShotCredits ?? 0;
-      if (subscriptionCredits === 0 && singleShotCredits === 0) {
-        return {
-          message: "You've reached your video generation limit. Subscribe or buy a Single Shot to continue.",
-          cta: { text: "Upgrade Plan", href: "/pricing" },
-          variant: "destructive" as const,
-        };
-      }
+    }
+
+    if (!isLoggedIn) {
+      return {
+        message:
+          "Please sign up to generate videos. Full video generation requires an active subscription plan.",
+        cta: { text: "Sign Up", href: "/signup" },
+        variant: "default" as const,
+      };
+    }
+    if (subscriptionLoading) return null;
+    if (!subscription) {
+      return {
+        message:
+          "Please subscribe to generate videos. Choose a plan to get started.",
+        cta: { text: "Upgrade Plan", href: "/pricing" },
+        variant: "destructive" as const,
+      };
+    }
+    const subscriptionCredits = subscription.videosRemaining ?? 0;
+    const singleShotCredits = subscription.singleShotCredits ?? 0;
+    if (subscriptionCredits === 0 && singleShotCredits === 0) {
+      return {
+        message:
+          "You've reached your video generation limit. Subscribe or buy a Single Shot to continue.",
+        cta: { text: "Upgrade Plan", href: "/pricing" },
+        variant: "destructive" as const,
+      };
     }
     return null;
   }, [canGenerate, mode, isLoggedIn, subscriptionLoading, subscription]);
@@ -388,7 +478,8 @@ export function Generator({
         {showSubscriptionInfo &&
           !subscriptionLoading &&
           subscription &&
-          (subscription.plan !== "free" || (subscription.singleShotCredits ?? 0) > 0) && (
+          (subscription.plan !== "free" ||
+            (subscription.singleShotCredits ?? 0) > 0) && (
             <SubscriptionInfo
               plan={subscription.plan}
               videosRemaining={subscription.videosRemaining}
@@ -403,11 +494,19 @@ export function Generator({
           isGenerating={isGenerating}
           canGenerate={canGenerate}
           mode={mode}
+          activeKit={activeKit ?? null}
           statusData={statusData}
-          blockedReason={getBlockedStateInfo ? {
-            message: getBlockedStateInfo.message,
-            cta: getBlockedStateInfo.cta || { text: "View Pricing", href: "/pricing" }
-          } : null}
+          blockedReason={
+            getBlockedStateInfo
+              ? {
+                  message: getBlockedStateInfo.message,
+                  cta: getBlockedStateInfo.cta || {
+                    text: "View Pricing",
+                    href: "/pricing",
+                  },
+                }
+              : null
+          }
           onBlockedClick={() => {
             if (getBlockedStateInfo) {
               let title = "Generation Blocked";
@@ -442,31 +541,59 @@ export function Generator({
             <div className="flex items-center gap-3">
               <Clock className="w-5 h-5 animate-spin text-primary" />
               <div className="flex-1">
-                <p className="font-medium">
-                  {isPreviewGeneration
-                    ? "Preview Generation in Progress"
-                    : "Video Generation in Progress"}
-                </p>
+                <p className="font-medium">{progressCopy.title}</p>
                 <p className="text-sm text-muted-foreground">
-                  <WordRotate
-                    words={[
-                      "Analyzing your prompt",
-                      "Generating video content",
-                      "Processing frames",
-                      "Optimizing quality",
-                      "Finalizing your video",
-                    ]}
-                    duration={2000}
-                  />
+                  {statusData?.status === "processing" ? (
+                    <WordRotate
+                      words={[
+                        "Generating video content",
+                        "Processing frames",
+                        "Optimizing quality",
+                        "Finalizing your video",
+                      ]}
+                      duration={2000}
+                    />
+                  ) : (
+                    progressCopy.detail
+                  )}
                 </p>
               </div>
-              {/* {!isPreviewGeneration && (
-                <Link href="/my-videos">
-                  <Button size="sm" variant="outline">
-                    View Status
-                  </Button>
-                </Link> 
-              )} */}
+            </div>
+          </div>
+        )}
+
+        {playbackUrl && resultVideoUrl && (
+          <div className="mt-6 p-4 rounded-xl border border-border bg-card space-y-4">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <p className="font-medium">Your video is ready</p>
+                <p className="text-sm text-muted-foreground">
+                  Play below or download a copy via the server.
+                </p>
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="gap-2"
+                disabled={isDownloading || !(completedJobId || jobId)}
+                onClick={() => void handleDownload()}
+              >
+                <Download className="w-4 h-4" />
+                {isDownloading ? "Downloading…" : "Download"}
+              </Button>
+            </div>
+            <div className="aspect-video bg-black rounded-lg overflow-hidden">
+              <video
+                key={playbackUrl}
+                src={playbackUrl}
+                controls
+                playsInline
+                className="w-full h-full object-contain"
+                onError={() => {
+                  void handlePlaybackError();
+                }}
+              />
             </div>
           </div>
         )}
@@ -478,46 +605,51 @@ export function Generator({
                 Smart preview is available after{" "}
                 <Link href="/signup" className="text-primary hover:underline">
                   signup
-                </Link>
-                {" "}Full generation requires an active{" "}
+                </Link>{" "}
+                Full generation requires an active{" "}
                 <Link href="/pricing" className="text-primary hover:underline">
                   subscription
                 </Link>
               </>
             ) : !subscription || subscription.plan === "free" ? (
               <>
-                Click Generate Video to see a smart preview. Full video generation available after{" "}
+                Click Generate Video to see a smart preview. Full video
+                generation available after{" "}
                 <Link href="/pricing" className="text-primary hover:underline">
                   subscribing
                 </Link>
               </>
             ) : (
-              "Click Generate Video to see a smart preview"
+              "Describe your video and generate a clip"
             )}
           </p>
         )}
 
-        {showRecentVideos && isLoggedIn && videosData && videosData.videos && videosData.videos.length > 0 && (
-          <div className="mt-16">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-bold">Recent Videos</h2>
-              <Link href="/my-videos">
-                <Button variant="ghost" size="sm">
-                  View All
-                </Button>
-              </Link>
+        {showRecentVideos &&
+          isLoggedIn &&
+          videosData &&
+          videosData.videos &&
+          videosData.videos.length > 0 && (
+            <div className="mt-16">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-2xl font-bold">Recent Videos</h2>
+                <Link href="/my-videos">
+                  <Button variant="ghost" size="sm">
+                    View All
+                  </Button>
+                </Link>
+              </div>
+              <VideoGrid
+                limit={3}
+                offset={0}
+                enabled={isLoggedIn}
+                showSearch={false}
+                showActions={false}
+                showHeader={false}
+                gridCols="3"
+              />
             </div>
-            <VideoGrid
-              limit={3}
-              offset={0}
-              enabled={isLoggedIn}
-              showSearch={false}
-              showActions={false}
-              showHeader={false}
-              gridCols="3"
-            />
-          </div>
-        )}
+          )}
       </div>
 
       {previewUrl && (

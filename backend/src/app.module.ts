@@ -10,6 +10,7 @@ import { VideosModule } from './application/videos/videos.module';
 import { SubscriptionModule } from './application/subscription/subscription.module';
 import { PromptsModule } from './application/prompts/prompts.module';
 import { UsersModule } from './application/users/users.module';
+import { KitsModule } from '@/infrastructure/kit/kits.module';
 import databaseConfig from './infrastructure/config/database.config';
 import serverConfig from './infrastructure/config/server.config';
 import jwtConfig from './infrastructure/config/jwt.config';
@@ -17,6 +18,7 @@ import paymentConfig from './infrastructure/config/payment.config';
 import videoGenerationConfig from './infrastructure/config/video-generation.config';
 import storageConfig from './infrastructure/config/storage.config';
 import emailConfig from './infrastructure/config/email.config';
+import kitConfig from './infrastructure/config/kit.config';
 
 @Module({
   imports: [
@@ -31,9 +33,11 @@ import emailConfig from './infrastructure/config/email.config';
         videoGenerationConfig,
         storageConfig,
         emailConfig,
+        kitConfig,
       ],
     }),
     DatabaseModule,
+    KitsModule,
     AuthModule,
     GeneratorModule,
     GenerationModule,

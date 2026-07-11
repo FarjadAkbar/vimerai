@@ -3,7 +3,14 @@ import { GenerationMode } from '@/domain/video.entity';
 export interface GenerateVideoRequest {
   prompt: string;
   mode: GenerationMode;
-  jobId?: string; // Optional jobId to use if provided
+  jobId?: string;
+  productAssetUrls?: string[];
+  referenceVideoUrl?: string;
+  negativePrompt?: string;
+  /** When true, use imageToVideoModel with first product asset as image_url. */
+  useImageConditioning?: boolean;
+  textToVideoModel?: string;
+  imageToVideoModel?: string;
 }
 
 export interface GenerateVideoResponse {
