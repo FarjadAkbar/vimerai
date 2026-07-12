@@ -239,6 +239,8 @@ export class GenerationService implements IGenerationService {
               await this.imageGenerationProvider.generateImage({
                 prompt: [
                   `Brand: ${snapshot.brandKit.name}. Tone: ${snapshot.brandKit.tone}.`,
+                  `Primary color: ${snapshot.brandKit.colors.primary}. Secondary color: ${snapshot.brandKit.colors.secondary}.`,
+                  `Logo: ${snapshot.brandKit.logoUrl}.`,
                   `Product: ${snapshot.product.name}. ${snapshot.product.description}`,
                   `Goal: ${input.goal}.`,
                   `Create a scroll-stopping social feed still for ${feedPlatform}.`,
@@ -1101,6 +1103,9 @@ export class GenerationService implements IGenerationService {
         `Name: ${brandKit.name}`,
         `Tone: ${brandKit.tone}`,
         `Audience: ${brandKit.audience}`,
+        `Primary color: ${brandKit.colors.primary}`,
+        `Secondary color: ${brandKit.colors.secondary}`,
+        `Logo: ${brandKit.logoUrl}`,
         `Avoid: ${brandKit.thingsToAvoid}`,
         brandKit.aiInstructions
           ? `AI instructions: ${brandKit.aiInstructions}`

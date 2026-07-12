@@ -176,6 +176,14 @@ describe('GenerationService.createGeneration', () => {
     expect(stored.generation.reelStoryboard?.hook).toBeTruthy();
     expect(stored.generation.reelCaption).toContain('glow');
     expect(stored.generation.video?.videoUrl).toContain('teaser.mp4');
+    expect(
+      text.calls.some(
+        (call) =>
+          call.layers.brandKit.includes('#111') &&
+          call.layers.brandKit.includes('#c9a') &&
+          call.layers.brandKit.includes('https://cdn.example.com/logo.png'),
+      ),
+    ).toBe(true);
   });
 
   it('forbids reading another user Generation', async () => {
@@ -1231,7 +1239,11 @@ describe('GenerationService AI Post image', () => {
     expect(images.calls[0].productImageUrls).toEqual([
       'https://cdn.example.com/product.jpg',
     ]);
-    expect(images.calls[0].prompt.length).toBeGreaterThan(0);
+    expect(images.calls[0].prompt).toContain('#111');
+    expect(images.calls[0].prompt).toContain('#c9a');
+    expect(images.calls[0].prompt).toContain(
+      'https://cdn.example.com/logo.png',
+    );
 
     const stored = await service.getGeneration('user-1', created.generationId);
     expect(stored.generation.postImageMode).toBe('ai_image');
