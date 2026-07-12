@@ -1,12 +1,12 @@
 import { registerAs } from '@nestjs/config';
+import { config } from 'dotenv';
 
+config();
+
+console.log(process.env.DATABASE_URL,'DATABASE_URL');
 export default registerAs('database', () => ({
   type: 'postgres' as const,
-  host: process.env.DB_HOST || 'localhost',
-  port: parseInt(process.env.DB_PORT || '5432', 10),
-  username: process.env.DB_USERNAME || 'postgres',
-  password: process.env.DB_PASSWORD || '123',
-  database: process.env.DB_NAME || 'vimerai',
+  url: process.env.DATABASE_URL,
   synchronize: process.env.NODE_ENV !== 'production',
   logging: process.env.NODE_ENV === 'development',
 }));

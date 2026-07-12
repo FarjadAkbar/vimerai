@@ -4,8 +4,8 @@ import { S3Client, PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client
 import { IStorageService } from '@/core/ports/storage.service';
 
 /**
- * AWS S3 storage implementation.
- * Uploads files to AWS S3 bucket.
+ * S3-compatible storage (AWS S3, Supabase Storage, etc.).
+ * Optional custom endpoint + forcePathStyle for non-AWS hosts.
  */
 @Injectable()
 export class S3StorageService implements IStorageService {
@@ -13,6 +13,7 @@ export class S3StorageService implements IStorageService {
   private readonly bucketName: string;
   private readonly region: string;
   private readonly baseUrl: string;
+  private readonly useAcl: boolean;
 
   constructor(private readonly configService: ConfigService) {
     const storageConfig = this.configService.get<{
@@ -21,7 +22,8 @@ export class S3StorageService implements IStorageService {
         bucketName: string;
         accessKeyId: string;
         secretAccessKey: string;
-        cloudfrontDomain: string;
+        endpoint: string;
+        publicBaseUrl: string;
       };
     }>('storage');
 
@@ -31,24 +33,31 @@ export class S3StorageService implements IStorageService {
 
     this.region = storageConfig.s3.region || 'us-east-1';
     this.bucketName = storageConfig.s3.bucketName || '';
-    const cdnDomain = storageConfig.s3.cloudfrontDomain;
+    const endpoint = storageConfig.s3.endpoint?.trim() || '';
+    const publicBaseUrl = storageConfig.s3.publicBaseUrl?.trim().replace(/\/$/, '') || '';
 
     if (!this.bucketName) {
-      throw new Error('AWS_S3_BUCKET_NAME is required in storage.s3 configuration');
+      throw new Error('AWS_BUCKET_NAME is required in storage.s3 configuration');
     }
 
-    // Initialize S3 client
+    this.useAcl = !endpoint;
+
     this.s3Client = new S3Client({
       region: this.region,
       credentials: {
         accessKeyId: storageConfig.s3.accessKeyId || '',
         secretAccessKey: storageConfig.s3.secretAccessKey || '',
       },
+      ...(endpoint
+        ? {
+            endpoint,
+            forcePathStyle: true,
+          }
+        : {}),
     });
 
-    // Use CloudFront CDN URL if available, otherwise use S3 URL
-    this.baseUrl = cdnDomain
-      ? `https://${cdnDomain}`
+    this.baseUrl = publicBaseUrl
+      ? publicBaseUrl
       : `https://${this.bucketName}.s3.${this.region}.amazonaws.com`;
   }
 
@@ -58,8 +67,7 @@ export class S3StorageService implements IStorageService {
       Key: key,
       Body: buffer,
       ContentType: contentType,
-      // Make file publicly readable (adjust ACL as needed)
-      ACL: 'public-read',
+      ...(this.useAcl ? { ACL: 'public-read' as const } : {}),
     });
 
     await this.s3Client.send(command);
@@ -80,4 +88,3 @@ export class S3StorageService implements IStorageService {
     return `${this.baseUrl}/${key}`;
   }
 }
-

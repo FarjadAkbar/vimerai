@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Package, Pencil, Plus } from "lucide-react";
+import { Package, Pencil, Plus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -449,13 +449,30 @@ function ProductFields({
         />
         <div className="flex flex-wrap gap-2 mt-2">
           {images.map((url) => (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              key={url}
-              src={url}
-              alt=""
-              className="h-12 w-12 rounded object-cover"
-            />
+            <div key={url} className="relative h-12 w-12">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={url}
+                alt=""
+                className="h-12 w-12 rounded object-cover"
+              />
+              <button
+                type="button"
+                aria-label="Remove image"
+                disabled={images.length <= 1}
+                className="absolute -top-1.5 -right-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-background border text-foreground shadow-sm disabled:opacity-40 disabled:pointer-events-none"
+                onClick={() => {
+                  if (images.length <= 1) return;
+                  form.setValue(
+                    "imageUrls",
+                    images.filter((imageUrl) => imageUrl !== url),
+                    { shouldValidate: true, shouldDirty: true },
+                  );
+                }}
+              >
+                <X className="h-3 w-3" />
+              </button>
+            </div>
           ))}
         </div>
         <FormMessage>

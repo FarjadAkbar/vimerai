@@ -13,9 +13,10 @@ import { STORAGE_SERVICE_TOKEN } from '@/core/tokens/injection.tokens';
  * 
  * Usage:
  * - Set STORAGE_TYPE=local (default) for local filesystem
- * - Set STORAGE_TYPE=s3 for AWS S3
+ * - Set STORAGE_TYPE=s3 for AWS S3 or S3-compatible (e.g. Supabase Storage)
  * - Set STORAGE_TYPE=r2 for Cloudflare R2
- * 
+ *
+ * For Supabase: set AWS_ENDPOINT, AWS_PUBLIC_BASE_URL, AWS_BUCKET_NAME, region, keys.
  * No code changes needed when switching providers - just update config.
  */
 @Module({
