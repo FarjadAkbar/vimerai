@@ -1002,9 +1002,55 @@ describe('GenerationService Promo Length Tier', () => {
       'viewer_connection',
     ]);
     expect(stored.generation.video?.videoUrl).toContain('promo-stitched');
+    expect(stored.generation.video?.videoUrl).not.toBe(
+      stored.generation.video?.shots?.[0]?.videoUrl,
+    );
     expect(text.calls.some((call) =>
       call.layers.outputSchema.includes('Promo'),
     )).toBe(true);
+  });
+
+  it('fails Video arm on stitch error while keeping completed Promo Shots', async () => {
+    video = {
+      ...video,
+      stitchClips: async () => {
+        stitchCalls += 1;
+        throw new Error('merge-videos unavailable');
+      },
+    };
+    service = new GenerationService(
+      text,
+      { generateImage: async () => ({ imageUrl: '' }) },
+      video,
+      generations,
+      products,
+      brandKits,
+      subscription,
+    );
+
+    const created = await service.createGeneration('user-1', {
+      productId: 'prod-1',
+      goal: 'increase_sales',
+      lengthTier: 'promo',
+    });
+
+    expect(created.status).toBe('partial');
+    expect(stitchCalls).toBe(1);
+
+    const stored = await service.getGeneration('user-1', created.generationId);
+    expect(stored.generation.video?.status).toBe('failed');
+    expect(stored.generation.video?.videoUrl).toBeNull();
+    expect(stored.generation.video?.error).toContain('merge-videos unavailable');
+    expect(stored.generation.video?.shots).toHaveLength(4);
+    expect(
+      stored.generation.video?.shots?.every((shot) => shot.status === 'completed'),
+    ).toBe(true);
+    expect(
+      stored.generation.arms.find((arm) => arm.arm === 'video')?.status,
+    ).toBe('failed');
+    expect(
+      stored.generation.arms.find((arm) => arm.arm === 'social-post')?.status,
+    ).toBe('completed');
   });
 
   it('keeps successful Promo Shots and retries only failed ones without recharging', async () => {
@@ -1604,6 +1650,7 @@ describe('GenerationService.listGenerations', () => {
       productId: 'prod-1',
       goal: 'increase_sales',
     });
+    await new Promise((resolve) => setTimeout(resolve, 5));
     const second = await service.createGeneration('user-1', {
       productId: 'prod-1',
       goal: 'brand_awareness',

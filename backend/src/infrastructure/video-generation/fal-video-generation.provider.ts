@@ -475,14 +475,66 @@ export class FalVideoGenerationProvider implements IVideoGenerationProvider {
       );
     }
 
-    // Phase 1 stitch assembly: ordered beat Shots are the Promo Video contract.
-    // fal native concat is deferred (ADR 0012); we return a stitch job whose
-    // playable URL is the first beat clip while Generation.video.shots holds
-    // the full ordered stitch for playback/retry/download.
-    return {
-      jobId: `stitch-${urls.length}-${Date.now()}`,
-      status: 'completed',
-      videoUrl: urls[0],
-    };
+    if (urls.length === 1) {
+      return {
+        jobId: `stitch-single-${Date.now()}`,
+        status: 'completed',
+        videoUrl: urls[0],
+      };
+    }
+
+    try {
+      const mergeEndpoint = this.joinUrl(
+        this.falConfig.baseUrl,
+        'ffmpeg-api/merge-videos',
+      );
+      const response = await axios.post<FalSubmitResponse>(
+        mergeEndpoint,
+        { video_urls: urls },
+        {
+          headers: this.jsonHeaders(),
+          timeout: this.falConfig.timeout,
+        },
+      );
+
+      const requestId = response.data.request_id;
+      if (!requestId) {
+        throw new BadRequestException(
+          'fal.ai did not return a request_id for Promo stitch',
+        );
+      }
+
+      this.requestUrls.set(requestId, {
+        statusUrl:
+          response.data.status_url ||
+          `${this.queueBaseUrl()}ffmpeg-api/requests/${requestId}/status`,
+        responseUrl:
+          response.data.response_url ||
+          `${this.queueBaseUrl()}ffmpeg-api/requests/${requestId}/response`,
+      });
+
+      return await this.waitForJob(requestId);
+    } catch (error) {
+      throw this.toBadRequest(error, 'fal.ai Promo stitch failed');
+    }
+  }
+
+  private async waitForJob(jobId: string): Promise<GenerateVideoResponse> {
+    const deadline = Date.now() + this.falConfig.timeout;
+    let latest = await this.getGenerationStatus(jobId);
+
+    while (latest.status !== 'completed' && latest.status !== 'failed') {
+      if (Date.now() >= deadline) {
+        return {
+          jobId,
+          status: 'failed',
+          error: latest.error ?? 'Promo stitch timed out',
+        };
+      }
+      await new Promise((resolve) => setTimeout(resolve, 2_000));
+      latest = await this.getGenerationStatus(jobId);
+    }
+
+    return latest;
   }
 }
