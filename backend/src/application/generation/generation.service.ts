@@ -62,7 +62,7 @@ import {
 import type { PromptLayers } from '@/types/generation/text-generation';
 
 const QUALITY_AND_SAFETY =
-  'Write human, benefit-led marketing copy. Never sound AI-generated. Strong hooks and clear CTAs.';
+  'Write all marketing copy in English. Write human, benefit-led marketing copy. Never sound AI-generated. Strong hooks and clear CTAs.';
 
 @Injectable()
 export class GenerationService implements IGenerationService {
