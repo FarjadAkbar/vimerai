@@ -117,7 +117,7 @@ function BrandKitFormFields({
                   }}
                 />
                 {field.value ? (
-                  <p className="text-xs text-muted-foreground truncate">
+                  <p className="text-xs text-muted-foreground truncate max-w-60">
                     {field.value}
                   </p>
                 ) : null}

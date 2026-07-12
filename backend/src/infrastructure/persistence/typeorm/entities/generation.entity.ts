@@ -71,7 +71,10 @@ export class GenerationEntity {
   @Column({ type: 'jsonb', nullable: true })
   video: VideoContent | null;
 
-  @Column()
+  @Column({
+    type: 'varchar',
+    length: 20,
+  })
   status: Generation['status'];
 
   @Column({ type: 'int', default: 0 })

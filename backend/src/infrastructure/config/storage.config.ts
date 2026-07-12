@@ -2,21 +2,22 @@ import { registerAs } from '@nestjs/config';
 
 export default registerAs('storage', () => ({
   type: process.env.STORAGE_TYPE || 'local', // 'local', 's3', or 'r2'
-  
+
   // Local storage (default)
   local: {
     uploadsDir: process.env.UPLOADS_DIR || 'uploads',
   },
-  
-  // AWS S3 configuration
+
+  // S3-compatible (AWS S3, Supabase Storage, etc.)
   s3: {
     region: process.env.AWS_REGION || 'us-east-1',
-    bucketName: process.env.AWS_S3_BUCKET_NAME || '',
+    bucketName: process.env.AWS_BUCKET_NAME || '',
     accessKeyId: process.env.AWS_ACCESS_KEY_ID || '',
     secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || '',
-    cloudfrontDomain: process.env.AWS_CLOUDFRONT_DOMAIN || '',
+    endpoint: process.env.AWS_ENDPOINT || '',
+    publicBaseUrl: process.env.AWS_PUBLIC_BASE_URL || '',
   },
-  
+
   // Cloudflare R2 configuration
   r2: {
     accountId: process.env.CLOUDFLARE_ACCOUNT_ID || '',
@@ -26,4 +27,3 @@ export default registerAs('storage', () => ({
     customDomain: process.env.CLOUDFLARE_R2_CUSTOM_DOMAIN || '',
   },
 }));
-
