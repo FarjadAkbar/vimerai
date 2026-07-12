@@ -184,6 +184,19 @@ describe('GenerationService.createGeneration', () => {
           call.layers.brandKit.includes('https://cdn.example.com/logo.png'),
       ),
     ).toBe(true);
+    expect(
+      text.calls.every((call) =>
+        call.layers.qualityAndSafety.toLowerCase().includes('english'),
+      ),
+    ).toBe(true);
+    expect(text.calls.map((call) => call.artifact).sort()).toEqual(
+      [
+        'creative-brief',
+        'reel-caption',
+        'reel-storyboard',
+        'social-post',
+      ].sort(),
+    );
   });
 
   it('forbids reading another user Generation', async () => {
@@ -562,6 +575,9 @@ describe('GenerationService.regenerateSection', () => {
     expect(result.generation.socialPost?.headline).toBe(originalHeadline);
     expect(result.generation.socialPost?.body).toBe(originalBody);
     expect(result.generation.textSectionRegenCount).toBe(1);
+    expect(text.calls[0].layers.qualityAndSafety.toLowerCase()).toContain(
+      'english',
+    );
   });
 
   it('uses live Brand Kit and Product for section regenerate, not only the snapshot', async () => {

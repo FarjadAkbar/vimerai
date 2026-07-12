@@ -4,10 +4,10 @@
 
 **Blocked by:** None — can start immediately
 
-**Status:** ready-for-agent
+**Status:** resolved
 
-- [ ] Quality/safety (or equivalent layer) instructs all copy in English
-- [ ] Social Post, Reel Storyboard, Reel caption, and Creative Brief text paths use that lock
-- [ ] Section regenerate keeps the English constraint
-- [ ] Tests assert the English lock is present in structured text-provider inputs
-- [ ] No Brand Kit preferred-language CRUD in this ticket
+- [x] Quality/safety (or equivalent layer) instructs all copy in English
+- [x] Social Post, Reel Storyboard, Reel caption, and Creative Brief text paths use that lock
+- [x] Section regenerate keeps the English constraint
+- [x] Tests assert the English lock is present in structured text-provider inputs
+- [x] No Brand Kit preferred-language CRUD in this ticket
