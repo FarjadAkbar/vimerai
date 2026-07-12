@@ -10,6 +10,10 @@ AI creative studio that turns ecommerce brand and product context into marketing
 A single generation flow that produces real short-form video and social post / storyboard content together — not video-only, not copy-only.
 _Avoid_: Shipping posts without video first; shipping video without companion copy first
 
+**Phase C (harden B+A)**:
+Make the shipped B+A loop honest and trustworthy before new domains (publish, Shopify, Workspace, studio chrome redesign). **First implementable slice:** (1) real Promo stitch via fal merge-videos into one playable ~60s Video, (2) Brand Kit colors and logo URL in prompt layers and AI Post image prompts, (3) English language lock on Generation copy. Sibling parallel Storyboard/Video arms and creative-partner progress UX remain Phase C backlog, not in the first slice. AI Post image “looks like Product photo” stays parked (model/conditioning) unless later proven to be a product bug (e.g. silent Product-photo fallback). Brand Kit preferred-language field is deferred.
+_Avoid_: Treating Phase C as Workspace/publish/Shopify; calling this “Phase 2” until a separate Phase 2 is locked; shipping colors-in-layers before honest Promo stitch; expanding the first slice to include parallel arms or progress UX
+
 ### Ownership
 
 **User**:
@@ -85,7 +89,7 @@ The shared structured intent (hook, attention, product display, viewer connectio
 _Avoid_: Prompt (implementation), master prompt, outline
 
 **Prompt layers**:
-The fixed order of context sent into text generation: (1) quality and safety rules (2) Brand Kit (3) Product (4) Goal, Length Tier, and platforms (5) output schema for the requested artifact. Section regenerate reuses layers and swaps only the output schema / target section.
+The fixed order of context sent into text generation: (1) quality and safety rules — including Phase C default **write all copy in English** (2) Brand Kit — including name, tone, audience, things-to-avoid, primary/secondary colors, logo URL as context, and optional AI instructions (3) Product (4) Goal, Length Tier, and platforms (5) output schema for the requested artifact. Section regenerate reuses layers and swaps only the output schema / target section. Optional AI Post image prompts also receive Brand Kit colors and logo context; Phase C does not inject colors into fal Video prompts. Brand Kit preferred-language as a user field is deferred.
 _Avoid_: Ad hoc prompt string, Prompt Studio template
 
 **Length Tier**:
@@ -97,7 +101,7 @@ The usage unit deducted for a Generation. Cost is weighted by Length Tier (e.g. 
 _Avoid_: Token (LLM billing), video credit (as a separate meter in Phase 1)
 
 **Shot**:
-One short rendered clip that is part of a Promo Video stitch (typically one reel beat). Teaser Video is a single shot.
+One short rendered clip that is part of a Promo Video stitch (typically one reel beat). Teaser Video is a single shot. Promo stitches beat Shots into one Video via the video provider’s merge/stitch capability (fal merge-videos in Phase C).
 _Avoid_: Scene (prefer for storyboard narrative units), segment
 
 **Video**:
