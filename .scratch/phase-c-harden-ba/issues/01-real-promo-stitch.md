@@ -4,10 +4,10 @@
 
 **Blocked by:** None — can start immediately
 
-**Status:** ready-for-agent
+**Status:** resolved
 
-- [ ] Promo create sets Video URL to stitch/merge result distinct from a single first Shot
-- [ ] Ordered beat Shots still stored and usable for failed-arm retry / Shot regenerate
-- [ ] Shot regenerate on Promo re-stitches and updates Video URL
-- [ ] Stitch failure fails Video arm while keeping completed Shots and other Content Outputs
-- [ ] Tests fake video provider stitch calls and assert merge URL behavior at IGenerationService
+- [x] Promo create sets Video URL to stitch/merge result distinct from a single first Shot
+- [x] Ordered beat Shots still stored and usable for failed-arm retry / Shot regenerate
+- [x] Shot regenerate on Promo re-stitches and updates Video URL
+- [x] Stitch failure fails Video arm while keeping completed Shots and other Content Outputs
+- [x] Tests fake video provider stitch calls and assert merge URL behavior at IGenerationService
