@@ -49,12 +49,16 @@ _Avoid_: Prompt template (as a consumer feature), custom prompt library
 ### Generation
 
 **Generation**:
-One user-initiated create action that yields one or more Content Outputs for a Product under a Brand Kit and Goal. Requires an existing Brand Kit and Product — Generation is blocked until both exist. Happy path: user picks **Product + Goal** then Generate. Defaults: Length Tier **Teaser**, feed platform **Instagram**, reel platform **Instagram Reels**, Post image **Product photo**; Brand Kit auto-selected when the Product has one link (must choose when multiple). Other options live behind an Options disclosure. Stores a snapshot of the Brand Kit and Product fields used; reopen shows that snapshot. Regenerate and section-regenerate use the live Brand Kit and Product. Arms may complete independently: partial success keeps finished Content Outputs; failed arms are retryable without recharging for work that already succeeded.
+One user-initiated create action that yields one or more Content Outputs (and, in Posts-only, Post Concepts) for a Product under a Brand Kit and Goal. Requires an existing Brand Kit and Product — Generation is blocked until both exist. Two paths: **multi-arm** (Social Post + Reel Storyboard + Video; Phase 1 defaults Length Tier Teaser, feed Instagram, reel Instagram Reels, Post image Product photo) and **Posts-only** (see Posts-only Generation). Brand Kit auto-selected when the Product has one link (must choose when multiple). Stores a snapshot of the Brand Kit and Product fields used; reopen shows that snapshot. Regenerate and section-regenerate use the live Brand Kit and Product. Multi-arm arms may complete independently: partial success keeps finished Content Outputs; failed arms are retryable without recharging for work that already succeeded.
 _Avoid_: Job (prefer in implementation only), render, run
 
+**Posts-only Generation**:
+A Generation path that skips Video and Reel Storyboard. Happy path: Product + Goal → exactly ten Instagram Post Concepts → user selects up to three → each selected Post Concept renders as a Social Post with an AI-generated Post image (Product photo is not offered in this path). Credits: charge for the Post Concept set; charge again per rendered Social Post. Competitor Task brief and soft memory are deferred.
+_Avoid_: Multi-arm Generation, posts mode (prefer Posts-only Generation), video-off checkbox as the name of the path
+
 **Content Output**:
-A concrete generated artifact the user can view, edit, and export. Phase 1 types: Social Post, Reel Storyboard, Video. Phase 1 editing is structured fields and scene lists (including reorder): the user can change text and simple fields directly and save with no AI call. Section regenerate is optional when they want the AI to rewrite a part. Freeform design canvas and version history are deferred.
-_Avoid_: Result, asset (assets are inputs), creative
+A concrete generated artifact the user can view, edit, and export. Phase 1 types: Social Post, Reel Storyboard, Video. Post Concepts are not Content Outputs. Phase 1 editing is structured fields and scene lists (including reorder): the user can change text and simple fields directly and save with no AI call. Section regenerate is optional when they want the AI to rewrite a part. Freeform design canvas and version history are deferred.
+_Avoid_: Result, asset (assets are inputs), creative, Post Concept
 
 **Manual edit**:
 A user change to a Content Output field (headline, body, CTA, hashtags, scene text, etc.) saved without calling the AI. Preferred for small tweaks to avoid token cost.
@@ -65,8 +69,12 @@ An AI request that rewrites only a chosen part of a Content Output (e.g. hashtag
 _Avoid_: Full regenerate (that regenerates the whole Generation or whole Content Output), manual edit
 
 **Social Post**:
-A platform-specific **feed** post for Instagram or Facebook: caption package (headline, body, CTA, caption, hashtags) plus a post image. Phase 1: one Social Post per Generation; feed platform is Instagram or Facebook (user picks; default Instagram). Image mode is either **use Product photo** (default when Product images exist) or **AI-generated image** (optional), with Product images used as conditioning when generating. Delivered via Export, not API publish.
-_Avoid_: Caption-only, tweet, listing, reel caption (that belongs on Video)
+A platform-specific **feed** post for Instagram or Facebook: caption package (headline, body, CTA, caption, hashtags) plus a post image. Phase 1 multi-arm Generation: one Social Post per Generation; feed platform is Instagram or Facebook (user picks; default Instagram). Image mode is either **use Product photo** (default when Product images exist) or **AI-generated image** (optional), with Product images used as conditioning when generating. Delivered via Export, not API publish. Posts-only Generation may yield multiple Social Posts from selected Post Concepts (see Post Concept).
+_Avoid_: Caption-only, tweet, listing, reel caption (that belongs on Video), Post Concept (directions before a Social Post exists)
+
+**Post Concept**:
+One alternate Instagram feed direction shown before the user commits to a Social Post. Fields: hook, visual idea, and angle (why it fits the Goal). Not a Content Output and not a Social Post until the user selects it and it is rendered. Posts-only Generation produces exactly ten Post Concepts; the user may select up to three to render as Social Posts.
+_Avoid_: Creative Brief, concept card, post direction, Social Post, outline
 
 **Post image**:
 The visual attached to a Social Post — either a selected Product Asset or an AI-generated still.
@@ -85,8 +93,8 @@ A scene-by-scene plan for a marketing reel — not the rendered Video. Every ree
 _Avoid_: Storyboard-as-video, script-only, ad storyboard (we make marketing reels, not ad-buy creatives)
 
 **Creative Brief**:
-The shared structured intent (hook, attention, product display, viewer connection, tone, CTA, goal, length tier) produced once per Generation and fed in parallel to Social Post, Reel Storyboard, and Video arms. Text arms (brief, Social Post, Reel Storyboard, Reel caption) use an LLM text provider; Video uses the video provider.
-_Avoid_: Prompt (implementation), master prompt, outline
+The shared structured intent (hook, attention, product display, viewer connection, tone, CTA, goal, length tier) produced once per Generation and fed in parallel to Social Post, Reel Storyboard, and Video arms. Text arms (brief, Social Post, Reel Storyboard, Reel caption) use an LLM text provider; Video uses the video provider. Distinct from Post Concept (many alternate Instagram directions in Posts-only).
+_Avoid_: Prompt (implementation), master prompt, outline, Post Concept
 
 **Prompt layers**:
 The fixed order of context sent into text generation: (1) quality and safety rules — including Phase C default **write all copy in English** (2) Brand Kit — including name, tone, audience, things-to-avoid, primary/secondary colors, logo URL as context, and optional AI instructions (3) Product (4) Goal, Length Tier, and platforms (5) output schema for the requested artifact. Section regenerate reuses layers and swaps only the output schema / target section. Optional AI Post image prompts also receive Brand Kit colors and logo context; Phase C does not inject colors into fal Video prompts. Brand Kit preferred-language as a user field is deferred.
@@ -97,7 +105,7 @@ The user-selected target duration for a Generation’s Video (and matching Reel 
 _Avoid_: Mode (conflicts with existing fal fast/cinematic/avatar), quality preset
 
 **Generation credit**:
-The usage unit deducted for a Generation. Cost is weighted by Length Tier (e.g. Teaser = 1, Promo = 4). Manual edits cost zero. Text section regenerate is free (fair-use limited). Regenerating a Video shot costs credits (e.g. 1 per shot). Optional AI Post image generation may add cost — exact surcharge not locked beyond “not free like text regen.”
+The usage unit deducted for a Generation. Multi-arm cost is weighted by Length Tier (e.g. Teaser = 1, Promo = 4). Posts-only charges 1 credit for the ten-Post-Concept set, then 1 credit per rendered Social Post (AI Post image included in that render charge). Manual edits cost zero. Text section regenerate is free (fair-use limited). Regenerating a Video shot costs credits (e.g. 1 per shot).
 _Avoid_: Token (LLM billing), video credit (as a separate meter in Phase 1)
 
 **Shot**:

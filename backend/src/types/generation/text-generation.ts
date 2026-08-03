@@ -5,6 +5,7 @@ export type TextArtifactKind =
   | 'social-post'
   | 'reel-storyboard'
   | 'reel-caption'
+  | 'post-concepts'
   | 'section-regenerate';
 
 export interface PromptLayers {

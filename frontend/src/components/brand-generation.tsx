@@ -40,6 +40,7 @@ const formSchema = z.object({
   productId: z.string().uuid("Select a Product"),
   brandKitId: z.string().optional(),
   goal: z.enum(["increase_sales", "product_launch", "brand_awareness"]),
+  path: z.enum(["posts_only", "multi_arm"]),
   lengthTier: z.enum(["teaser", "promo"]),
   feedPlatform: z.enum(["instagram", "facebook"]),
   reelPlatform: z.enum(["instagram_reels", "tiktok"]),
@@ -77,6 +78,7 @@ export function BrandGeneration() {
       productId: "",
       brandKitId: "",
       goal: "increase_sales",
+      path: "posts_only",
       lengthTier: "teaser",
       feedPlatform: "instagram",
       reelPlatform: "instagram_reels",
@@ -85,6 +87,7 @@ export function BrandGeneration() {
   });
 
   const selectedProductId = form.watch("productId");
+  const selectedPath = form.watch("path");
 
   const linkedKitIds = useMemo(() => {
     const product = products.find((item) => item.id === selectedProductId);
@@ -178,10 +181,15 @@ export function BrandGeneration() {
                 productId: values.productId,
                 brandKitId: values.brandKitId || undefined,
                 goal: values.goal,
-                lengthTier: values.lengthTier,
-                feedPlatform: values.feedPlatform,
-                reelPlatform: values.reelPlatform,
-                postImageMode: values.postImageMode,
+                path: values.path,
+                ...(values.path === "multi_arm"
+                  ? {
+                      lengthTier: values.lengthTier,
+                      feedPlatform: values.feedPlatform,
+                      reelPlatform: values.reelPlatform,
+                      postImageMode: values.postImageMode,
+                    }
+                  : {}),
               },
               {
                 onSuccess: (result) => setGenerationId(result.generationId),
@@ -193,6 +201,27 @@ export function BrandGeneration() {
             );
           })}
         >
+          <FormField
+            control={form.control}
+            name="path"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>What to generate</FormLabel>
+                <FormControl>
+                  <select {...field} className={selectClassName}>
+                    <option value="posts_only">
+                      Instagram posts (10 concepts, pick up to 3)
+                    </option>
+                    <option value="multi_arm">
+                      Full bundle (post + storyboard + video)
+                    </option>
+                  </select>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
           <FormField
             control={form.control}
             name="productId"
@@ -261,82 +290,92 @@ export function BrandGeneration() {
           />
 
           <div className="space-y-3">
-            <button
-              type="button"
-              className="text-sm text-muted-foreground underline-offset-4 hover:underline"
-              onClick={() => setShowOptions((open) => !open)}
-            >
-              {showOptions ? "Hide options" : "Options"}
-            </button>
-            {showOptions && (
-              <div className="grid gap-4 sm:grid-cols-2">
-                <FormField
-                  control={form.control}
-                  name="lengthTier"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Length</FormLabel>
-                      <FormControl>
-                        <select {...field} className={selectClassName}>
-                          <option value="teaser">
-                            Teaser (~8–10s, {LENGTH_TIER_CREDIT_WEIGHT.teaser}{" "}
-                            credit)
-                          </option>
-                          <option value="promo">
-                            Promo (~60s stitch, {LENGTH_TIER_CREDIT_WEIGHT.promo}{" "}
-                            credits)
-                          </option>
-                        </select>
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="feedPlatform"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Feed</FormLabel>
-                      <FormControl>
-                        <select {...field} className={selectClassName}>
-                          <option value="instagram">Instagram</option>
-                          <option value="facebook">Facebook</option>
-                        </select>
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="reelPlatform"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Reel</FormLabel>
-                      <FormControl>
-                        <select {...field} className={selectClassName}>
-                          <option value="instagram_reels">IG Reels</option>
-                          <option value="tiktok">TikTok</option>
-                        </select>
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="postImageMode"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Post image</FormLabel>
-                      <FormControl>
-                        <select {...field} className={selectClassName}>
-                          <option value="product_photo">Product photo</option>
-                          <option value="ai_image">AI image (+1 credit)</option>
-                        </select>
-                      </FormControl>
-                    </FormItem>
-                  )}
-                />
-              </div>
+            {selectedPath === "multi_arm" && (
+              <>
+                <button
+                  type="button"
+                  className="text-sm text-muted-foreground underline-offset-4 hover:underline"
+                  onClick={() => setShowOptions((open) => !open)}
+                >
+                  {showOptions ? "Hide options" : "Options"}
+                </button>
+                {showOptions && (
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <FormField
+                      control={form.control}
+                      name="lengthTier"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Length</FormLabel>
+                          <FormControl>
+                            <select {...field} className={selectClassName}>
+                              <option value="teaser">
+                                Teaser (~8–10s, {LENGTH_TIER_CREDIT_WEIGHT.teaser}{" "}
+                                credit)
+                              </option>
+                              <option value="promo">
+                                Promo (~60s stitch,{" "}
+                                {LENGTH_TIER_CREDIT_WEIGHT.promo} credits)
+                              </option>
+                            </select>
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="feedPlatform"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Feed</FormLabel>
+                          <FormControl>
+                            <select {...field} className={selectClassName}>
+                              <option value="instagram">Instagram</option>
+                              <option value="facebook">Facebook</option>
+                            </select>
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="reelPlatform"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Reel</FormLabel>
+                          <FormControl>
+                            <select {...field} className={selectClassName}>
+                              <option value="instagram_reels">IG Reels</option>
+                              <option value="tiktok">TikTok</option>
+                            </select>
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="postImageMode"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Post image</FormLabel>
+                          <FormControl>
+                            <select {...field} className={selectClassName}>
+                              <option value="product_photo">Product photo</option>
+                              <option value="ai_image">AI image (+1 credit)</option>
+                            </select>
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                )}
+              </>
+            )}
+            {selectedPath === "posts_only" && (
+              <p className="text-sm text-muted-foreground">
+                Generates 10 Instagram Post Concepts. Pick up to 3 to render as
+                full Social Posts with AI images (not Product photos).
+              </p>
             )}
           </div>
 
@@ -344,9 +383,11 @@ export function BrandGeneration() {
 
           {createGeneration.isPending && (
             <p className="text-sm text-muted-foreground">
-              {form.watch("lengthTier") === "promo"
-                ? "Queuing Promo (~60s): rendering beat Shots, then stitching. This can take several minutes — keep this page open."
-                : "Generating your Teaser bundle…"}
+              {selectedPath === "posts_only"
+                ? "Generating 10 Instagram Post Concepts…"
+                : form.watch("lengthTier") === "promo"
+                  ? "Queuing Promo (~60s): rendering beat Shots, then stitching. This can take several minutes — keep this page open."
+                  : "Generating your Teaser bundle…"}
             </p>
           )}
 
@@ -356,10 +397,14 @@ export function BrandGeneration() {
             disabled={createGeneration.isPending}
           >
             {createGeneration.isPending
-              ? form.watch("lengthTier") === "promo"
-                ? "Promo queued…"
-                : "Generating…"
-              : "Generate"}
+              ? selectedPath === "posts_only"
+                ? "Generating concepts…"
+                : form.watch("lengthTier") === "promo"
+                  ? "Promo queued…"
+                  : "Generating…"
+              : selectedPath === "posts_only"
+                ? "Generate Post Concepts"
+                : "Generate"}
           </Button>
         </form>
       </Form>

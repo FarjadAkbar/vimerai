@@ -5,6 +5,7 @@ import {
   type ManualEditGenerationRequest,
   type RegenerateSectionRequest,
   type RegenerateShotRequest,
+  type RenderPostConceptsRequest,
   type RetryFailedArmsRequest,
 } from '@/lib/api/generations.api';
 
@@ -95,6 +96,23 @@ export const useRetryFailedArms = () => {
       id: string;
       data?: RetryFailedArmsRequest;
     }) => generationsApi.retryFailedArms(id, data),
+    onSuccess: (result) => {
+      queryClient.setQueryData(['generations', result.generation.id], result);
+      void queryClient.invalidateQueries({ queryKey: ['generations', 'list'] });
+    },
+  });
+};
+
+export const useRenderPostConcepts = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      id,
+      data,
+    }: {
+      id: string;
+      data: RenderPostConceptsRequest;
+    }) => generationsApi.renderPostConcepts(id, data),
     onSuccess: (result) => {
       queryClient.setQueryData(['generations', result.generation.id], result);
       void queryClient.invalidateQueries({ queryKey: ['generations', 'list'] });

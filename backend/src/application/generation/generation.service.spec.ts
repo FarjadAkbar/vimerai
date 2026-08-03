@@ -1750,3 +1750,210 @@ describe('GenerationService.listGenerations', () => {
     ).rejects.toBeInstanceOf(ForbiddenException);
   });
 });
+
+describe('GenerationService Posts-only Generation', () => {
+  let brandKits: IBrandKitRepository;
+  let products: IProductRepository;
+  let generations: InMemoryGenerationRepository;
+  let text: FakeTextGenerationProvider;
+  let videoCalls: number;
+  let usageIncrements: number;
+  let subscription: ISubscriptionService;
+  let video: IVideoGenerationProvider;
+  let service: GenerationService;
+
+  const tenConcepts = Array.from({ length: 10 }, (_, i) => ({
+    id: `concept-${i + 1}`,
+    hook: `Hook ${i + 1}`,
+    visualIdea: `Visual ${i + 1}`,
+    angle: `Angle ${i + 1}`,
+  }));
+
+  beforeEach(async () => {
+    brandKits = new InMemoryBrandKitRepository();
+    products = new InMemoryProductRepository();
+    generations = new InMemoryGenerationRepository();
+    videoCalls = 0;
+    usageIncrements = 0;
+
+    subscription = {
+      canGenerate: async (_userId?: string, creditsNeeded = 1) =>
+        creditsNeeded <= 10,
+      recordVideoGeneration: async (_userId?: string, creditsNeeded = 1) => {
+        usageIncrements += creditsNeeded;
+      },
+    } as unknown as ISubscriptionService;
+
+    video = {
+      generateVideo: async () => {
+        videoCalls += 1;
+        return {
+          jobId: 'fal-job-1',
+          status: 'completed',
+          videoUrl: 'https://cdn.example.com/teaser.mp4',
+        };
+      },
+      getGenerationStatus: async () => ({
+        jobId: 'fal-job-1',
+        status: 'completed',
+        videoUrl: 'https://cdn.example.com/teaser.mp4',
+      }),
+      generatePreview: async () => ({
+        jobId: 'fal-job-1',
+        status: 'completed',
+      }),
+      stitchClips: async () => ({
+        jobId: 'stitch-1',
+        status: 'completed',
+        videoUrl: 'https://cdn.example.com/promo-stitched.mp4',
+      }),
+      downloadVideo: async () => Buffer.from(''),
+    };
+
+    text = new FakeTextGenerationProvider({
+      'post-concepts': JSON.stringify({ concepts: tenConcepts }),
+      'social-post': JSON.stringify({
+        headline: 'Rendered headline',
+        body: 'Rendered body',
+        cta: 'Shop now',
+        caption: 'Rendered Instagram caption',
+        hashtags: ['#nitro', '#shine'],
+      }),
+    });
+
+    await brandKits.create(
+      BrandKit.create(
+        'kit-1',
+        'user-1',
+        'Nitro',
+        'https://cdn.example.com/logo.png',
+        { primary: '#111', secondary: '#c9a' },
+        'luxury',
+        'Premium buyers',
+        'Slang',
+      ),
+    );
+    await products.create(
+      Product.create(
+        'prod-1',
+        'user-1',
+        'Serum',
+        'Hydrating serum',
+        ['https://cdn.example.com/product.jpg'],
+        'https://shop.example.com/serum',
+        ['kit-1'],
+        '49',
+      ),
+    );
+
+    service = new GenerationService(
+      text,
+      {
+        generateImage: async () => ({
+          imageUrl: 'https://cdn.example.com/ai-feed.jpg',
+        }),
+      },
+      video,
+      generations,
+      products,
+      brandKits,
+      subscription,
+    );
+  });
+
+  it('creates Posts-only Generation with exactly 10 Post Concepts and no Video', async () => {
+    const result = await service.createGeneration('user-1', {
+      productId: 'prod-1',
+      goal: 'increase_sales',
+      path: 'posts_only',
+    });
+
+    expect(result.status).toBe('completed');
+    expect(usageIncrements).toBe(1);
+    expect(videoCalls).toBe(0);
+
+    const stored = await service.getGeneration('user-1', result.generationId);
+    expect(stored.generation.path).toBe('posts_only');
+    expect(stored.generation.feedPlatform).toBe('instagram');
+    expect(stored.generation.postImageMode).toBe('ai_image');
+    expect(stored.generation.postConcepts).toHaveLength(10);
+    expect(stored.generation.postConcepts?.[0]).toMatchObject({
+      hook: expect.any(String),
+      visualIdea: expect.any(String),
+      angle: expect.any(String),
+    });
+    expect(stored.generation.socialPost).toBeNull();
+    expect(stored.generation.socialPosts).toEqual([]);
+    expect(stored.generation.video).toBeNull();
+    expect(stored.generation.reelStoryboard).toBeNull();
+    expect(stored.generation.reelCaption).toBeNull();
+    expect(text.calls.map((call) => call.artifact)).toEqual(['post-concepts']);
+  });
+
+  it('renders up to 3 selected Post Concepts as AI Social Posts', async () => {
+    const created = await service.createGeneration('user-1', {
+      productId: 'prod-1',
+      goal: 'increase_sales',
+      path: 'posts_only',
+    });
+    usageIncrements = 0;
+    const before = await service.getGeneration('user-1', created.generationId);
+    const conceptIds = before.generation.postConcepts!.slice(0, 2).map((c) => c.id);
+
+    const result = await service.renderPostConcepts(
+      'user-1',
+      created.generationId,
+      { conceptIds },
+    );
+
+    expect(usageIncrements).toBe(2);
+    expect(result.generation.socialPosts).toHaveLength(2);
+    expect(result.generation.socialPosts[0].postImageUrl).toBe(
+      'https://cdn.example.com/ai-feed.jpg',
+    );
+    expect(result.generation.socialPosts[0].postImageUrl).not.toContain(
+      'product.jpg',
+    );
+    expect(result.generation.socialPosts[0].headline).toBe('Rendered headline');
+    expect(result.generation.socialPosts[0].conceptId).toBe(conceptIds[0]);
+    expect(videoCalls).toBe(0);
+  });
+
+  it('rejects rendering more than 3 Post Concepts', async () => {
+    const created = await service.createGeneration('user-1', {
+      productId: 'prod-1',
+      goal: 'increase_sales',
+      path: 'posts_only',
+    });
+    const ids = (
+      await service.getGeneration('user-1', created.generationId)
+    ).generation.postConcepts!.slice(0, 4).map((c) => c.id);
+
+    await expect(
+      service.renderPostConcepts('user-1', created.generationId, {
+        conceptIds: ids,
+      }),
+    ).rejects.toBeInstanceOf(BadRequestException);
+  });
+
+  it('rejects a second batch that would exceed 3 rendered Social Posts', async () => {
+    const created = await service.createGeneration('user-1', {
+      productId: 'prod-1',
+      goal: 'increase_sales',
+      path: 'posts_only',
+    });
+    const ids = (
+      await service.getGeneration('user-1', created.generationId)
+    ).generation.postConcepts!.map((c) => c.id);
+
+    await service.renderPostConcepts('user-1', created.generationId, {
+      conceptIds: ids.slice(0, 2),
+    });
+
+    await expect(
+      service.renderPostConcepts('user-1', created.generationId, {
+        conceptIds: ids.slice(2, 4),
+      }),
+    ).rejects.toBeInstanceOf(BadRequestException);
+  });
+});

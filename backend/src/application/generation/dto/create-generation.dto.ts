@@ -10,6 +10,7 @@ const LENGTH_TIERS = ['teaser', 'promo'] as const;
 const FEED_PLATFORMS = ['instagram', 'facebook'] as const;
 const REEL_PLATFORMS = ['instagram_reels', 'tiktok'] as const;
 const POST_IMAGE_MODES = ['product_photo', 'ai_image'] as const;
+const GENERATION_PATHS = ['multi_arm', 'posts_only'] as const;
 
 export class CreateGenerationDto {
   @IsUUID()
@@ -21,6 +22,10 @@ export class CreateGenerationDto {
 
   @IsIn(GOALS)
   goal: (typeof GOALS)[number];
+
+  @IsOptional()
+  @IsIn(GENERATION_PATHS)
+  path?: (typeof GENERATION_PATHS)[number];
 
   @IsOptional()
   @IsIn(LENGTH_TIERS)
