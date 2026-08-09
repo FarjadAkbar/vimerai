@@ -5,7 +5,7 @@ import type {
   ImageGenerationResult,
 } from '@/types/generation/image-generation';
 
-/** Production placeholder until image adapter is chosen and wired. */
+/** Test/dev placeholder; production wires FalImageGenerationProvider. */
 @Injectable()
 export class StubImageGenerationProvider implements IImageGenerationProvider {
   async generateImage(
