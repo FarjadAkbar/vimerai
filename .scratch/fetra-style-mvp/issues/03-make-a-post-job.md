@@ -6,9 +6,9 @@
 
 **Status:** ready-for-agent
 
-- [ ] Curated Format catalog exists with modality tags; Make a Post only lists `post` / `both`
-- [ ] Post Job creates from Brand + Product + Format, snapshots inputs, always AI-generates Post image (Product images condition the model)
-- [ ] No AI caption package is produced
-- [ ] Credits are checked and charged per Post Job; Regenerate starts a new Post Job with same inputs and charges again
-- [ ] User can preview in a phone frame and Export/download the image
-- [ ] Post Job application service tests use a fake image provider (no live OpenAI in unit tests)
+- [x] Curated Format catalog exists with modality tags; Make a Post only lists `post` / `both`
+- [x] Post Job creates from Brand + Product + Format, snapshots inputs, always AI-generates Post image (Product images condition the model)
+- [x] No AI caption package is produced
+- [x] Credits are checked and charged per Post Job; Regenerate starts a new Post Job with same inputs and charges again
+- [x] User can preview in a phone frame and Export/download the image
+- [x] Post Job application service tests use a fake image provider (no live OpenAI in unit tests)
