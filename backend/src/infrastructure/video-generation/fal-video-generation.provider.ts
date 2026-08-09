@@ -273,6 +273,10 @@ export class FalVideoGenerationProvider implements IVideoGenerationProvider {
       body.negative_prompt = request.negativePrompt.trim();
     }
 
+    if (request.aspectRatio) {
+      body.aspect_ratio = request.aspectRatio;
+    }
+
     if (useImageConditioning) {
       const imageUrl = request.productAssetUrls?.find((url) => url?.trim());
       if (!imageUrl) {

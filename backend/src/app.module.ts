@@ -8,6 +8,7 @@ import { GenerationModule } from './application/generation/generation.module';
 import { BrandKitsModule } from './application/brand-kits/brand-kits.module';
 import { ProductsModule } from './application/products/products.module';
 import { PostJobsModule } from './application/post-jobs/post-jobs.module';
+import { VideoJobsModule } from './application/video-jobs/video-jobs.module';
 import { VideosModule } from './application/videos/videos.module';
 import { SubscriptionModule } from './application/subscription/subscription.module';
 import { UsersModule } from './application/users/users.module';
@@ -44,6 +45,7 @@ import imageGenerationConfig from './infrastructure/config/image-generation.conf
     BrandKitsModule,
     ProductsModule,
     PostJobsModule,
+    VideoJobsModule,
     VideosModule,
     SubscriptionModule,
     UsersModule,
