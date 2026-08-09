@@ -35,6 +35,7 @@ const Header = () => {
     : 0;
 
   const homeHref = isLoggedIn ? PRODUCT_PATH.studio : "/";
+  const inStudio = pathname.startsWith("/studio");
 
   const handleNavigation = (href: string, e: React.MouseEvent) => {
     e.preventDefault();
@@ -69,50 +70,64 @@ const Header = () => {
             {userData?.user ? (
               <>
                 <div className="hidden md:flex items-center gap-2">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={(e) => handleNavigation(PRODUCT_PATH.studio, e)}
-                  >
-                    Brand Studio
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={(e) => handleNavigation(PRODUCT_PATH.posts, e)}
-                  >
-                    Make a Post
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={(e) => handleNavigation(PRODUCT_PATH.videos, e)}
-                  >
-                    Make a Video
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={(e) =>
-                      handleNavigation(PRODUCT_PATH.businessDna, e)
-                    }
-                  >
-                    Business DNA
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={(e) => handleNavigation(PRODUCT_PATH.brands, e)}
-                  >
-                    Brands
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={(e) => handleNavigation(PRODUCT_PATH.products, e)}
-                  >
-                    Products
-                  </Button>
+                  {!inStudio ? (
+                    <>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={(e) =>
+                          handleNavigation(PRODUCT_PATH.studio, e)
+                        }
+                      >
+                        Brand Studio
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={(e) =>
+                          handleNavigation(PRODUCT_PATH.posts, e)
+                        }
+                      >
+                        Make a Post
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={(e) =>
+                          handleNavigation(PRODUCT_PATH.videos, e)
+                        }
+                      >
+                        Make a Video
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={(e) =>
+                          handleNavigation(PRODUCT_PATH.businessDna, e)
+                        }
+                      >
+                        Business DNA
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={(e) =>
+                          handleNavigation(PRODUCT_PATH.brands, e)
+                        }
+                      >
+                        Brands
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={(e) =>
+                          handleNavigation(PRODUCT_PATH.products, e)
+                        }
+                      >
+                        Products
+                      </Button>
+                    </>
+                  ) : null}
                   <Button
                     variant="ghost"
                     size="sm"
@@ -283,44 +298,56 @@ const Header = () => {
           <div className="flex flex-col px-4 py-3 gap-1">
             {userData?.user ? (
               <>
-                <button
-                  className="text-left px-3 py-2.5 rounded-xl hover:bg-secondary transition-colors text-sm font-medium"
-                  onClick={(e) => handleNavigation(PRODUCT_PATH.studio, e)}
-                >
-                  Brand Studio
-                </button>
-                <button
-                  className="text-left px-3 py-2.5 rounded-xl hover:bg-secondary transition-colors text-sm font-medium"
-                  onClick={(e) => handleNavigation(PRODUCT_PATH.posts, e)}
-                >
-                  Make a Post
-                </button>
-                <button
-                  className="text-left px-3 py-2.5 rounded-xl hover:bg-secondary transition-colors text-sm font-medium"
-                  onClick={(e) => handleNavigation(PRODUCT_PATH.videos, e)}
-                >
-                  Make a Video
-                </button>
-                <button
-                  className="text-left px-3 py-2.5 rounded-xl hover:bg-secondary transition-colors text-sm font-medium"
-                  onClick={(e) =>
-                    handleNavigation(PRODUCT_PATH.businessDna, e)
-                  }
-                >
-                  Business DNA
-                </button>
-                <button
-                  className="text-left px-3 py-2.5 rounded-xl hover:bg-secondary transition-colors text-sm font-medium"
-                  onClick={(e) => handleNavigation(PRODUCT_PATH.brands, e)}
-                >
-                  Brands
-                </button>
-                <button
-                  className="text-left px-3 py-2.5 rounded-xl hover:bg-secondary transition-colors text-sm font-medium"
-                  onClick={(e) => handleNavigation(PRODUCT_PATH.products, e)}
-                >
-                  Products
-                </button>
+                {!inStudio ? (
+                  <>
+                    <button
+                      className="text-left px-3 py-2.5 rounded-xl hover:bg-secondary transition-colors text-sm font-medium"
+                      onClick={(e) =>
+                        handleNavigation(PRODUCT_PATH.studio, e)
+                      }
+                    >
+                      Brand Studio
+                    </button>
+                    <button
+                      className="text-left px-3 py-2.5 rounded-xl hover:bg-secondary transition-colors text-sm font-medium"
+                      onClick={(e) => handleNavigation(PRODUCT_PATH.posts, e)}
+                    >
+                      Make a Post
+                    </button>
+                    <button
+                      className="text-left px-3 py-2.5 rounded-xl hover:bg-secondary transition-colors text-sm font-medium"
+                      onClick={(e) =>
+                        handleNavigation(PRODUCT_PATH.videos, e)
+                      }
+                    >
+                      Make a Video
+                    </button>
+                    <button
+                      className="text-left px-3 py-2.5 rounded-xl hover:bg-secondary transition-colors text-sm font-medium"
+                      onClick={(e) =>
+                        handleNavigation(PRODUCT_PATH.businessDna, e)
+                      }
+                    >
+                      Business DNA
+                    </button>
+                    <button
+                      className="text-left px-3 py-2.5 rounded-xl hover:bg-secondary transition-colors text-sm font-medium"
+                      onClick={(e) =>
+                        handleNavigation(PRODUCT_PATH.brands, e)
+                      }
+                    >
+                      Brands
+                    </button>
+                    <button
+                      className="text-left px-3 py-2.5 rounded-xl hover:bg-secondary transition-colors text-sm font-medium"
+                      onClick={(e) =>
+                        handleNavigation(PRODUCT_PATH.products, e)
+                      }
+                    >
+                      Products
+                    </button>
+                  </>
+                ) : null}
                 <button
                   className="text-left px-3 py-2.5 rounded-xl hover:bg-secondary transition-colors text-sm font-medium"
                   onClick={(e) => handleNavigation("/pricing", e)}
