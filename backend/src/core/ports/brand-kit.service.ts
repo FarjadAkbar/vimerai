@@ -1,11 +1,10 @@
-import type { BrandKit } from '@/domain/brand-kit.entity';
+import type { BrandKit, BrandKitColors } from '@/domain/brand-kit.entity';
 import type { Tone } from '@/types/generation/enums';
 
 export interface CreateBrandKitInput {
   name: string;
   logoUrl: string;
-  /** Thin Brand Confirm needs primary; secondary defaults to primary when omitted. */
-  colors: { primary: string; secondary?: string };
+  colors: BrandKitColors;
   tone: Tone;
   audience?: string;
   thingsToAvoid?: string;
@@ -15,7 +14,7 @@ export interface CreateBrandKitInput {
 export interface UpdateBrandKitInput {
   name?: string;
   logoUrl?: string;
-  colors?: { primary: string; secondary?: string };
+  colors?: BrandKitColors;
   tone?: Tone;
   audience?: string;
   thingsToAvoid?: string;

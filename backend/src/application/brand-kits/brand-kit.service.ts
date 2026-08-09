@@ -28,16 +28,12 @@ export class BrandKitService implements IBrandKitService {
   ) {}
 
   async createBrandKit(userId: string, input: CreateBrandKitInput) {
-    const primary = input.colors.primary;
     const brandKit = BrandKit.create(
       uuidv4(),
       userId,
       input.name,
       input.logoUrl,
-      {
-        primary,
-        secondary: input.colors.secondary ?? primary,
-      },
+      input.colors,
       input.tone,
       input.audience ?? '',
       input.thingsToAvoid ?? '',
@@ -64,15 +60,7 @@ export class BrandKitService implements IBrandKitService {
     if (existing.userId !== userId) {
       throw new ForbiddenException('Not authorized to update this Brand Kit');
     }
-    const updated = existing.update({
-      ...input,
-      colors: input.colors
-        ? {
-            primary: input.colors.primary,
-            secondary: input.colors.secondary ?? input.colors.primary,
-          }
-        : undefined,
-    });
+    const updated = existing.update(input);
     await this.brandKitRepository.update(updated);
     return { brandKit: updated };
   }

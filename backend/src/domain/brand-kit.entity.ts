@@ -2,7 +2,8 @@ import type { Tone } from '@/types/generation/enums';
 
 export interface BrandKitColors {
   primary: string;
-  secondary: string;
+  /** Optional on thin Brand Confirm input; persisted secondary defaults to primary. */
+  secondary?: string;
 }
 
 const ALLOWED_TONES: readonly Tone[] = [
@@ -54,7 +55,10 @@ export class BrandKit {
       userId,
       name,
       logoUrl,
-      colors,
+      {
+        primary: colors.primary,
+        secondary: colors.secondary ?? colors.primary,
+      },
       tone,
       audience,
       thingsToAvoid,
@@ -76,12 +80,18 @@ export class BrandKit {
     if (fields.tone !== undefined) {
       BrandKit.assertTone(fields.tone);
     }
+    const colors = fields.colors
+      ? {
+          primary: fields.colors.primary,
+          secondary: fields.colors.secondary ?? fields.colors.primary,
+        }
+      : this.colors;
     return new BrandKit(
       this.id,
       this.userId,
       fields.name ?? this.name,
       fields.logoUrl ?? this.logoUrl,
-      fields.colors ?? this.colors,
+      colors,
       fields.tone ?? this.tone,
       fields.audience ?? this.audience,
       fields.thingsToAvoid ?? this.thingsToAvoid,
