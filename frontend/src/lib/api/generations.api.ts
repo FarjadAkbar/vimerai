@@ -6,6 +6,7 @@ export type LengthTier = 'teaser' | 'promo';
 export type FeedPlatform = 'instagram' | 'facebook';
 export type ReelPlatform = 'instagram_reels' | 'tiktok';
 export type PostImageMode = 'product_photo' | 'ai_image';
+export type GenerationPath = 'multi_arm' | 'posts_only';
 export type GenerationStatus =
   | 'accepted'
   | 'processing'
@@ -17,6 +18,7 @@ export interface CreateGenerationRequest {
   productId: string;
   brandKitId?: string;
   goal: Goal;
+  path?: GenerationPath;
   lengthTier?: LengthTier;
   feedPlatform?: FeedPlatform;
   reelPlatform?: ReelPlatform;
@@ -33,7 +35,8 @@ export type GenerationArm =
   | 'social-post'
   | 'reel-storyboard'
   | 'video'
-  | 'reel-caption';
+  | 'reel-caption'
+  | 'post-concepts';
 
 export type ArmStatus = 'pending' | 'processing' | 'completed' | 'failed';
 
@@ -41,6 +44,24 @@ export interface GenerationArmState {
   arm: GenerationArm;
   status: ArmStatus;
   error?: string;
+}
+
+export interface PostConcept {
+  id: string;
+  hook: string;
+  visualIdea: string;
+  angle: string;
+}
+
+export interface SocialPostRecord {
+  headline: string;
+  body: string;
+  cta: string;
+  caption: string;
+  hashtags: string[];
+  postImageUrl: string;
+  feedPlatform: FeedPlatform;
+  conceptId?: string;
 }
 
 export interface GenerationRecord {
@@ -53,6 +74,7 @@ export interface GenerationRecord {
   postImageMode: PostImageMode;
   brandKitId: string;
   productId: string;
+  path?: GenerationPath;
   snapshot: {
     brandKit: {
       id: string;
@@ -75,15 +97,9 @@ export interface GenerationRecord {
   };
   arms: GenerationArmState[];
   creativeBrief: string | null;
-  socialPost: {
-    headline: string;
-    body: string;
-    cta: string;
-    caption: string;
-    hashtags: string[];
-    postImageUrl: string;
-    feedPlatform: FeedPlatform;
-  } | null;
+  postConcepts?: PostConcept[] | null;
+  socialPosts?: SocialPostRecord[];
+  socialPost: SocialPostRecord | null;
   reelStoryboard: {
     hook: string;
     attention: string;
@@ -119,6 +135,10 @@ export const LENGTH_TIER_CREDIT_WEIGHT = {
   teaser: 1,
   promo: 4,
 } as const;
+
+export const POSTS_ONLY_CONCEPT_SET_CREDITS = 1;
+export const POSTS_ONLY_RENDER_CREDITS = 1;
+export const POSTS_ONLY_MAX_RENDER_SELECTION = 3;
 
 export type TextSectionKey =
   | 'social.headline'
@@ -174,6 +194,10 @@ export interface RegenerateShotRequest {
 
 export interface RetryFailedArmsRequest {
   arms?: GenerationArm[];
+}
+
+export interface RenderPostConceptsRequest {
+  conceptIds: string[];
 }
 
 export interface GenerationLibraryItem {
@@ -258,6 +282,17 @@ export const generationsApi = {
   ): Promise<GenerationResponse> => {
     const response = await api.post<GenerationResponse>(
       `/generations/${id}/arms/retry`,
+      data,
+    );
+    return response.data;
+  },
+
+  renderPostConcepts: async (
+    id: string,
+    data: RenderPostConceptsRequest,
+  ): Promise<GenerationResponse> => {
+    const response = await api.post<GenerationResponse>(
+      `/generations/${id}/post-concepts/render`,
       data,
     );
     return response.data;

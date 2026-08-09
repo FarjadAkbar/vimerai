@@ -5,6 +5,12 @@ export interface BrandKitColors {
   secondary: string;
 }
 
+/** Thin Brand Confirm input may omit secondary (defaults to primary). */
+export interface BrandKitColorsInput {
+  primary: string;
+  secondary?: string;
+}
+
 const ALLOWED_TONES: readonly Tone[] = [
   'luxury',
   'professional',
@@ -41,7 +47,7 @@ export class BrandKit {
     userId: string,
     name: string,
     logoUrl: string,
-    colors: BrandKitColors,
+    colors: BrandKitColorsInput,
     tone: Tone,
     audience: string,
     thingsToAvoid: string,
@@ -54,7 +60,10 @@ export class BrandKit {
       userId,
       name,
       logoUrl,
-      colors,
+      {
+        primary: colors.primary,
+        secondary: colors.secondary ?? colors.primary,
+      },
       tone,
       audience,
       thingsToAvoid,
@@ -67,7 +76,7 @@ export class BrandKit {
   update(fields: {
     name?: string;
     logoUrl?: string;
-    colors?: BrandKitColors;
+    colors?: BrandKitColorsInput;
     tone?: Tone;
     audience?: string;
     thingsToAvoid?: string;
@@ -76,12 +85,18 @@ export class BrandKit {
     if (fields.tone !== undefined) {
       BrandKit.assertTone(fields.tone);
     }
+    const colors = fields.colors
+      ? {
+          primary: fields.colors.primary,
+          secondary: fields.colors.secondary ?? fields.colors.primary,
+        }
+      : this.colors;
     return new BrandKit(
       this.id,
       this.userId,
       fields.name ?? this.name,
       fields.logoUrl ?? this.logoUrl,
-      fields.colors ?? this.colors,
+      colors,
       fields.tone ?? this.tone,
       fields.audience ?? this.audience,
       fields.thingsToAvoid ?? this.thingsToAvoid,

@@ -19,7 +19,11 @@ import type {
   PostImageMode,
   ReelPlatform,
 } from '@/types/generation/enums';
-import type { GenerationArmState } from '@/types/generation/generation';
+import type {
+  GenerationArmState,
+  GenerationPath,
+  PostConcept,
+} from '@/types/generation/generation';
 
 @Entity('generations')
 export class GenerationEntity {
@@ -80,6 +84,15 @@ export class GenerationEntity {
   @Column({ type: 'int', default: 0 })
   textSectionRegenCount: number;
 
+  @Column({ type: 'varchar', length: 20, default: 'multi_arm' })
+  path: GenerationPath;
+
+  @Column({ type: 'jsonb', nullable: true })
+  postConcepts: PostConcept[] | null;
+
+  @Column({ type: 'jsonb', default: [] })
+  socialPosts: SocialPostContent[];
+
   @CreateDateColumn()
   createdAt: Date;
 
@@ -108,6 +121,9 @@ export class GenerationEntity {
       entity.createdAt,
       entity.updatedAt,
       entity.textSectionRegenCount ?? 0,
+      entity.path ?? 'multi_arm',
+      entity.postConcepts ?? null,
+      entity.socialPosts ?? [],
     );
   }
 
@@ -131,6 +147,9 @@ export class GenerationEntity {
     entity.video = domain.video;
     entity.status = domain.status;
     entity.textSectionRegenCount = domain.textSectionRegenCount;
+    entity.path = domain.path;
+    entity.postConcepts = domain.postConcepts;
+    entity.socialPosts = domain.socialPosts;
     if (domain.createdAt) entity.createdAt = domain.createdAt;
     if (domain.updatedAt) entity.updatedAt = domain.updatedAt;
     return entity;

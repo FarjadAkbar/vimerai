@@ -35,8 +35,8 @@ export class BrandKitService implements IBrandKitService {
       input.logoUrl,
       input.colors,
       input.tone,
-      input.audience,
-      input.thingsToAvoid,
+      input.audience ?? '',
+      input.thingsToAvoid ?? '',
       input.aiInstructions ?? null,
     );
     await this.brandKitRepository.create(brandKit);

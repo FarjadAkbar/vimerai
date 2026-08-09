@@ -25,9 +25,6 @@ export class Product {
     if (imageUrls.length < 1) {
       throw new Error('Product requires at least one image');
     }
-    if (brandKitIds.length < 1) {
-      throw new Error('Product requires at least one Brand Kit link');
-    }
     const now = new Date();
     return new Product(
       id,
@@ -55,9 +52,6 @@ export class Product {
     const brandKitIds = fields.brandKitIds ?? this.brandKitIds;
     if (imageUrls.length < 1) {
       throw new Error('Product requires at least one image');
-    }
-    if (brandKitIds.length < 1) {
-      throw new Error('Product requires at least one Brand Kit link');
     }
     return new Product(
       this.id,

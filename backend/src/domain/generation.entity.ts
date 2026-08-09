@@ -10,6 +10,8 @@ import type {
   ArmStatus,
   GenerationArm,
   GenerationArmState,
+  GenerationPath,
+  PostConcept,
   PromoBeat,
 } from '@/types/generation/generation';
 
@@ -46,6 +48,8 @@ export interface SocialPostContent {
   hashtags: string[];
   postImageUrl: string;
   feedPlatform: FeedPlatform;
+  /** Set when rendered from a Post Concept in Posts-only Generation. */
+  conceptId?: string;
 }
 
 export interface ReelStoryboardContent {
@@ -103,6 +107,9 @@ export class Generation {
     public readonly createdAt: Date,
     public readonly updatedAt: Date,
     public readonly textSectionRegenCount: number = 0,
+    public readonly path: GenerationPath = 'multi_arm',
+    public readonly postConcepts: PostConcept[] | null = null,
+    public readonly socialPosts: SocialPostContent[] = [],
   ) {}
 
   static create(input: {
@@ -116,17 +123,24 @@ export class Generation {
     brandKitId: string;
     productId: string;
     snapshot: GenerationSnapshot;
+    path?: GenerationPath;
   }): Generation {
     const now = new Date();
-    const arms: GenerationArmState[] = (
-      [
-        'creative-brief',
-        'social-post',
-        'reel-storyboard',
-        'reel-caption',
-        'video',
-      ] as GenerationArm[]
-    ).map((arm) => ({ arm, status: 'pending' as ArmStatus }));
+    const path = input.path ?? 'multi_arm';
+    const armNames: GenerationArm[] =
+      path === 'posts_only'
+        ? ['post-concepts']
+        : [
+            'creative-brief',
+            'social-post',
+            'reel-storyboard',
+            'reel-caption',
+            'video',
+          ];
+    const arms: GenerationArmState[] = armNames.map((arm) => ({
+      arm,
+      status: 'pending' as ArmStatus,
+    }));
 
     return new Generation(
       input.id,
@@ -149,6 +163,9 @@ export class Generation {
       now,
       now,
       0,
+      path,
+      null,
+      [],
     );
   }
 
@@ -161,6 +178,8 @@ export class Generation {
     video?: VideoContent | null;
     status?: Generation['status'];
     textSectionRegenCount?: number;
+    postConcepts?: PostConcept[] | null;
+    socialPosts?: SocialPostContent[];
   }): Generation {
     return new Generation(
       this.id,
@@ -189,6 +208,11 @@ export class Generation {
       fields.textSectionRegenCount !== undefined
         ? fields.textSectionRegenCount
         : this.textSectionRegenCount,
+      this.path,
+      fields.postConcepts !== undefined
+        ? fields.postConcepts
+        : this.postConcepts,
+      fields.socialPosts !== undefined ? fields.socialPosts : this.socialPosts,
     );
   }
 }

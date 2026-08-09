@@ -44,6 +44,22 @@ describe('BrandKitService', () => {
     expect(result.brandKit.aiInstructions).toBe('Keep sentences short');
   });
 
+  it('lets a user create a thin Brand with Brand Confirm fields only', async () => {
+    const result = await service.createBrandKit('user-1', {
+      name: 'Nitro Shine',
+      logoUrl: 'https://cdn.example.com/logo.png',
+      colors: { primary: '#111111' },
+      tone: 'professional',
+    });
+
+    expect(result.brandKit.name).toBe('Nitro Shine');
+    expect(result.brandKit.colors.primary).toBe('#111111');
+    expect(result.brandKit.colors.secondary).toBe('#111111');
+    expect(result.brandKit.tone).toBe('professional');
+    expect(result.brandKit.audience).toBe('');
+    expect(result.brandKit.thingsToAvoid).toBe('');
+  });
+
   it('lists only Brand Kits owned by the user', async () => {
     await service.createBrandKit('user-1', {
       name: 'Mine',

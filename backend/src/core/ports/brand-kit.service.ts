@@ -1,21 +1,23 @@
-import type { BrandKitColors } from '@/domain/brand-kit.entity';
-import type { BrandKit } from '@/domain/brand-kit.entity';
+import type {
+  BrandKit,
+  BrandKitColorsInput,
+} from '@/domain/brand-kit.entity';
 import type { Tone } from '@/types/generation/enums';
 
 export interface CreateBrandKitInput {
   name: string;
   logoUrl: string;
-  colors: BrandKitColors;
+  colors: BrandKitColorsInput;
   tone: Tone;
-  audience: string;
-  thingsToAvoid: string;
+  audience?: string;
+  thingsToAvoid?: string;
   aiInstructions?: string | null;
 }
 
 export interface UpdateBrandKitInput {
   name?: string;
   logoUrl?: string;
-  colors?: BrandKitColors;
+  colors?: BrandKitColorsInput;
   tone?: Tone;
   audience?: string;
   thingsToAvoid?: string;

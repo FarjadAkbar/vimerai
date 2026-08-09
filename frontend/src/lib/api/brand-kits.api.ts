@@ -9,7 +9,7 @@ export type BrandKitTone =
 
 export interface BrandKitColors {
   primary: string;
-  secondary: string;
+  secondary?: string;
 }
 
 export interface BrandKit {
@@ -17,7 +17,7 @@ export interface BrandKit {
   userId: string;
   name: string;
   logoUrl: string;
-  colors: BrandKitColors;
+  colors: { primary: string; secondary: string };
   tone: BrandKitTone;
   audience: string;
   thingsToAvoid: string;
@@ -39,8 +39,8 @@ export interface CreateBrandKitRequest {
   logoUrl: string;
   colors: BrandKitColors;
   tone: BrandKitTone;
-  audience: string;
-  thingsToAvoid: string;
+  audience?: string;
+  thingsToAvoid?: string;
   aiInstructions?: string;
 }
 

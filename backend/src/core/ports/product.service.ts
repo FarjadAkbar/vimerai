@@ -4,7 +4,7 @@ export interface CreateProductInput {
   name: string;
   description: string;
   imageUrls: string[];
-  landingPageUrl: string;
+  landingPageUrl?: string;
   price?: string | null;
   brandKitIds?: string[];
 }

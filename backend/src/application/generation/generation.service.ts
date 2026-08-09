@@ -45,6 +45,10 @@ import {
   AI_POST_IMAGE_CREDIT_SURCHARGE,
   DEFAULT_TEXT_SECTION_REGEN_LIMIT,
   LENGTH_TIER_CREDIT_WEIGHT,
+  POSTS_ONLY_CONCEPT_COUNT,
+  POSTS_ONLY_CONCEPT_SET_CREDITS,
+  POSTS_ONLY_MAX_RENDER_SELECTION,
+  POSTS_ONLY_RENDER_CREDITS,
   PROMO_BEATS,
   VIDEO_SHOT_REGEN_CREDIT_COST,
   type CreateGenerationInput,
@@ -52,10 +56,13 @@ import {
   type GenerationArm,
   type GenerationArmState,
   type GenerationLibraryItem,
+  type GenerationPath,
   type ManualEditGenerationInput,
+  type PostConcept,
   type PromoBeat,
   type RegenerateSectionInput,
   type RegenerateShotInput,
+  type RenderPostConceptsInput,
   type RetryFailedArmsInput,
   type TextSectionKey,
 } from '@/types/generation/generation';
@@ -109,12 +116,28 @@ export class GenerationService implements IGenerationService {
       brandKits,
     );
 
+    const path: GenerationPath = input.path ?? 'multi_arm';
     const lengthTier: LengthTier = input.lengthTier ?? 'teaser';
-    const feedPlatform: FeedPlatform = input.feedPlatform ?? 'instagram';
+    const feedPlatform: FeedPlatform =
+      path === 'posts_only' ? 'instagram' : (input.feedPlatform ?? 'instagram');
     const reelPlatform: ReelPlatform =
       input.reelPlatform ?? 'instagram_reels';
     const postImageMode: PostImageMode =
-      input.postImageMode ?? 'product_photo';
+      path === 'posts_only'
+        ? 'ai_image'
+        : (input.postImageMode ?? 'product_photo');
+
+    if (path === 'posts_only') {
+      return this.createPostsOnlyGeneration(userId, {
+        product,
+        brandKit,
+        goal: input.goal,
+        feedPlatform,
+        reelPlatform,
+        lengthTier,
+        postImageMode,
+      });
+    }
 
     const creditWeight =
       LENGTH_TIER_CREDIT_WEIGHT[lengthTier] +
@@ -139,6 +162,7 @@ export class GenerationService implements IGenerationService {
       brandKitId: brandKit.id,
       productId: product.id,
       snapshot,
+      path: 'multi_arm',
     });
     await this.generationRepository.create(generation);
     await this.subscriptionService.recordVideoGeneration(userId, creditWeight);
@@ -350,6 +374,265 @@ export class GenerationService implements IGenerationService {
     await this.generationRepository.update(generation);
 
     return { generationId: generation.id, status };
+  }
+
+  private async createPostsOnlyGeneration(
+    userId: string,
+    input: {
+      product: Product;
+      brandKit: BrandKit;
+      goal: Goal;
+      feedPlatform: FeedPlatform;
+      reelPlatform: ReelPlatform;
+      lengthTier: LengthTier;
+      postImageMode: PostImageMode;
+    },
+  ): Promise<CreateGenerationResult> {
+    const canGenerate = await this.subscriptionService.canGenerate(
+      userId,
+      POSTS_ONLY_CONCEPT_SET_CREDITS,
+    );
+    if (!canGenerate) {
+      throw new BadRequestException('Generation credit limit reached');
+    }
+
+    const snapshot = this.buildSnapshot(input.brandKit, input.product);
+    let generation = Generation.create({
+      id: uuidv4(),
+      userId,
+      goal: input.goal,
+      lengthTier: input.lengthTier,
+      feedPlatform: input.feedPlatform,
+      reelPlatform: input.reelPlatform,
+      postImageMode: input.postImageMode,
+      brandKitId: input.brandKit.id,
+      productId: input.product.id,
+      snapshot,
+      path: 'posts_only',
+    });
+    await this.generationRepository.create(generation);
+    await this.subscriptionService.recordVideoGeneration(
+      userId,
+      POSTS_ONLY_CONCEPT_SET_CREDITS,
+    );
+
+    const layers = this.buildLayers(snapshot, input.goal, {
+      lengthTier: input.lengthTier,
+      feedPlatform: input.feedPlatform,
+      reelPlatform: input.reelPlatform,
+      postImageMode: input.postImageMode,
+    });
+
+    const arms: GenerationArmState[] = [...generation.arms];
+    let postConcepts: PostConcept[] | null = null;
+
+    try {
+      const conceptsResult = await this.textGenerationProvider.generateText({
+        artifact: 'post-concepts',
+        layers: {
+          ...layers,
+          outputSchema: `Return JSON: { "concepts": [ { "hook", "visualIdea", "angle" } ] } with exactly ${POSTS_ONLY_CONCEPT_COUNT} distinct Instagram feed Post Concepts. Each concept must differ in hook, visual idea, and angle (why it fits the Goal). No Video or Reel Storyboard.`,
+        },
+      });
+      const parsed = this.parseJson<{
+        concepts: Array<{
+          id?: string;
+          hook?: string;
+          visualIdea?: string;
+          angle?: string;
+        }>;
+      }>(conceptsResult.text);
+      const raw = parsed?.concepts ?? [];
+      if (raw.length < POSTS_ONLY_CONCEPT_COUNT) {
+        this.setArm(
+          arms,
+          'post-concepts',
+          'failed',
+          `Expected ${POSTS_ONLY_CONCEPT_COUNT} Post Concepts`,
+        );
+      } else {
+        postConcepts = raw.slice(0, POSTS_ONLY_CONCEPT_COUNT).map((c) => ({
+          id: uuidv4(),
+          hook: c.hook?.trim() || '',
+          visualIdea: c.visualIdea?.trim() || '',
+          angle: c.angle?.trim() || '',
+        }));
+        if (
+          postConcepts.some((c) => !c.hook || !c.visualIdea || !c.angle)
+        ) {
+          this.setArm(
+            arms,
+            'post-concepts',
+            'failed',
+            'Post Concepts missing required fields',
+          );
+          postConcepts = null;
+        } else {
+          this.setArm(arms, 'post-concepts', 'completed');
+        }
+      }
+    } catch (error) {
+      this.setArm(
+        arms,
+        'post-concepts',
+        'failed',
+        error instanceof Error ? error.message : 'Post Concepts failed',
+      );
+    }
+
+    const status = this.rollupStatus(arms);
+    generation = generation.withUpdates({
+      arms,
+      postConcepts,
+      socialPosts: [],
+      socialPost: null,
+      reelStoryboard: null,
+      reelCaption: null,
+      video: null,
+      status,
+    });
+    await this.generationRepository.update(generation);
+
+    return { generationId: generation.id, status };
+  }
+
+  async renderPostConcepts(
+    userId: string,
+    generationId: string,
+    input: RenderPostConceptsInput,
+  ): Promise<{ generation: Generation }> {
+    const { generation } = await this.getGeneration(userId, generationId);
+    if (generation.path !== 'posts_only') {
+      throw new BadRequestException(
+        'Only Posts-only Generations can render Post Concepts',
+      );
+    }
+    if (!generation.postConcepts?.length) {
+      throw new BadRequestException('No Post Concepts to render');
+    }
+
+    const conceptIds = [...new Set(input.conceptIds ?? [])];
+    if (conceptIds.length === 0) {
+      throw new BadRequestException('Select at least one Post Concept');
+    }
+    if (conceptIds.length > POSTS_ONLY_MAX_RENDER_SELECTION) {
+      throw new BadRequestException(
+        `Select at most ${POSTS_ONLY_MAX_RENDER_SELECTION} Post Concepts`,
+      );
+    }
+
+    const alreadyRendered = new Set(
+      generation.socialPosts.map((p) => p.conceptId).filter(Boolean),
+    );
+    if (
+      alreadyRendered.size + conceptIds.filter((id) => !alreadyRendered.has(id))
+        .length >
+      POSTS_ONLY_MAX_RENDER_SELECTION
+    ) {
+      throw new BadRequestException(
+        `Render at most ${POSTS_ONLY_MAX_RENDER_SELECTION} Social Posts per Posts-only Generation`,
+      );
+    }
+    const toRender = conceptIds.filter((id) => !alreadyRendered.has(id));
+    if (toRender.length === 0) {
+      throw new BadRequestException(
+        'Selected Post Concepts were already rendered',
+      );
+    }
+
+    const concepts = toRender.map((id) => {
+      const concept = generation.postConcepts!.find((c) => c.id === id);
+      if (!concept) {
+        throw new BadRequestException(`Unknown Post Concept: ${id}`);
+      }
+      return concept;
+    });
+
+    const creditNeeded = POSTS_ONLY_RENDER_CREDITS * concepts.length;
+    const canGenerate = await this.subscriptionService.canGenerate(
+      userId,
+      creditNeeded,
+    );
+    if (!canGenerate) {
+      throw new BadRequestException('Generation credit limit reached');
+    }
+
+    if (generation.snapshot.product.imageUrls.length === 0) {
+      throw new BadRequestException(
+        'AI Post image requires at least one Product image for conditioning',
+      );
+    }
+
+    await this.subscriptionService.recordVideoGeneration(userId, creditNeeded);
+
+    const layers = this.buildLayers(
+      generation.snapshot,
+      generation.goal,
+      {
+        lengthTier: generation.lengthTier,
+        feedPlatform: generation.feedPlatform,
+        reelPlatform: generation.reelPlatform,
+        postImageMode: 'ai_image',
+      },
+    );
+
+    const socialPosts = [...generation.socialPosts];
+
+    for (const concept of concepts) {
+      const postResult = await this.textGenerationProvider.generateText({
+        artifact: 'social-post',
+        layers: {
+          ...layers,
+          outputSchema: `Post Concept — hook: ${concept.hook}; visual idea: ${concept.visualIdea}; angle: ${concept.angle}. Return JSON: headline, body, cta, caption, hashtags (string array) for Instagram feed.`,
+        },
+      });
+      const parsed = this.parseJson<{
+        headline: string;
+        body: string;
+        cta: string;
+        caption: string;
+        hashtags: string[];
+      }>(postResult.text);
+
+      const imageResult = await this.imageGenerationProvider.generateImage({
+        prompt: [
+          `Brand: ${generation.snapshot.brandKit.name}. Tone: ${generation.snapshot.brandKit.tone}.`,
+          `Primary color: ${generation.snapshot.brandKit.colors.primary}. Secondary color: ${generation.snapshot.brandKit.colors.secondary}.`,
+          `Logo: ${generation.snapshot.brandKit.logoUrl}.`,
+          `Product: ${generation.snapshot.product.name}. ${generation.snapshot.product.description}`,
+          `Goal: ${generation.goal}.`,
+          `Instagram feed creative — not a white-background packshot.`,
+          `Hook: ${concept.hook}. Visual idea: ${concept.visualIdea}. Angle: ${concept.angle}.`,
+          `Show the product recognizably in a social/lifestyle scene.`,
+        ].join(' '),
+        productImageUrls: generation.snapshot.product.imageUrls,
+        negativePrompt: [
+          generation.snapshot.brandKit.thingsToAvoid,
+          'plain white background catalog packshot',
+        ]
+          .filter(Boolean)
+          .join('. '),
+      });
+
+      socialPosts.push({
+        headline: parsed?.headline ?? '',
+        body: parsed?.body ?? '',
+        cta: parsed?.cta ?? '',
+        caption: parsed?.caption ?? postResult.text,
+        hashtags: parsed?.hashtags ?? [],
+        postImageUrl: imageResult.imageUrl,
+        feedPlatform: 'instagram',
+        conceptId: concept.id,
+      });
+    }
+
+    const updated = generation.withUpdates({
+      socialPosts,
+      socialPost: socialPosts[socialPosts.length - 1] ?? null,
+      status: 'completed',
+    });
+    await this.generationRepository.update(updated);
+    return { generation: updated };
   }
 
   async listGenerations(

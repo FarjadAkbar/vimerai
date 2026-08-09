@@ -5,13 +5,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { useUpdateGeneration, useRegenerateSection, useRegenerateShot, useRetryFailedArms } from "@/lib/hooks/use-generations";
+import { useUpdateGeneration, useRegenerateSection, useRegenerateShot, useRetryFailedArms, useRenderPostConcepts } from "@/lib/hooks/use-generations";
 import {
   getApiErrorMessage,
   type GenerationArm,
   type GenerationRecord,
   type ManualEditStoryboardSceneRequest,
   type TextSectionKey,
+  POSTS_ONLY_MAX_RENDER_SELECTION,
   TEXT_SECTION_REGEN_LIMIT,
 } from "@/lib/api/generations.api";
 
@@ -21,6 +22,7 @@ const ARM_LABELS: Record<GenerationArm, string> = {
   "reel-storyboard": "Reel Storyboard",
   "reel-caption": "Reel caption",
   video: "Video",
+  "post-concepts": "Post Concepts",
 };
 
 async function copyText(text: string): Promise<boolean> {
@@ -72,6 +74,7 @@ export function GenerationDetail({
   const regenerateSection = useRegenerateSection();
   const regenerateShot = useRegenerateShot();
   const retryFailedArms = useRetryFailedArms();
+  const renderPostConcepts = useRenderPostConcepts();
   const [headline, setHeadline] = useState("");
   const [body, setBody] = useState("");
   const [cta, setCta] = useState("");
@@ -86,6 +89,18 @@ export function GenerationDetail({
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [regenTarget, setRegenTarget] = useState<string | null>(null);
+  const [selectedConceptIds, setSelectedConceptIds] = useState<string[]>([]);
+
+  const isPostsOnly = generation.path === "posts_only";
+  const renderedConceptIds = new Set(
+    (generation.socialPosts ?? [])
+      .map((post) => post.conceptId)
+      .filter(Boolean),
+  );
+  const remainingRenderSlots = Math.max(
+    0,
+    POSTS_ONLY_MAX_RENDER_SELECTION - renderedConceptIds.size,
+  );
 
   useEffect(() => {
     setHeadline(generation.socialPost?.headline ?? "");
@@ -104,6 +119,7 @@ export function GenerationDetail({
       })),
     );
     setReelCaption(generation.reelCaption ?? "");
+    setSelectedConceptIds([]);
     setMessage(null);
     setError(null);
   }, [generation]);
@@ -222,8 +238,11 @@ export function GenerationDetail({
             Generation ready
           </h2>
           <p className="text-sm text-muted-foreground capitalize">
-            {generation.status} · {generation.lengthTier} ·{" "}
-            {generation.goal.replaceAll("_", " ")}
+            {generation.status}
+            {isPostsOnly
+              ? " · Instagram posts"
+              : ` · ${generation.lengthTier}`}{" "}
+            · {generation.goal.replaceAll("_", " ")}
           </p>
           <p className="text-sm text-muted-foreground">
             Snapshot · Brand Kit {generation.snapshot.brandKit.name} (
@@ -413,7 +432,165 @@ export function GenerationDetail({
         </section>
       )}
 
-      {generation.socialPost && (
+      {isPostsOnly && (generation.postConcepts?.length ?? 0) > 0 && (
+        <section className="space-y-3">
+          <h3 className="text-sm font-medium uppercase tracking-wide text-muted-foreground">
+            Post Concepts ({generation.postConcepts!.length})
+          </h3>
+          <p className="text-sm text-muted-foreground">
+            Select up to {POSTS_ONLY_MAX_RENDER_SELECTION} total (
+            {remainingRenderSlots} remaining) to render as full Instagram Social
+            Posts with AI images.
+          </p>
+          <ul className="space-y-2">
+            {generation.postConcepts!.map((concept, index) => {
+              const rendered = renderedConceptIds.has(concept.id);
+              const checked = selectedConceptIds.includes(concept.id);
+              return (
+                <li
+                  key={concept.id}
+                  className="rounded-lg border border-border/60 p-3 space-y-1"
+                >
+                  <label className="flex items-start gap-3 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      className="mt-1"
+                      disabled={
+                        rendered ||
+                        (!checked &&
+                          selectedConceptIds.length >= remainingRenderSlots)
+                      }
+                      checked={checked || rendered}
+                      onChange={(event) => {
+                        if (rendered) return;
+                        if (event.target.checked) {
+                          if (
+                            selectedConceptIds.length >= remainingRenderSlots
+                          ) {
+                            setError(
+                              `Select at most ${POSTS_ONLY_MAX_RENDER_SELECTION} Post Concepts total`,
+                            );
+                            return;
+                          }
+                          setError(null);
+                          setSelectedConceptIds((ids) => [...ids, concept.id]);
+                        } else {
+                          setSelectedConceptIds((ids) =>
+                            ids.filter((id) => id !== concept.id),
+                          );
+                        }
+                      }}
+                    />
+                    <span className="space-y-1 text-sm">
+                      <span className="font-medium block">
+                        {index + 1}. {concept.hook}
+                        {rendered ? " · rendered" : ""}
+                      </span>
+                      <span className="block text-muted-foreground">
+                        Visual: {concept.visualIdea}
+                      </span>
+                      <span className="block text-muted-foreground">
+                        Angle: {concept.angle}
+                      </span>
+                    </span>
+                  </label>
+                </li>
+              );
+            })}
+          </ul>
+          <Button
+            type="button"
+            disabled={
+              selectedConceptIds.length === 0 ||
+              remainingRenderSlots === 0 ||
+              renderPostConcepts.isPending
+            }
+            onClick={() => {
+              setError(null);
+              setMessage(null);
+              renderPostConcepts.mutate(
+                {
+                  id: generation.id,
+                  data: { conceptIds: selectedConceptIds },
+                },
+                {
+                  onSuccess: () => {
+                    setSelectedConceptIds([]);
+                    setMessage("Social Posts rendered with AI images");
+                  },
+                  onError: (err) =>
+                    setError(
+                      getApiErrorMessage(
+                        err,
+                        "Could not render selected Post Concepts",
+                      ),
+                    ),
+                },
+              );
+            }}
+          >
+            {renderPostConcepts.isPending
+              ? "Rendering…"
+              : `Render ${selectedConceptIds.length || ""} Social Post${
+                  selectedConceptIds.length === 1 ? "" : "s"
+                }`}
+          </Button>
+        </section>
+      )}
+
+      {(generation.socialPosts?.length ?? 0) > 0 && (
+        <section className="space-y-4">
+          <h3 className="text-sm font-medium uppercase tracking-wide text-muted-foreground">
+            Rendered Social Posts ({generation.socialPosts!.length})
+          </h3>
+          {generation.socialPosts!.map((post, index) => (
+            <div
+              key={post.conceptId ?? `${post.headline}-${index}`}
+              className="space-y-2 rounded-lg border border-border/60 p-3"
+            >
+              {post.postImageUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={post.postImageUrl}
+                  alt={`Social Post ${index + 1}`}
+                  className="max-h-64 w-full rounded-lg object-cover"
+                />
+              ) : null}
+              <p className="font-medium">{post.headline}</p>
+              <p className="text-sm whitespace-pre-wrap">{post.body}</p>
+              <p className="text-sm">{post.cta}</p>
+              <p className="text-sm text-muted-foreground whitespace-pre-wrap">
+                {post.caption}
+              </p>
+              <p className="text-sm text-muted-foreground">
+                {(post.hashtags ?? []).join(" ")}
+              </p>
+              {post.postImageUrl && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={async () => {
+                    const saved = await downloadFromUrl(
+                      post.postImageUrl,
+                      `post-${generation.id}-${index + 1}.jpg`,
+                    );
+                    setMessage(
+                      saved
+                        ? "Post image downloaded"
+                        : "Opened Post image (save from browser if download blocked)",
+                    );
+                  }}
+                >
+                  Download image
+                </Button>
+              )}
+            </div>
+          ))}
+        </section>
+      )}
+
+      {!isPostsOnly && generation.socialPost && (
         <section className="space-y-3">
           <h3 className="text-sm font-medium uppercase tracking-wide text-muted-foreground">
             Social Post
