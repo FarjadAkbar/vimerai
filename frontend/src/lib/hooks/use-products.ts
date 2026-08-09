@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { productsApi } from '@/lib/api/products.api';
 import type {
   CreateProductRequest,
+  ScrapeProductRequest,
   UpdateProductRequest,
 } from '@/lib/api/products.api';
 
@@ -10,6 +11,12 @@ export const useProducts = (enabled = true) => {
     queryKey: ['products'],
     queryFn: () => productsApi.list(),
     enabled,
+  });
+};
+
+export const useScrapeProduct = () => {
+  return useMutation({
+    mutationFn: (data: ScrapeProductRequest) => productsApi.scrape(data),
   });
 };
 
