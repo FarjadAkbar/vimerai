@@ -17,3 +17,6 @@ export const BRAND_KIT_REPOSITORY_TOKEN = 'IBrandKitRepository';
 export const BRAND_KIT_SERVICE_TOKEN = 'IBrandKitService';
 export const PRODUCT_REPOSITORY_TOKEN = 'IProductRepository';
 export const PRODUCT_SERVICE_TOKEN = 'IProductService';
+export const HOMEPAGE_SCRAPE_PROVIDER_TOKEN = 'IHomepageScrapeProvider';
+export const BUSINESS_DNA_EXTRACTOR_TOKEN = 'IBusinessDnaExtractor';
+export const BUSINESS_DNA_SERVICE_TOKEN = 'IBusinessDnaService';

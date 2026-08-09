@@ -1,0 +1,5 @@
+# Business DNA from homepage URL + Brand Studio shell
+
+We are expanding MVP Brand beyond thin Brand Confirm–only fields: an authenticated User pastes a business/homepage URL, the system scrapes the page and structures a **Business DNA** (Brand Overview + Business Details), persists it on a reusable Brand, then lands the user in **Brand Studio** — a Fetra-like app shell with separate **Make a Post** and **Make a Video** modes (not the legacy multi-arm Generation home). Thin Brand Confirm remains the minimum required core and manual fallback; Product page scrape stays a separate PDP path because a product URL is not the brand homepage. Sidebar IA is simplified vs full Fetra (no warmed accounts, AI Influencers, Calendar, Growth Team, or Video Director chat in MVP). Chosen over keeping thin-Brand-only after the product expectation shifted to Fetra-like “paste URL → Business DNA → studio,” and over reviving deprecated Brand Kit naming/gating. UI copy uses Business DNA / Brand Overview / Brand Studio — not Brand Kit.
+
+**Status**: accepted (extends ADR-0031 create loop; does not restore Brand Kit gate or multi-arm Generation)
