@@ -76,8 +76,10 @@ describe('BrandKitService', () => {
         values: ['Reliability'],
         aesthetic: ['Modern'],
         toneOfVoice: 'Authoritative yet accessible',
-        imageStyle: 'High-contrast product shots',
-        writingStyle: 'Instructional',
+        imageStyle:
+          'Images should feature high-contrast, sharp photography with a focus on before and after results.',
+        writingStyle:
+          'Authoritative yet accessible copy that is instructional and encouraging.',
         industry: 'Automotive',
         primaryLanguage: 'English',
         elevatorPitch: 'Pro-grade care for home use.',

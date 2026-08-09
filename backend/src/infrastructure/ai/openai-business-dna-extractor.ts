@@ -21,6 +21,47 @@ const ALLOWED_TONES: readonly Tone[] = [
   'friendly',
 ];
 
+const PROSE_MAX = 1200;
+
+/** Exported for unit tests — system instructions for Business DNA structuring. */
+export const BUSINESS_DNA_SYSTEM_PROMPT = [
+  'You extract Business DNA from a scraped business homepage for an ecommerce creative studio.',
+  'Return ONLY valid JSON matching the schema. No markdown.',
+  'tone must be one of: luxury, professional, playful, bold, friendly.',
+  'primaryColor and colorPalette entries must be hex like #RRGGBB.',
+  'Invent nothing that contradicts the page; infer reasonably from the copy, product category, and cues in the text.',
+  'Keep short fields (name, tagline, values, aesthetic, industry) concise.',
+  'imageStyle and writingStyle are REQUIRED non-empty strings — never null, never a single adjective.',
+  'imageStyle: write 2–4 sentences of concrete photography / visual direction for ads and social creatives.',
+  'Ground it in the brand and product category: lighting, setting, what to feature, materials/finish cues, and what to avoid.',
+  'Example shape (adapt to THIS brand, do not copy): "Images should feature high-contrast, sharp photography with a focus on before-and-after results. Use a modern studio aesthetic with clean pedestals for product shots, plus lifestyle shots that show the product in real use."',
+  'writingStyle: write 2–4 sentences of concrete copy voice for captions and on-image text.',
+  'Cover sentence shape, vocabulary, do\'s (and brief don\'ts if clear), and how brand promises should sound — not only a tone label like "professional".',
+  'Example shape (adapt to THIS brand, do not copy): "The writing style should be authoritative yet accessible, focusing on the core promise. Use instructional and encouraging language that simplifies the process and emphasizes ease of use and visible results."',
+].join(' ');
+
+/** Exported for unit tests — JSON schema hints sent to the model. */
+export const BUSINESS_DNA_OUTPUT_SCHEMA = {
+  name: 'string',
+  primaryColor: '#hex',
+  secondaryColor: '#hex|null',
+  tone: 'luxury|professional|playful|bold|friendly',
+  audience: 'string',
+  typography: 'string|null',
+  colorPalette: ['#hex'],
+  tagline: 'string|null',
+  values: ['string'],
+  aesthetic: ['string'],
+  toneOfVoice: 'string|null',
+  imageStyle:
+    'required string — 2-4 sentences of photography/visual direction grounded in the homepage',
+  writingStyle:
+    'required string — 2-4 sentences of copy voice, sentence shape, and dos grounded in the homepage',
+  industry: 'string|null',
+  primaryLanguage: 'string|null',
+  elevatorPitch: 'string|null',
+} as const;
+
 interface ExtractionJson {
   name?: string;
   primaryColor?: string;
@@ -57,37 +98,12 @@ export class OpenAiBusinessDnaExtractor implements IBusinessDnaExtractor {
       );
     }
 
-    const system = [
-      'You extract Business DNA from a scraped business homepage.',
-      'Return ONLY valid JSON matching the schema. No markdown.',
-      'tone must be one of: luxury, professional, playful, bold, friendly.',
-      'primaryColor and colorPalette entries must be hex like #RRGGBB.',
-      'Be concise but specific. Invent nothing that contradicts the page; infer reasonably from the copy.',
-    ].join(' ');
-
     const user = JSON.stringify({
       url: scrape.url,
       title: scrape.title,
       description: scrape.description,
       textContent: scrape.textContent.slice(0, 8000),
-      schema: {
-        name: 'string',
-        primaryColor: '#hex',
-        secondaryColor: '#hex|null',
-        tone: 'luxury|professional|playful|bold|friendly',
-        audience: 'string',
-        typography: 'string|null',
-        colorPalette: ['#hex'],
-        tagline: 'string|null',
-        values: ['string'],
-        aesthetic: ['string'],
-        toneOfVoice: 'string|null',
-        imageStyle: 'string|null',
-        writingStyle: 'string|null',
-        industry: 'string|null',
-        primaryLanguage: 'string|null',
-        elevatorPitch: 'string|null',
-      },
+      schema: BUSINESS_DNA_OUTPUT_SCHEMA,
     });
 
     try {
@@ -100,7 +116,7 @@ export class OpenAiBusinessDnaExtractor implements IBusinessDnaExtractor {
           temperature: 0.4,
           response_format: { type: 'json_object' },
           messages: [
-            { role: 'system', content: system },
+            { role: 'system', content: BUSINESS_DNA_SYSTEM_PROMPT },
             { role: 'user', content: user },
           ],
         },
@@ -165,8 +181,12 @@ export function mapExtraction(
   businessDna.values = cleanStringList(raw.values);
   businessDna.aesthetic = cleanStringList(raw.aesthetic);
   businessDna.toneOfVoice = raw.toneOfVoice?.trim() || null;
-  businessDna.imageStyle = raw.imageStyle?.trim() || null;
-  businessDna.writingStyle = raw.writingStyle?.trim() || null;
+  businessDna.imageStyle = clipProse(
+    raw.imageStyle?.trim() || groundedImageStyleFallback(scrape),
+  );
+  businessDna.writingStyle = clipProse(
+    raw.writingStyle?.trim() || groundedWritingStyleFallback(scrape),
+  );
   businessDna.industry = raw.industry?.trim() || null;
   businessDna.primaryLanguage = raw.primaryLanguage?.trim() || 'English';
   businessDna.elevatorPitch =
@@ -181,6 +201,41 @@ export function mapExtraction(
     audience,
     businessDna,
   };
+}
+
+export function groundedImageStyleFallback(
+  scrape: HomepageScrapeResult,
+): string {
+  const subject =
+    scrape.title?.replace(/\s*[|\-–].*$/, '').trim() || "the brand's products";
+  const cue =
+    scrape.description?.trim() ||
+    scrape.textContent.replace(/\s+/g, ' ').trim().slice(0, 160);
+  const cueClause = cue ? ` that reflects "${cue.slice(0, 140)}"` : '';
+  return (
+    `Feature sharp, high-quality photography that clearly shows ${subject} in real use` +
+    `${cueClause}. ` +
+    `Prefer category-true lighting, materials, and settings over generic stock. ` +
+    `Include close product detail plus lifestyle context that makes the benefit obvious at a glance.`
+  );
+}
+
+export function groundedWritingStyleFallback(
+  scrape: HomepageScrapeResult,
+): string {
+  const cue =
+    scrape.description?.trim() ||
+    scrape.title?.trim() ||
+    'the brand promise on the homepage';
+  return (
+    `Write in a clear, confident voice that echoes the homepage message (${cue.slice(0, 140)}). ` +
+    `Use short, concrete sentences that explain benefits and next steps without empty hype. ` +
+    `Stay instructional and benefit-led so captions and on-image copy feel usable for social creatives.`
+  );
+}
+
+function clipProse(value: string): string {
+  return value.slice(0, PROSE_MAX);
 }
 
 function normalizeTone(value: string | undefined): Tone {
