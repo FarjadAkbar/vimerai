@@ -1,12 +1,12 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowRight, Link2, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
+import { BrandConfirmForm } from "@/components/studio/brand-confirm-form";
 import { useGenerateBusinessDna } from "@/lib/hooks/use-brand-kits";
 import type { BrandKit } from "@/lib/api/brand-kits.api";
 
@@ -29,6 +29,7 @@ export default function BusinessDnaPage() {
   const [brand, setBrand] = useState<BrandKit | null>(null);
   const [tab, setTab] = useState<OverviewTab>("overview");
   const [error, setError] = useState<string | null>(null);
+  const [showBrandConfirm, setShowBrandConfirm] = useState(false);
 
   useEffect(() => {
     if (phase !== "generating") return;
@@ -271,12 +272,27 @@ export default function BusinessDnaPage() {
         {error ? (
           <p className="mt-3 text-sm text-red-600">{error}</p>
         ) : null}
-        <p className="mt-4 text-xs text-[var(--studio-muted)]">
-          Prefer manual entry?{" "}
-          <Link href="/brand-kits" className="underline">
-            Brand Confirm
-          </Link>
-        </p>
+        {showBrandConfirm ? (
+          <BrandConfirmForm
+            onCreated={(created) => {
+              setBrand(created);
+              setPhase("overview");
+              setShowBrandConfirm(false);
+            }}
+            onCancel={() => setShowBrandConfirm(false)}
+          />
+        ) : (
+          <p className="mt-4 text-xs text-[var(--studio-muted)]">
+            Prefer manual entry?{" "}
+            <button
+              type="button"
+              className="underline"
+              onClick={() => setShowBrandConfirm(true)}
+            >
+              Brand Confirm
+            </button>
+          </p>
+        )}
       </div>
     </div>
   );

@@ -4,9 +4,9 @@
 
 **Blocked by:** 01 — Thin Brand + manual Product (no Brand Kit gate)
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] Authenticated scrape accepts a product URL and returns structured name, description, and image URLs (or a clear failure)
-- [ ] User can confirm and save scrape results as a Product (source URL retained)
-- [ ] Manual fallback remains available when scrape fails or URL is absent
-- [ ] Scrape port is tested with fixture HTML (no live storefront calls in unit tests)
+- [x] Authenticated scrape accepts a product URL and returns structured name, description, and image URLs (or a clear failure)
+- [x] User can confirm and save scrape results as a Product (source URL retained)
+- [x] Manual fallback remains available when scrape fails or URL is absent
+- [x] Scrape port is tested with fixture HTML (no live storefront calls in unit tests)

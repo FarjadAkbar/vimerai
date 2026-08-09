@@ -1,16 +1,23 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { Download, Loader2, RefreshCw } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  Download,
+  Loader2,
+  RefreshCw,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { InlineProductCreate } from "@/components/studio/inline-product-create";
 import { getApiErrorMessage } from "@/lib/api/errors";
-import type { Format } from "@/lib/api/formats.api";
 import {
   REEL_PLATFORM_OPTIONS,
   type ReelPlatform,
   type VideoJob,
 } from "@/lib/api/video-jobs.api";
+import { PRODUCT_PATH } from "@/lib/product-path";
 import { useBrandKits } from "@/lib/hooks/use-brand-kits";
 import { useFormats } from "@/lib/hooks/use-formats";
 import { useProducts } from "@/lib/hooks/use-products";
@@ -42,6 +49,8 @@ export default function StudioVideosPage() {
     useState<ReelPlatform>("instagram_reels");
   const [activeJob, setActiveJob] = useState<VideoJob | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [addingProduct, setAddingProduct] = useState(false);
+  const touchStartX = useRef<number | null>(null);
 
   useEffect(() => {
     if (!brandId && brands[0]) setBrandId(brands[0].id);
@@ -64,14 +73,32 @@ export default function StudioVideosPage() {
   const selectedBrand = brands.find((b) => b.id === brandId);
   const selectedProduct = products.find((p) => p.id === productId);
   const selectedFormat = formats.find((f) => f.id === formatId);
+  const formatIndex = formats.findIndex((f) => f.id === formatId);
   const platformLabel =
     REEL_PLATFORM_OPTIONS.find((option) => option.value === reelPlatform)
       ?.label ?? reelPlatform;
 
+  const neighborFormats = useMemo(() => {
+    if (formats.length === 0) return { prev: null, next: null };
+    const index = formatIndex < 0 ? 0 : formatIndex;
+    return {
+      prev: formats[(index - 1 + formats.length) % formats.length] ?? null,
+      next: formats[(index + 1) % formats.length] ?? null,
+    };
+  }, [formats, formatIndex]);
+
+  const previewReady = activeJob?.status === "completed" && !!activeJob.videoUrl;
   const canGenerate =
     Boolean(brandId && productId && formatId && reelPlatform) &&
     !createJob.isPending &&
     !regenerateJob.isPending;
+
+  const selectFormatByOffset = (offset: number) => {
+    if (formats.length === 0) return;
+    const index = formatIndex < 0 ? 0 : formatIndex;
+    const next = formats[(index + offset + formats.length) % formats.length];
+    if (next) setFormatId(next.id);
+  };
 
   const onGenerate = async () => {
     if (!brandId || !productId || !formatId) return;
@@ -122,128 +149,228 @@ export default function StudioVideosPage() {
   const busy = createJob.isPending || regenerateJob.isPending;
 
   return (
-    <div className="mx-auto max-w-6xl">
+    <div className="mx-auto max-w-5xl">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-semibold tracking-tight">Videos</h1>
-          <p className="mt-1 text-[var(--studio-muted)]">
-            Make a Video — pick Brand, Product, Format, and platform, then
-            Export the Video. Video Director chat is parked.
-          </p>
-        </div>
-        <div className="flex flex-col items-end gap-1">
-          <Button
-            className="rounded-full bg-[var(--studio-ink)] text-white hover:bg-black"
-            disabled={!canGenerate}
-            onClick={onGenerate}
-          >
-            {createJob.isPending ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Generating…
-              </>
-            ) : (
-              "Generate Video"
-            )}
-          </Button>
-          <p className="text-xs text-[var(--studio-muted)]">
+          <h1 className="text-3xl font-semibold tracking-tight">Make a Video</h1>
+          <p className="mt-1 text-sm text-[var(--studio-muted)]">
             Costs {VIDEO_JOB_CREDIT_COST} credits per Video Job · ~15–30s 9:16
           </p>
         </div>
+        <Button
+          className="rounded-full bg-[var(--studio-ink)] px-6 text-white hover:bg-black"
+          disabled={!canGenerate}
+          onClick={onGenerate}
+        >
+          {createJob.isPending ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Generating…
+            </>
+          ) : (
+            "Generate"
+          )}
+        </Button>
       </div>
 
       {!selectedBrand ? (
         <EmptyGuide
           title="Generate Business DNA first"
           body="A Brand is required before you can run a Video Job."
-          href="/studio/business-dna"
+          href={PRODUCT_PATH.businessDna}
           cta="Business DNA"
         />
-      ) : !selectedProduct ? (
-        <EmptyGuide
-          title="Add a Product to continue"
-          body="Video Jobs need a Product with at least one image so the model can condition on it."
-          href="/products"
-          cta="Create Product"
+      ) : products.length === 0 || addingProduct ? (
+        <InlineProductCreate
+          title={
+            products.length > 0
+              ? "Add another Product"
+              : "Add a Product to continue"
+          }
+          onCreated={(product) => {
+            setProductId(product.id);
+            setAddingProduct(false);
+          }}
+          onCancel={
+            products.length > 0 ? () => setAddingProduct(false) : undefined
+          }
         />
       ) : (
         <>
-          <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            <SelectField
-              label="Brand"
-              value={brandId}
-              onChange={setBrandId}
-              options={brands.map((b) => ({ value: b.id, label: b.name }))}
-            />
-            <SelectField
-              label="Product"
-              value={productId}
-              onChange={setProductId}
-              options={products.map((p) => ({ value: p.id, label: p.name }))}
-            />
-            <SelectField
-              label="Platform"
-              value={reelPlatform}
-              onChange={(value) => setReelPlatform(value as ReelPlatform)}
-              options={REEL_PLATFORM_OPTIONS.map((option) => ({
-                value: option.value,
-                label: option.label,
-              }))}
-            />
-            <div className="flex items-end">
-              <Link
-                href="/products"
-                className="text-sm text-[var(--studio-muted)] underline-offset-2 hover:underline"
-              >
-                Manage Products
-              </Link>
+          <div className="mt-6 flex flex-wrap items-end gap-3">
+            <div className="min-w-[10rem] flex-1">
+              <SelectField
+                label="Brand"
+                value={brandId}
+                onChange={setBrandId}
+                options={brands.map((b) => ({ value: b.id, label: b.name }))}
+              />
             </div>
+            <div className="min-w-[10rem] flex-1">
+              <SelectField
+                label="Product"
+                value={productId}
+                onChange={setProductId}
+                options={products.map((p) => ({ value: p.id, label: p.name }))}
+              />
+            </div>
+            <div className="min-w-[10rem] flex-1">
+              <SelectField
+                label="Platform"
+                value={reelPlatform}
+                onChange={(value) => setReelPlatform(value as ReelPlatform)}
+                options={REEL_PLATFORM_OPTIONS.map((option) => ({
+                  value: option.value,
+                  label: option.label,
+                }))}
+              />
+            </div>
+            <button
+              type="button"
+              onClick={() => setAddingProduct(true)}
+              className="mb-2.5 text-sm text-[var(--studio-muted)] underline-offset-2 hover:underline"
+            >
+              Add Product
+            </button>
           </div>
 
-          <section className="mt-8">
-            <h2 className="text-sm font-medium uppercase tracking-[0.14em] text-[var(--studio-muted)]">
-              Formats
-            </h2>
+          <div className="mt-10 flex min-h-[28rem] flex-col items-center justify-center">
             {formatsLoading ? (
-              <p className="mt-3 text-sm text-[var(--studio-muted)]">
+              <p className="text-sm text-[var(--studio-muted)]">
                 Loading Formats…
               </p>
+            ) : formats.length === 0 ? (
+              <p className="text-sm text-[var(--studio-muted)]">
+                No Formats available.
+              </p>
             ) : (
-              <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                {formats.map((format) => (
-                  <FormatCard
-                    key={format.id}
-                    format={format}
-                    selected={format.id === formatId}
-                    onSelect={() => setFormatId(format.id)}
-                  />
-                ))}
-              </div>
-            )}
-          </section>
+              <>
+                <div className="mb-4 flex items-center gap-2 text-sm text-[var(--studio-muted)]">
+                  <span>Format</span>
+                  <span className="font-medium text-[var(--studio-ink)]">
+                    {selectedFormat?.label ?? "—"}
+                  </span>
+                  {formats.length > 1 ? (
+                    <span className="text-xs">
+                      {Math.max(formatIndex, 0) + 1} / {formats.length}
+                    </span>
+                  ) : null}
+                </div>
 
-          <div className="mt-10 flex min-h-[28rem] flex-col items-center justify-center">
-            <PhonePreview
-              label={
-                activeJob?.status === "completed"
-                  ? `${platformLabel} preview`
-                  : selectedFormat?.label ?? "Video preview"
-              }
-              title={
-                activeJob?.status === "failed"
-                  ? "Video Job failed"
-                  : (selectedBrand.name ?? "Brand")
-              }
-              body={
-                activeJob?.status === "failed"
-                  ? (activeJob.error ?? "Try again")
-                  : `${selectedProduct.name} · ${platformLabel}`
-              }
-              videoUrl={
-                activeJob?.status === "completed" ? activeJob.videoUrl : null
-              }
-              busy={busy}
-            />
+                <div
+                  className="relative flex items-end gap-4 sm:gap-6"
+                  onTouchStart={(event) => {
+                    touchStartX.current =
+                      event.changedTouches[0]?.clientX ?? null;
+                  }}
+                  onTouchEnd={(event) => {
+                    if (touchStartX.current == null) return;
+                    const endX =
+                      event.changedTouches[0]?.clientX ?? touchStartX.current;
+                    const delta = endX - touchStartX.current;
+                    touchStartX.current = null;
+                    if (Math.abs(delta) < 40) return;
+                    selectFormatByOffset(delta < 0 ? 1 : -1);
+                  }}
+                >
+                  {formats.length > 1 ? (
+                    <button
+                      type="button"
+                      aria-label="Previous format"
+                      className="absolute -left-2 top-1/2 z-10 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-[var(--studio-border)] bg-white/90 text-[var(--studio-ink)] shadow-sm backdrop-blur sm:-left-12"
+                      onClick={() => selectFormatByOffset(-1)}
+                    >
+                      <ChevronLeft className="h-5 w-5" />
+                    </button>
+                  ) : null}
+
+                  {neighborFormats.prev && formats.length > 1 ? (
+                    <button
+                      type="button"
+                      onClick={() => setFormatId(neighborFormats.prev!.id)}
+                      className="hidden text-left md:block"
+                      aria-label={`Select ${neighborFormats.prev.label}`}
+                    >
+                      <PhonePreview
+                        muted
+                        label="Format"
+                        title={neighborFormats.prev.label}
+                        body={neighborFormats.prev.description}
+                      />
+                    </button>
+                  ) : null}
+
+                  <PhonePreview
+                    featured
+                    label={
+                      previewReady
+                        ? `${platformLabel} preview`
+                        : selectedFormat?.label ?? "Format"
+                    }
+                    title={
+                      activeJob?.status === "failed"
+                        ? "Video Job failed"
+                        : selectedBrand.name
+                    }
+                    body={
+                      activeJob?.status === "failed"
+                        ? (activeJob.error ?? "Try again")
+                        : previewReady
+                          ? `${selectedProduct?.name ?? "Product"} · ${platformLabel}`
+                          : (selectedFormat?.description ??
+                            `${selectedProduct?.name ?? "Product"} · ${platformLabel}`)
+                    }
+                    videoUrl={previewReady ? activeJob.videoUrl : null}
+                    busy={busy}
+                  />
+
+                  {neighborFormats.next && formats.length > 1 ? (
+                    <button
+                      type="button"
+                      onClick={() => setFormatId(neighborFormats.next!.id)}
+                      className="hidden text-left md:block"
+                      aria-label={`Select ${neighborFormats.next.label}`}
+                    >
+                      <PhonePreview
+                        muted
+                        label="Format"
+                        title={neighborFormats.next.label}
+                        body={neighborFormats.next.description}
+                      />
+                    </button>
+                  ) : null}
+
+                  {formats.length > 1 ? (
+                    <button
+                      type="button"
+                      aria-label="Next format"
+                      className="absolute -right-2 top-1/2 z-10 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-[var(--studio-border)] bg-white/90 text-[var(--studio-ink)] shadow-sm backdrop-blur sm:-right-12"
+                      onClick={() => selectFormatByOffset(1)}
+                    >
+                      <ChevronRight className="h-5 w-5" />
+                    </button>
+                  ) : null}
+                </div>
+
+                {formats.length > 1 ? (
+                  <div className="mt-5 flex items-center gap-1.5">
+                    {formats.map((format) => (
+                      <button
+                        key={format.id}
+                        type="button"
+                        aria-label={format.label}
+                        onClick={() => setFormatId(format.id)}
+                        className={`h-1.5 rounded-full transition-all ${
+                          format.id === formatId
+                            ? "w-5 bg-[var(--studio-ink)]"
+                            : "w-1.5 bg-[var(--studio-border)] hover:bg-[var(--studio-muted)]"
+                        }`}
+                      />
+                    ))}
+                  </div>
+                ) : null}
+              </>
+            )}
 
             {error ? (
               <p className="mt-6 max-w-md text-center text-sm text-red-600">
@@ -251,38 +378,35 @@ export default function StudioVideosPage() {
               </p>
             ) : null}
 
-            <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
-              <Button
-                variant="outline"
-                className="rounded-full"
-                disabled={activeJob?.status !== "completed" || busy}
-                onClick={onRegenerate}
-              >
-                {regenerateJob.isPending ? (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                ) : (
-                  <RefreshCw className="mr-2 h-4 w-4" />
-                )}
-                Regenerate
-              </Button>
-              <Button
-                className="rounded-full bg-[var(--studio-ink)] text-white hover:bg-black"
-                disabled={
-                  activeJob?.status !== "completed" || !activeJob.videoUrl
-                }
-                onClick={onExport}
-              >
-                <Download className="mr-2 h-4 w-4" />
-                Export
-              </Button>
-            </div>
-
-            <p className="mt-4 max-w-md text-center text-sm text-[var(--studio-muted)]">
-              Regenerate starts a new credited Video Job (
-              {VIDEO_JOB_CREDIT_COST} credits) with the same Brand, Product,
-              Format, and platform. No AI captions — write those outside the
-              app.
-            </p>
+            {previewReady || activeJob?.status === "failed" ? (
+              <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+                <Button
+                  variant="outline"
+                  className="rounded-full"
+                  disabled={!previewReady || busy}
+                  onClick={onRegenerate}
+                >
+                  {regenerateJob.isPending ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ) : (
+                    <RefreshCw className="mr-2 h-4 w-4" />
+                  )}
+                  Regenerate
+                </Button>
+                <Button
+                  className="rounded-full bg-[var(--studio-ink)] text-white hover:bg-black"
+                  disabled={!previewReady}
+                  onClick={onExport}
+                >
+                  <Download className="mr-2 h-4 w-4" />
+                  Export
+                </Button>
+              </div>
+            ) : (
+              <p className="mt-8 max-w-sm text-center text-sm text-[var(--studio-muted)]">
+                Swipe or use the arrows to pick a Format, then Generate.
+              </p>
+            )}
           </div>
 
           {recentJobs.length > 0 ? (
@@ -384,51 +508,33 @@ function SelectField({
   );
 }
 
-function FormatCard({
-  format,
-  selected,
-  onSelect,
-}: {
-  format: Format;
-  selected: boolean;
-  onSelect: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onSelect}
-      className={`rounded-2xl border px-4 py-4 text-left transition ${
-        selected
-          ? "border-[var(--studio-ink)] bg-white shadow-sm"
-          : "border-[var(--studio-border)] bg-white/70 hover:border-black/20"
-      }`}
-    >
-      <p className="font-medium">{format.label}</p>
-      <p className="mt-1 text-xs text-[var(--studio-muted)]">
-        {format.description}
-      </p>
-      <p className="mt-3 text-[10px] uppercase tracking-[0.14em] text-[var(--studio-muted)]">
-        {format.modality}
-      </p>
-    </button>
-  );
-}
-
 function PhonePreview({
   title,
   body,
   label,
+  featured,
+  muted,
   videoUrl,
   busy,
 }: {
   title: string;
   body: string;
   label: string;
+  featured?: boolean;
+  muted?: boolean;
   videoUrl?: string | null;
   busy?: boolean;
 }) {
   return (
-    <div className="relative h-[28rem] w-[16rem] overflow-hidden rounded-[1.75rem] border border-black/5 bg-black text-white shadow-xl">
+    <div
+      className={`relative overflow-hidden rounded-[1.75rem] border border-black/5 bg-black text-white shadow-xl transition ${
+        featured
+          ? "h-[28rem] w-[16rem] scale-105"
+          : muted
+            ? "h-[22rem] w-[12rem] opacity-70"
+            : "h-[26rem] w-[14rem]"
+      }`}
+    >
       {videoUrl ? (
         <video
           key={videoUrl}
@@ -443,7 +549,7 @@ function PhonePreview({
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(255,255,255,0.18),transparent_45%)]" />
         </div>
       )}
-      {busy ? (
+      {busy && featured ? (
         <div className="absolute inset-0 z-10 flex items-center justify-center bg-black/45">
           <Loader2 className="h-8 w-8 animate-spin" />
         </div>
@@ -456,10 +562,14 @@ function PhonePreview({
           <div className="mt-auto space-y-2 pb-6">
             <p className="text-lg font-semibold leading-snug">{title}</p>
             <p className="text-xs text-white/75">{body}</p>
-            <div className="mt-4 flex flex-wrap gap-2 text-[10px]">
-              <span className="rounded-full bg-white/15 px-2 py-1">9:16</span>
-              <span className="rounded-full bg-white/15 px-2 py-1">15–30s</span>
-            </div>
+            {featured ? (
+              <div className="mt-4 flex flex-wrap gap-2 text-[10px]">
+                <span className="rounded-full bg-white/15 px-2 py-1">9:16</span>
+                <span className="rounded-full bg-white/15 px-2 py-1">
+                  15–30s
+                </span>
+              </div>
+            ) : null}
           </div>
         </div>
       ) : (
