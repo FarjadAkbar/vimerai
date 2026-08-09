@@ -1,4 +1,7 @@
 import { GenerationMode } from '@/domain/video.entity';
+import type { VideoAspectRatio } from '@/types/video-job/aspect-ratio';
+
+export type { VideoAspectRatio };
 
 export interface GenerateVideoRequest {
   prompt: string;
@@ -11,6 +14,8 @@ export interface GenerateVideoRequest {
   useImageConditioning?: boolean;
   textToVideoModel?: string;
   imageToVideoModel?: string;
+  /** Vertical short-form default for Video Jobs. */
+  aspectRatio?: VideoAspectRatio;
 }
 
 export interface GenerateVideoResponse {

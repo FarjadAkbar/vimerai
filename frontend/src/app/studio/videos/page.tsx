@@ -1,146 +1,584 @@
 "use client";
 
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { Box, UserRound, Video } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  Download,
+  Loader2,
+  RefreshCw,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { InlineProductCreate } from "@/components/studio/inline-product-create";
+import { getApiErrorMessage } from "@/lib/api/errors";
+import {
+  REEL_PLATFORM_OPTIONS,
+  type ReelPlatform,
+  type VideoJob,
+} from "@/lib/api/video-jobs.api";
+import { PRODUCT_PATH } from "@/lib/product-path";
 import { useBrandKits } from "@/lib/hooks/use-brand-kits";
+import { useFormats } from "@/lib/hooks/use-formats";
 import { useProducts } from "@/lib/hooks/use-products";
+import {
+  useCreateVideoJob,
+  useRegenerateVideoJob,
+  useVideoJobs,
+} from "@/lib/hooks/use-video-jobs";
+
+const VIDEO_JOB_CREDIT_COST = 2;
 
 export default function StudioVideosPage() {
-  const { data: brands } = useBrandKits();
-  const { data: products } = useProducts();
-  const brand = brands?.brandKits[0];
-  const product = products?.products[0];
+  const { data: brandsData } = useBrandKits();
+  const { data: productsData } = useProducts();
+  const { data: formatsData, isLoading: formatsLoading } = useFormats("video");
+  const { data: jobsData } = useVideoJobs();
+  const createJob = useCreateVideoJob();
+  const regenerateJob = useRegenerateVideoJob();
+
+  const brands = brandsData?.brandKits ?? [];
+  const products = productsData?.products ?? [];
+  const formats = formatsData?.formats ?? [];
+  const recentJobs = jobsData?.videoJobs ?? [];
+
+  const [brandId, setBrandId] = useState("");
+  const [productId, setProductId] = useState("");
+  const [formatId, setFormatId] = useState("");
+  const [reelPlatform, setReelPlatform] =
+    useState<ReelPlatform>("instagram_reels");
+  const [activeJob, setActiveJob] = useState<VideoJob | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [addingProduct, setAddingProduct] = useState(false);
+  const touchStartX = useRef<number | null>(null);
+
+  useEffect(() => {
+    if (!brandId && brands[0]) setBrandId(brands[0].id);
+  }, [brands, brandId]);
+
+  useEffect(() => {
+    if (!productId && products[0]) setProductId(products[0].id);
+  }, [products, productId]);
+
+  useEffect(() => {
+    if (!formatId && formats[0]) setFormatId(formats[0].id);
+  }, [formats, formatId]);
+
+  useEffect(() => {
+    if (!activeJob && recentJobs[0]) {
+      setActiveJob(recentJobs[0]);
+    }
+  }, [recentJobs, activeJob]);
+
+  const selectedBrand = brands.find((b) => b.id === brandId);
+  const selectedProduct = products.find((p) => p.id === productId);
+  const selectedFormat = formats.find((f) => f.id === formatId);
+  const formatIndex = formats.findIndex((f) => f.id === formatId);
+  const platformLabel =
+    REEL_PLATFORM_OPTIONS.find((option) => option.value === reelPlatform)
+      ?.label ?? reelPlatform;
+
+  const neighborFormats = useMemo(() => {
+    if (formats.length === 0) return { prev: null, next: null };
+    const index = formatIndex < 0 ? 0 : formatIndex;
+    return {
+      prev: formats[(index - 1 + formats.length) % formats.length] ?? null,
+      next: formats[(index + 1) % formats.length] ?? null,
+    };
+  }, [formats, formatIndex]);
+
+  const previewReady = activeJob?.status === "completed" && !!activeJob.videoUrl;
+  const canGenerate =
+    Boolean(brandId && productId && formatId && reelPlatform) &&
+    !createJob.isPending &&
+    !regenerateJob.isPending;
+
+  const selectFormatByOffset = (offset: number) => {
+    if (formats.length === 0) return;
+    const index = formatIndex < 0 ? 0 : formatIndex;
+    const next = formats[(index + offset + formats.length) % formats.length];
+    if (next) setFormatId(next.id);
+  };
+
+  const onGenerate = async () => {
+    if (!brandId || !productId || !formatId) return;
+    setError(null);
+    try {
+      const result = await createJob.mutateAsync({
+        brandId,
+        productId,
+        formatId,
+        reelPlatform,
+      });
+      setActiveJob(result.videoJob);
+    } catch (err) {
+      setError(getApiErrorMessage(err, "Could not start Video Job"));
+    }
+  };
+
+  const onRegenerate = async () => {
+    if (!activeJob) return;
+    setError(null);
+    try {
+      const result = await regenerateJob.mutateAsync(activeJob.id);
+      setActiveJob(result.videoJob);
+      setBrandId(result.videoJob.brandId);
+      setProductId(result.videoJob.productId);
+      setFormatId(result.videoJob.formatId);
+      setReelPlatform(result.videoJob.reelPlatform);
+    } catch (err) {
+      setError(getApiErrorMessage(err, "Could not regenerate Video Job"));
+    }
+  };
+
+  const onExport = async () => {
+    if (!activeJob?.videoUrl) return;
+    const response = await fetch(activeJob.videoUrl);
+    const blob = await response.blob();
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    const formatLabel =
+      activeJob.snapshot.format.label.replace(/\s+/g, "-").toLowerCase() ||
+      "video";
+    anchor.href = url;
+    anchor.download = `${formatLabel}-${activeJob.id.slice(0, 8)}.mp4`;
+    anchor.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const busy = createJob.isPending || regenerateJob.isPending;
 
   return (
     <div className="mx-auto max-w-5xl">
-      <h1 className="text-3xl font-semibold tracking-tight">Videos</h1>
-      <p className="mt-1 text-[var(--studio-muted)]">
-        Make a Video — Viral Remix–like assets + generate. Separate from Posts.
-        Video Director chat is parked.
-      </p>
-
-      <div className="mt-4 flex flex-wrap gap-3 text-sm">
-        <span className="rounded-full bg-[var(--studio-chip)] px-3 py-1.5">
-          Brand:{" "}
-          <strong className="font-medium">
-            {brand?.name ?? "Generate Business DNA"}
-          </strong>
-        </span>
-        <span className="rounded-full bg-[var(--studio-chip)] px-3 py-1.5">
-          Product:{" "}
-          <strong className="font-medium">
-            {product?.name ?? "Add a Product"}
-          </strong>
-        </span>
-      </div>
-
-      <section className="mt-8 grid gap-4 md:grid-cols-3">
-        <StepCard
-          step="1"
-          title="Choose assets"
-          body="Reference style optional later; Product images condition the Video Job."
-        />
-        <StepCard
-          step="2"
-          title="Generate"
-          body="Run a Video Job for ~15–30s 9:16 (Reels or TikTok)."
-        />
-        <StepCard
-          step="3"
-          title="Preview & Export"
-          body="Play in a phone frame, then download — no in-app publish."
-        />
-      </section>
-
-      <section className="mt-8 rounded-3xl border border-[var(--studio-border)] bg-white p-6 shadow-[0_18px_40px_rgba(30,58,95,0.08)]">
-        <div className="grid gap-4 md:grid-cols-[1.2fr_1fr]">
-          <div className="grid grid-cols-3 gap-3">
-            <UploadSlot icon={Video} label="Ref video" hint="Optional MVP" />
-            <UploadSlot icon={Box} label="Product" hint={product?.name ?? "Required"} />
-            <UploadSlot icon={UserRound} label="Person" hint="Optional" />
-          </div>
-          <div className="flex flex-col rounded-2xl bg-[var(--studio-panel)] p-4">
-            <p className="text-sm font-medium">Optional instructions</p>
-            <textarea
-              className="mt-2 min-h-28 flex-1 resize-none rounded-xl border border-[var(--studio-border)] bg-white p-3 text-sm outline-none"
-              placeholder="Describe the hook, pacing, camera, or message…"
-              disabled
-            />
-          </div>
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-semibold tracking-tight">Make a Video</h1>
+          <p className="mt-1 text-sm text-[var(--studio-muted)]">
+            Costs {VIDEO_JOB_CREDIT_COST} credits per Video Job · ~15–30s 9:16
+          </p>
         </div>
-
-        <div className="mt-5 flex flex-wrap items-center justify-between gap-3">
-          <div className="flex flex-wrap gap-2 text-xs">
-            <SpecChip label="Aspect" value="9:16" />
-            <SpecChip label="Duration" value="15–30s" />
-            <SpecChip label="Platform" value="Reels / TikTok" />
-          </div>
-          <Button disabled className="rounded-full bg-[var(--studio-ink)] text-white">
-            Generate Video
-          </Button>
-        </div>
-      </section>
-
-      <p className="mt-6 text-sm text-[var(--studio-muted)]">
-        Video Job wiring lands in ticket 04. This page keeps the Video entry
-        clear and separate from Posts.
-      </p>
-      <div className="mt-4 flex gap-3">
-        <Button asChild variant="outline" className="rounded-full">
-          <Link href="/studio/posts">Back to Posts</Link>
-        </Button>
-        <Button asChild className="rounded-full bg-[var(--studio-ink)] text-white hover:bg-black">
-          <Link href="/studio/business-dna">Business DNA</Link>
+        <Button
+          className="rounded-full bg-[var(--studio-ink)] px-6 text-white hover:bg-black"
+          disabled={!canGenerate}
+          onClick={onGenerate}
+        >
+          {createJob.isPending ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Generating…
+            </>
+          ) : (
+            "Generate"
+          )}
         </Button>
       </div>
+
+      {!selectedBrand ? (
+        <EmptyGuide
+          title="Generate Business DNA first"
+          body="A Brand is required before you can run a Video Job."
+          href={PRODUCT_PATH.businessDna}
+          cta="Business DNA"
+        />
+      ) : products.length === 0 || addingProduct ? (
+        <InlineProductCreate
+          title={
+            products.length > 0
+              ? "Add another Product"
+              : "Add a Product to continue"
+          }
+          onCreated={(product) => {
+            setProductId(product.id);
+            setAddingProduct(false);
+          }}
+          onCancel={
+            products.length > 0 ? () => setAddingProduct(false) : undefined
+          }
+        />
+      ) : (
+        <>
+          <div className="mt-6 flex flex-wrap items-end gap-3">
+            <div className="min-w-[10rem] flex-1">
+              <SelectField
+                label="Brand"
+                value={brandId}
+                onChange={setBrandId}
+                options={brands.map((b) => ({ value: b.id, label: b.name }))}
+              />
+            </div>
+            <div className="min-w-[10rem] flex-1">
+              <SelectField
+                label="Product"
+                value={productId}
+                onChange={setProductId}
+                options={products.map((p) => ({ value: p.id, label: p.name }))}
+              />
+            </div>
+            <div className="min-w-[10rem] flex-1">
+              <SelectField
+                label="Platform"
+                value={reelPlatform}
+                onChange={(value) => setReelPlatform(value as ReelPlatform)}
+                options={REEL_PLATFORM_OPTIONS.map((option) => ({
+                  value: option.value,
+                  label: option.label,
+                }))}
+              />
+            </div>
+            <button
+              type="button"
+              onClick={() => setAddingProduct(true)}
+              className="mb-2.5 text-sm text-[var(--studio-muted)] underline-offset-2 hover:underline"
+            >
+              Add Product
+            </button>
+          </div>
+
+          <div className="mt-10 flex min-h-[28rem] flex-col items-center justify-center">
+            {formatsLoading ? (
+              <p className="text-sm text-[var(--studio-muted)]">
+                Loading Formats…
+              </p>
+            ) : formats.length === 0 ? (
+              <p className="text-sm text-[var(--studio-muted)]">
+                No Formats available.
+              </p>
+            ) : (
+              <>
+                <div className="mb-4 flex items-center gap-2 text-sm text-[var(--studio-muted)]">
+                  <span>Format</span>
+                  <span className="font-medium text-[var(--studio-ink)]">
+                    {selectedFormat?.label ?? "—"}
+                  </span>
+                  {formats.length > 1 ? (
+                    <span className="text-xs">
+                      {Math.max(formatIndex, 0) + 1} / {formats.length}
+                    </span>
+                  ) : null}
+                </div>
+
+                <div
+                  className="relative flex items-end gap-4 sm:gap-6"
+                  onTouchStart={(event) => {
+                    touchStartX.current =
+                      event.changedTouches[0]?.clientX ?? null;
+                  }}
+                  onTouchEnd={(event) => {
+                    if (touchStartX.current == null) return;
+                    const endX =
+                      event.changedTouches[0]?.clientX ?? touchStartX.current;
+                    const delta = endX - touchStartX.current;
+                    touchStartX.current = null;
+                    if (Math.abs(delta) < 40) return;
+                    selectFormatByOffset(delta < 0 ? 1 : -1);
+                  }}
+                >
+                  {formats.length > 1 ? (
+                    <button
+                      type="button"
+                      aria-label="Previous format"
+                      className="absolute -left-2 top-1/2 z-10 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-[var(--studio-border)] bg-white/90 text-[var(--studio-ink)] shadow-sm backdrop-blur sm:-left-12"
+                      onClick={() => selectFormatByOffset(-1)}
+                    >
+                      <ChevronLeft className="h-5 w-5" />
+                    </button>
+                  ) : null}
+
+                  {neighborFormats.prev && formats.length > 1 ? (
+                    <button
+                      type="button"
+                      onClick={() => setFormatId(neighborFormats.prev!.id)}
+                      className="hidden text-left md:block"
+                      aria-label={`Select ${neighborFormats.prev.label}`}
+                    >
+                      <PhonePreview
+                        muted
+                        label="Format"
+                        title={neighborFormats.prev.label}
+                        body={neighborFormats.prev.description}
+                      />
+                    </button>
+                  ) : null}
+
+                  <PhonePreview
+                    featured
+                    label={
+                      previewReady
+                        ? `${platformLabel} preview`
+                        : selectedFormat?.label ?? "Format"
+                    }
+                    title={
+                      activeJob?.status === "failed"
+                        ? "Video Job failed"
+                        : selectedBrand.name
+                    }
+                    body={
+                      activeJob?.status === "failed"
+                        ? (activeJob.error ?? "Try again")
+                        : previewReady
+                          ? `${selectedProduct?.name ?? "Product"} · ${platformLabel}`
+                          : (selectedFormat?.description ??
+                            `${selectedProduct?.name ?? "Product"} · ${platformLabel}`)
+                    }
+                    videoUrl={previewReady ? activeJob.videoUrl : null}
+                    busy={busy}
+                  />
+
+                  {neighborFormats.next && formats.length > 1 ? (
+                    <button
+                      type="button"
+                      onClick={() => setFormatId(neighborFormats.next!.id)}
+                      className="hidden text-left md:block"
+                      aria-label={`Select ${neighborFormats.next.label}`}
+                    >
+                      <PhonePreview
+                        muted
+                        label="Format"
+                        title={neighborFormats.next.label}
+                        body={neighborFormats.next.description}
+                      />
+                    </button>
+                  ) : null}
+
+                  {formats.length > 1 ? (
+                    <button
+                      type="button"
+                      aria-label="Next format"
+                      className="absolute -right-2 top-1/2 z-10 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-[var(--studio-border)] bg-white/90 text-[var(--studio-ink)] shadow-sm backdrop-blur sm:-right-12"
+                      onClick={() => selectFormatByOffset(1)}
+                    >
+                      <ChevronRight className="h-5 w-5" />
+                    </button>
+                  ) : null}
+                </div>
+
+                {formats.length > 1 ? (
+                  <div className="mt-5 flex items-center gap-1.5">
+                    {formats.map((format) => (
+                      <button
+                        key={format.id}
+                        type="button"
+                        aria-label={format.label}
+                        onClick={() => setFormatId(format.id)}
+                        className={`h-1.5 rounded-full transition-all ${
+                          format.id === formatId
+                            ? "w-5 bg-[var(--studio-ink)]"
+                            : "w-1.5 bg-[var(--studio-border)] hover:bg-[var(--studio-muted)]"
+                        }`}
+                      />
+                    ))}
+                  </div>
+                ) : null}
+              </>
+            )}
+
+            {error ? (
+              <p className="mt-6 max-w-md text-center text-sm text-red-600">
+                {error}
+              </p>
+            ) : null}
+
+            {previewReady || activeJob?.status === "failed" ? (
+              <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+                <Button
+                  variant="outline"
+                  className="rounded-full"
+                  disabled={!previewReady || busy}
+                  onClick={onRegenerate}
+                >
+                  {regenerateJob.isPending ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ) : (
+                    <RefreshCw className="mr-2 h-4 w-4" />
+                  )}
+                  Regenerate
+                </Button>
+                <Button
+                  className="rounded-full bg-[var(--studio-ink)] text-white hover:bg-black"
+                  disabled={!previewReady}
+                  onClick={onExport}
+                >
+                  <Download className="mr-2 h-4 w-4" />
+                  Export
+                </Button>
+              </div>
+            ) : (
+              <p className="mt-8 max-w-sm text-center text-sm text-[var(--studio-muted)]">
+                Swipe or use the arrows to pick a Format, then Generate.
+              </p>
+            )}
+          </div>
+
+          {recentJobs.length > 0 ? (
+            <section className="mt-12 border-t border-[var(--studio-border)] pt-8">
+              <h2 className="text-sm font-medium uppercase tracking-[0.14em] text-[var(--studio-muted)]">
+                Recent Video Jobs
+              </h2>
+              <ul className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                {recentJobs.slice(0, 6).map((job) => (
+                  <li key={job.id}>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setActiveJob(job);
+                        setBrandId(job.brandId);
+                        setProductId(job.productId);
+                        setFormatId(job.formatId);
+                        setReelPlatform(job.reelPlatform);
+                      }}
+                      className={`w-full rounded-2xl border px-4 py-3 text-left transition ${
+                        activeJob?.id === job.id
+                          ? "border-[var(--studio-ink)] bg-white"
+                          : "border-[var(--studio-border)] bg-white/70 hover:border-black/20"
+                      }`}
+                    >
+                      <p className="text-sm font-medium">
+                        {job.snapshot.format.label}
+                      </p>
+                      <p className="mt-1 text-xs text-[var(--studio-muted)]">
+                        {job.snapshot.product.name} ·{" "}
+                        {REEL_PLATFORM_OPTIONS.find(
+                          (option) => option.value === job.reelPlatform,
+                        )?.label ?? job.reelPlatform}{" "}
+                        · {job.status}
+                      </p>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          ) : null}
+        </>
+      )}
     </div>
   );
 }
 
-function StepCard({
-  step,
+function EmptyGuide({
   title,
   body,
+  href,
+  cta,
 }: {
-  step: string;
   title: string;
   body: string;
+  href: string;
+  cta: string;
 }) {
   return (
-    <div className="rounded-2xl bg-[var(--studio-panel)] p-5">
-      <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--studio-accent)]">
-        Step {step}
-      </p>
-      <p className="mt-2 font-medium">{title}</p>
-      <p className="mt-1 text-sm text-[var(--studio-muted)]">{body}</p>
+    <div className="mt-16 flex flex-col items-center text-center">
+      <h2 className="text-xl font-semibold tracking-tight">{title}</h2>
+      <p className="mt-2 max-w-md text-sm text-[var(--studio-muted)]">{body}</p>
+      <Button
+        asChild
+        className="mt-6 rounded-full bg-[var(--studio-ink)] text-white hover:bg-black"
+      >
+        <Link href={href}>{cta}</Link>
+      </Button>
     </div>
   );
 }
 
-function UploadSlot({
-  icon: Icon,
+function SelectField({
   label,
-  hint,
+  value,
+  onChange,
+  options,
 }: {
-  icon: typeof Video;
   label: string;
-  hint: string;
+  value: string;
+  onChange: (value: string) => void;
+  options: Array<{ value: string; label: string }>;
 }) {
   return (
-    <div className="flex min-h-36 flex-col items-center justify-center rounded-2xl border border-dashed border-[var(--studio-border)] bg-[var(--studio-canvas)] p-3 text-center">
-      <Icon className="h-5 w-5 text-[var(--studio-muted)]" />
-      <p className="mt-2 text-sm font-medium">{label}</p>
-      <p className="text-xs text-[var(--studio-muted)]">{hint}</p>
-    </div>
+    <label className="block text-sm">
+      <span className="mb-1.5 block text-[var(--studio-muted)]">{label}</span>
+      <select
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        className="w-full rounded-full border border-[var(--studio-border)] bg-white px-4 py-2.5 text-sm outline-none focus:border-[var(--studio-ink)]"
+      >
+        {options.map((option) => (
+          <option key={option.value} value={option.value}>
+            {option.label}
+          </option>
+        ))}
+      </select>
+    </label>
   );
 }
 
-function SpecChip({ label, value }: { label: string; value: string }) {
+function PhonePreview({
+  title,
+  body,
+  label,
+  featured,
+  muted,
+  videoUrl,
+  busy,
+}: {
+  title: string;
+  body: string;
+  label: string;
+  featured?: boolean;
+  muted?: boolean;
+  videoUrl?: string | null;
+  busy?: boolean;
+}) {
   return (
-    <span className="rounded-full bg-[var(--studio-chip)] px-3 py-1.5">
-      <span className="text-[var(--studio-muted)]">{label}: </span>
-      {value}
-    </span>
+    <div
+      className={`relative overflow-hidden rounded-[1.75rem] border border-black/5 bg-black text-white shadow-xl transition ${
+        featured
+          ? "h-[28rem] w-[16rem] scale-105"
+          : muted
+            ? "h-[22rem] w-[12rem] opacity-70"
+            : "h-[26rem] w-[14rem]"
+      }`}
+    >
+      {videoUrl ? (
+        <video
+          key={videoUrl}
+          src={videoUrl}
+          className="absolute inset-0 h-full w-full object-cover"
+          controls
+          playsInline
+          loop
+        />
+      ) : (
+        <div className="absolute inset-0 bg-gradient-to-b from-[#1e3a5f] to-[#0f172a]">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(255,255,255,0.18),transparent_45%)]" />
+        </div>
+      )}
+      {busy && featured ? (
+        <div className="absolute inset-0 z-10 flex items-center justify-center bg-black/45">
+          <Loader2 className="h-8 w-8 animate-spin" />
+        </div>
+      ) : null}
+      {!videoUrl ? (
+        <div className="relative z-[1] flex h-full flex-col p-4">
+          <p className="text-[10px] uppercase tracking-[0.16em] text-white/80">
+            {label}
+          </p>
+          <div className="mt-auto space-y-2 pb-6">
+            <p className="text-lg font-semibold leading-snug">{title}</p>
+            <p className="text-xs text-white/75">{body}</p>
+            {featured ? (
+              <div className="mt-4 flex flex-wrap gap-2 text-[10px]">
+                <span className="rounded-full bg-white/15 px-2 py-1">9:16</span>
+                <span className="rounded-full bg-white/15 px-2 py-1">
+                  15–30s
+                </span>
+              </div>
+            ) : null}
+          </div>
+        </div>
+      ) : (
+        <div className="pointer-events-none absolute inset-x-0 top-0 z-[1] p-4">
+          <p className="text-[10px] uppercase tracking-[0.16em] text-white/90 drop-shadow">
+            {label}
+          </p>
+        </div>
+      )}
+    </div>
   );
 }

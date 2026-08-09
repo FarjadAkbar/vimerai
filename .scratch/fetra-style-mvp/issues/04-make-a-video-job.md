@@ -4,11 +4,11 @@
 
 **Blocked by:** 01 — Thin Brand + manual Product; 02b — Brand Studio shell; 03 — Make a Post Job (Format catalog)
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] Make a Video lists only Formats tagged `video` / `both`
-- [ ] Video Job accepts Brand + Product + Format + reel platform; snapshots inputs; yields ~15–30s 9:16 Video file
-- [ ] No AI Reel caption is produced
-- [ ] Credits charged per Video Job; Regenerate creates a new Video Job with same inputs and charges again
-- [ ] User can play the Video in a phone frame and Export/download the file
-- [ ] Video Job application service tests use a fake video provider (no live fal in unit tests)
+- [x] Make a Video lists only Formats tagged `video` / `both`
+- [x] Video Job accepts Brand + Product + Format + reel platform; snapshots inputs; yields ~15–30s 9:16 Video file
+- [x] No AI Reel caption is produced
+- [x] Credits charged per Video Job; Regenerate creates a new Video Job with same inputs and charges again
+- [x] User can play the Video in a phone frame and Export/download the file
+- [x] Video Job application service tests use a fake video provider (no live fal in unit tests)

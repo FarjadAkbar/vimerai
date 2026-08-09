@@ -8,6 +8,8 @@ import { PlanEntity } from './typeorm/entities/plan.entity';
 import { BrandKitEntity } from './typeorm/entities/brand-kit.entity';
 import { ProductEntity } from './typeorm/entities/product.entity';
 import { GenerationEntity } from './typeorm/entities/generation.entity';
+import { PostJobEntity } from './typeorm/entities/post-job.entity';
+import { VideoJobEntity } from './typeorm/entities/video-job.entity';
 import databaseConfig from '@/infrastructure/config/database.config';
 
 @Module({
@@ -25,6 +27,8 @@ import databaseConfig from '@/infrastructure/config/database.config';
           BrandKitEntity,
           ProductEntity,
           GenerationEntity,
+          PostJobEntity,
+          VideoJobEntity,
         ],
         migrations: ['dist/infrastructure/persistence/migrations/*.js'],
         migrationsRun: false, // Set to true to auto-run migrations on app start
@@ -38,6 +42,8 @@ import databaseConfig from '@/infrastructure/config/database.config';
       BrandKitEntity,
       ProductEntity,
       GenerationEntity,
+      PostJobEntity,
+      VideoJobEntity,
     ]),
   ],
   exports: [TypeOrmModule],
