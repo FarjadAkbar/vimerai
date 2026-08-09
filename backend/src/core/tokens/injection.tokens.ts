@@ -20,3 +20,6 @@ export const PRODUCT_SERVICE_TOKEN = 'IProductService';
 export const HOMEPAGE_SCRAPE_PROVIDER_TOKEN = 'IHomepageScrapeProvider';
 export const BUSINESS_DNA_EXTRACTOR_TOKEN = 'IBusinessDnaExtractor';
 export const BUSINESS_DNA_SERVICE_TOKEN = 'IBusinessDnaService';
+export const FORMAT_CATALOG_TOKEN = 'IFormatCatalog';
+export const POST_JOB_REPOSITORY_TOKEN = 'IPostJobRepository';
+export const POST_JOB_SERVICE_TOKEN = 'IPostJobService';
