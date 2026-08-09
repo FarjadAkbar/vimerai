@@ -33,6 +33,10 @@ describe('BusinessDnaService', () => {
     dna.colorPalette = ['#1A1A1A', '#FFFFFF'];
     dna.values = ['Professional Quality', 'Reliability'];
     dna.aesthetic = ['Modern', 'Clean'];
+    dna.imageStyle =
+      'Images should feature high-contrast, sharp photography with a focus on before and after results. Use a modern studio aesthetic with clean white pedestals for product shots on vehicles with visible water beading.';
+    dna.writingStyle =
+      'The writing style should be authoritative yet accessible, focusing on the pro-grade results at home promise. Use instructional and encouraging language that simplifies detailing.';
     dna.industry = 'Automotive & Transportation Services';
     dna.primaryLanguage = 'English';
     dna.elevatorPitch = 'Pro-grade car care for home use.';
@@ -73,6 +77,50 @@ describe('BusinessDnaService', () => {
     );
     expect(result.brandKit.businessDna?.industry).toBe(
       'Automotive & Transportation Services',
+    );
+    expect(result.brandKit.businessDna?.imageStyle).toMatch(
+      /photography|studio aesthetic/i,
+    );
+    expect(result.brandKit.businessDna?.writingStyle).toMatch(
+      /authoritative|instructional/i,
+    );
+    expect(result.brandKit.businessDna?.imageStyle?.length).toBeGreaterThan(80);
+    expect(result.brandKit.businessDna?.writingStyle?.length).toBeGreaterThan(
+      80,
+    );
+  });
+
+  it('persists non-empty imageStyle and writingStyle from the default fake extractor', async () => {
+    const scrape = new FakeHomepageScrapeProvider();
+    scrape.result = {
+      url: 'https://nitroshinepro.com/',
+      title: 'NitroShine | Pro-Grade Car Care',
+      description: 'Showroom Shine Starts With Nitro Shine',
+      textContent: 'Professional-grade car care for home use in Karachi.',
+      logoCandidateUrl: 'https://nitroshinepro.com/og-logo.png',
+      previewImageUrl: 'https://nitroshinepro.com/og-logo.png',
+    };
+    const brandKits = new BrandKitService(
+      new InMemoryBrandKitRepository(),
+      createStorageFake(),
+    );
+    const service = new BusinessDnaService(
+      scrape,
+      new FakeBusinessDnaExtractor(),
+      brandKits,
+    );
+
+    const result = await service.generateFromUrl('user-1', {
+      url: 'https://nitroshinepro.com/',
+    });
+
+    expect(result.brandKit.businessDna?.imageStyle?.trim()).toBeTruthy();
+    expect(result.brandKit.businessDna?.writingStyle?.trim()).toBeTruthy();
+    expect(result.brandKit.businessDna?.imageStyle).toMatch(
+      /photography|visual|studio/i,
+    );
+    expect(result.brandKit.businessDna?.writingStyle).toMatch(
+      /voice|instructional|sentence|language/i,
     );
   });
 

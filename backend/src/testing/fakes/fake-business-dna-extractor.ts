@@ -22,8 +22,10 @@ export class FakeBusinessDnaExtractor implements IBusinessDnaExtractor {
     dna.values = ['Professional Quality', 'Simplicity'];
     dna.aesthetic = ['Modern', 'Clean'];
     dna.toneOfVoice = 'Authoritative yet accessible';
-    dna.imageStyle = 'High-contrast product photography';
-    dna.writingStyle = 'Instructional and encouraging';
+    dna.imageStyle =
+      'Images should feature high-contrast, sharp product photography with clear before-and-after results. Use a modern studio aesthetic with clean pedestals for hero shots, plus real-world application scenes that show the product working on vehicles.';
+    dna.writingStyle =
+      'Write in an authoritative yet accessible voice that focuses on the brand promise from the homepage. Use instructional, encouraging sentences that simplify the process and emphasize ease of use and visible results — not vague tone labels alone.';
     dna.industry = 'Automotive & Transportation Services';
     dna.primaryLanguage = 'English';
     return {

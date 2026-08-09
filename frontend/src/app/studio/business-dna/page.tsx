@@ -200,8 +200,10 @@ export default function BusinessDnaPage() {
                   </p>
                 ) : null}
               </section>
-              <TextBlock title="Image style" body={dna?.imageStyle} />
-              <TextBlock title="Writing style" body={dna?.writingStyle} />
+              <div className="grid gap-4 md:grid-cols-2">
+                <TextBlock title="Image style" body={dna?.imageStyle} />
+                <TextBlock title="Writing style" body={dna?.writingStyle} />
+              </div>
             </>
           ) : (
             <>
@@ -311,13 +313,20 @@ function TextBlock({
   title: string;
   body: string | null | undefined;
 }) {
+  const text = body?.trim();
   return (
     <section className="rounded-2xl bg-[var(--studio-panel)] p-5">
-      <p className="text-xs uppercase tracking-wide text-[var(--studio-muted)]">
+      <p className="text-xs font-medium uppercase tracking-wide text-[var(--studio-muted)]">
         {title}
       </p>
-      <p className="mt-2 text-sm leading-relaxed text-[var(--studio-ink)]">
-        {body?.trim() ? body : "—"}
+      <p
+        className={`mt-3 text-[15px] leading-7 ${
+          text
+            ? "text-[var(--studio-ink)]"
+            : "text-[var(--studio-muted)]"
+        }`}
+      >
+        {text || "—"}
       </p>
     </section>
   );
