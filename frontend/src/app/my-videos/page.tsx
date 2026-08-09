@@ -2,8 +2,9 @@
 
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Plus, ArrowLeft } from "lucide-react";
+import { Plus } from "lucide-react";
 import { VideoGrid } from "@/components/video-grid";
+import { PRODUCT_PATH } from "@/lib/product-path";
 
 export default function MyVideosPage() {
   return (
@@ -17,25 +18,25 @@ export default function MyVideosPage() {
           showHeader={true}
           headerTitle="My Videos"
           headerAction={
-            <Link href="/" className="w-full sm:w-auto">
+            <Link href={PRODUCT_PATH.videos} className="w-full sm:w-auto">
               <Button
                 size="lg"
                 className="bg-primary hover:bg-primary/90 gap-2 font-medium w-full sm:w-auto"
               >
                 <Plus className="w-5 h-5" />
-                Create New Video
+                Make a Video
               </Button>
             </Link>
           }
           emptyMessage="You haven’t created any videos yet."
           emptyAction={
-            <Link href="/">
+            <Link href={PRODUCT_PATH.videos}>
               <Button
                 size="lg"
                 className="mt-4 bg-primary hover:bg-primary/90 gap-2 font-medium"
               >
                 <Plus className="w-5 h-5" />
-                Create Your First Video
+                Make a Video
               </Button>
             </Link>
           }

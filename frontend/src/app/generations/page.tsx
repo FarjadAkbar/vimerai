@@ -7,6 +7,7 @@ import { Spinner } from "@/components/ui/spinner";
 import { useGenerations } from "@/lib/hooks/use-generations";
 import { useUser } from "@/lib/hooks/use-user";
 import type { GenerationLibraryItem } from "@/lib/api/generations.api";
+import { PRODUCT_PATH } from "@/lib/product-path";
 
 const GOAL_LABELS: Record<GenerationLibraryItem["goal"], string> = {
   increase_sales: "Increase sales",
@@ -39,11 +40,16 @@ export default function GenerationsLibraryPage() {
     return (
       <div className="min-h-screen bg-background">
         <div className="mx-auto max-w-3xl px-4 py-16 text-center space-y-4">
-          <h1 className="text-2xl font-semibold">Generation library</h1>
+          <h1 className="text-2xl font-semibold">Legacy Generation library</h1>
           <p className="text-muted-foreground">
-            Sign in to reopen past Generations and Content Outputs.
+            Sign in to reopen past Generations. New creates use Brand Studio.
           </p>
-          <Button onClick={() => router.push("/login")}>Sign in</Button>
+          <div className="flex flex-wrap justify-center gap-2">
+            <Button onClick={() => router.push("/login")}>Sign in</Button>
+            <Button asChild variant="outline">
+              <Link href={PRODUCT_PATH.studio}>Brand Studio</Link>
+            </Button>
+          </div>
         </div>
       </div>
     );
@@ -61,8 +67,11 @@ export default function GenerationsLibraryPage() {
     return (
       <div className="min-h-screen bg-background">
         <div className="mx-auto max-w-3xl px-4 py-16 text-center space-y-4">
-          <h1 className="text-2xl font-semibold">Generation library</h1>
+          <h1 className="text-2xl font-semibold">Legacy Generation library</h1>
           <p className="text-destructive">Could not load your Generations.</p>
+          <Button asChild variant="outline">
+            <Link href={PRODUCT_PATH.studio}>Open Brand Studio</Link>
+          </Button>
         </div>
       </div>
     );
@@ -73,27 +82,46 @@ export default function GenerationsLibraryPage() {
   return (
     <div className="min-h-screen bg-background">
       <div className="mx-auto max-w-3xl space-y-8 px-4 py-10 sm:px-6">
+        <div className="rounded-2xl border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm">
+          <p className="font-medium text-foreground">
+            Legacy path — not the primary create experience
+          </p>
+          <p className="mt-1 text-muted-foreground">
+            Make a Post and Make a Video live in Brand Studio with separate Post
+            Job and Video Job history.
+          </p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <Button asChild size="sm">
+              <Link href={PRODUCT_PATH.posts}>Make a Post</Link>
+            </Button>
+            <Button asChild size="sm" variant="outline">
+              <Link href={PRODUCT_PATH.videos}>Make a Video</Link>
+            </Button>
+          </div>
+        </div>
+
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
             <h1 className="text-2xl font-semibold tracking-tight">
-              Generation library
+              Legacy Generation library
             </h1>
             <p className="text-sm text-muted-foreground">
-              Reopen past Generations to edit, export, or retry failed arms.
+              Read-only access to older multi-arm Generations. Prefer Brand Studio
+              for new work.
             </p>
           </div>
           <Button asChild>
-            <Link href="/">New Generation</Link>
+            <Link href={PRODUCT_PATH.studio}>Open Brand Studio</Link>
           </Button>
         </div>
 
         {generations.length === 0 ? (
           <div className="rounded-2xl border border-border/60 bg-background/70 p-8 text-center space-y-4 backdrop-blur">
             <p className="text-muted-foreground">
-              No Generations yet. Create one from a Product and Goal.
+              No legacy Generations. Start a Post Job or Video Job in Brand Studio.
             </p>
             <Button asChild>
-              <Link href="/">Generate</Link>
+              <Link href={PRODUCT_PATH.studio}>Brand Studio</Link>
             </Button>
           </div>
         ) : (

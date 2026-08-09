@@ -3,6 +3,7 @@ import { useRouter } from 'next/navigation';
 import { authApi, type AuthResponse } from '@/lib/api/auth.api';
 import { apiClient } from '@/lib/api/client';
 import type { LoginInput, SignupInput } from '@/lib/auth/schema';
+import { PRODUCT_PATH } from '@/lib/product-path';
 
 export const useSignup = () => {
   const queryClient = useQueryClient();
@@ -16,8 +17,8 @@ export const useSignup = () => {
       // Store user in localStorage for persistent sessions (signup defaults to rememberMe)
       localStorage.setItem('user', JSON.stringify(response.user));
       queryClient.setQueryData(['user'], { user: response.user });
-      // Redirect to generator as per Phase 1 requirements
-      router.push('/');
+      // Primary create path is Brand Studio (Fetra MVP / ticket 05)
+      router.push(PRODUCT_PATH.studio);
     },
   });
 };
@@ -46,8 +47,8 @@ export const useLogin = () => {
       
       // Update React Query cache
       queryClient.setQueryData(['user'], { user: response.user });
-      // Redirect to generator as per Phase 1 requirements
-      router.push('/');
+      // Primary create path is Brand Studio (Fetra MVP / ticket 05)
+      router.push(PRODUCT_PATH.studio);
     },
   });
 };

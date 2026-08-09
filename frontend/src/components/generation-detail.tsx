@@ -66,9 +66,12 @@ async function downloadFromUrl(url: string, filename: string): Promise<boolean> 
 export function GenerationDetail({
   generation,
   onNewGeneration,
+  newGenerationLabel = "Open Brand Studio",
 }: {
   generation: GenerationRecord;
   onNewGeneration: () => void;
+  /** CTA leaving legacy Generation detail; defaults to Brand Studio (ticket 05). */
+  newGenerationLabel?: string;
 }) {
   const updateGeneration = useUpdateGeneration();
   const regenerateSection = useRegenerateSection();
@@ -901,7 +904,7 @@ export function GenerationDetail({
           {updateGeneration.isPending ? "Saving…" : "Save edits"}
         </Button>
         <Button type="button" variant="outline" onClick={onNewGeneration}>
-          New Generation
+          {newGenerationLabel}
         </Button>
       </div>
     </div>
