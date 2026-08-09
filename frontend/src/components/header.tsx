@@ -14,6 +14,7 @@ import {
 import { useCurrentSubscription } from "@/lib/hooks/use-subscription";
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
+import { PRODUCT_PATH } from "@/lib/product-path";
 
 const Header = () => {
   const logout = useLogout();
@@ -33,6 +34,8 @@ const Header = () => {
     ? (usedVideos / subscription.limit) * 100
     : 0;
 
+  const homeHref = isLoggedIn ? PRODUCT_PATH.studio : "/";
+
   const handleNavigation = (href: string, e: React.MouseEvent) => {
     e.preventDefault();
     setMobileMenuOpen(false);
@@ -49,11 +52,10 @@ const Header = () => {
     <>
       <nav className="sticky top-0 z-50 border-b border-border backdrop-blur-md">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 sm:py-4 flex items-center justify-between gap-4">
-          <Link href="/" className="flex items-center gap-2">
+          <Link href={homeHref} className="flex items-center gap-2">
             <div className="logo-fallback hidden w-8 h-8 flex items-center justify-center rounded-lg bg-primary">
               <LayoutGrid className="w-5 h-5 text-primary-foreground" />
             </div>
-            {/* Logo + Nav wrapper */}
             <div className="flex items-center gap-6">
               <img
                 src="/platform/logo-vimera.png"
@@ -66,20 +68,33 @@ const Header = () => {
           <div className="flex items-center gap-3">
             {userData?.user ? (
               <>
-                {/* Desktop Nav (logged in) */}
                 <div className="hidden md:flex items-center gap-2">
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={(e) => handleNavigation("/studio", e)}
+                    onClick={(e) => handleNavigation(PRODUCT_PATH.studio, e)}
                   >
                     Brand Studio
                   </Button>
                   <Button
                     variant="ghost"
                     size="sm"
+                    onClick={(e) => handleNavigation(PRODUCT_PATH.posts, e)}
+                  >
+                    Make a Post
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={(e) => handleNavigation(PRODUCT_PATH.videos, e)}
+                  >
+                    Make a Video
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
                     onClick={(e) =>
-                      handleNavigation("/studio/business-dna", e)
+                      handleNavigation(PRODUCT_PATH.businessDna, e)
                     }
                   >
                     Business DNA
@@ -87,14 +102,14 @@ const Header = () => {
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={(e) => handleNavigation("/brand-kits", e)}
+                    onClick={(e) => handleNavigation(PRODUCT_PATH.brands, e)}
                   >
                     Brands
                   </Button>
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={(e) => handleNavigation("/products", e)}
+                    onClick={(e) => handleNavigation(PRODUCT_PATH.products, e)}
                   >
                     Products
                   </Button>
@@ -108,7 +123,6 @@ const Header = () => {
                   </Button>
                 </div>
 
-                {/* Mobile Hamburger (logged in) */}
                 <Button
                   variant="ghost"
                   size="icon"
@@ -123,7 +137,6 @@ const Header = () => {
                   )}
                 </Button>
 
-                {/* Avatar Dropdown */}
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button
@@ -141,7 +154,6 @@ const Header = () => {
                   </DropdownMenuTrigger>
 
                   <DropdownMenuContent className="w-80 p-0 mr-4 md:mr-20 my-3 rounded-2xl border border-border overflow-hidden">
-                    {/* Email Section */}
                     <div className="p-4 border-b border-border">
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center">
@@ -162,7 +174,6 @@ const Header = () => {
                       </div>
                     </div>
 
-                    {/* Usage Stats */}
                     {(subscription?.plan !== "free" ||
                       (subscription?.singleShotCredits ?? 0) > 0) && (
                       <div className="p-4 space-y-2 border-b border-border">
@@ -201,7 +212,6 @@ const Header = () => {
                       </div>
                     )}
 
-                    {/* Logout */}
                     <div className="p-2">
                       <button
                         className="w-full flex items-center gap-3 justify-center px-3 py-2.5 rounded-xl hover:bg-red-800 transition-colors text-left cursor-pointer"
@@ -218,14 +228,13 @@ const Header = () => {
               </>
             ) : (
               <>
-                {/* Desktop Nav (logged out) */}
                 <div className="hidden md:flex items-center gap-2">
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={(e) => handleNavigation("/", e)}
+                    onClick={(e) => handleNavigation("/login", e)}
                   >
-                    Generator
+                    Brand Studio
                   </Button>
                   <Button
                     variant="ghost"
@@ -246,11 +255,10 @@ const Header = () => {
                     onClick={(e) => handleNavigation("/signup", e)}
                     className="bg-primary hover:bg-primary/90"
                   >
-                    Create Account
+                    Sign up
                   </Button>
                 </div>
 
-                {/* Mobile Hamburger (logged out) */}
                 <Button
                   variant="ghost"
                   size="icon"
@@ -270,7 +278,6 @@ const Header = () => {
         </div>
       </nav>
 
-      {/* Mobile Slide-down Menu */}
       {mobileMenuOpen && (
         <div className="md:hidden fixed top-[57px] left-0 right-0 z-40 border-b border-border backdrop-blur-md bg-background/95 shadow-lg">
           <div className="flex flex-col px-4 py-3 gap-1">
@@ -278,27 +285,39 @@ const Header = () => {
               <>
                 <button
                   className="text-left px-3 py-2.5 rounded-xl hover:bg-secondary transition-colors text-sm font-medium"
-                  onClick={(e) => handleNavigation("/studio", e)}
+                  onClick={(e) => handleNavigation(PRODUCT_PATH.studio, e)}
                 >
                   Brand Studio
                 </button>
                 <button
                   className="text-left px-3 py-2.5 rounded-xl hover:bg-secondary transition-colors text-sm font-medium"
+                  onClick={(e) => handleNavigation(PRODUCT_PATH.posts, e)}
+                >
+                  Make a Post
+                </button>
+                <button
+                  className="text-left px-3 py-2.5 rounded-xl hover:bg-secondary transition-colors text-sm font-medium"
+                  onClick={(e) => handleNavigation(PRODUCT_PATH.videos, e)}
+                >
+                  Make a Video
+                </button>
+                <button
+                  className="text-left px-3 py-2.5 rounded-xl hover:bg-secondary transition-colors text-sm font-medium"
                   onClick={(e) =>
-                    handleNavigation("/studio/business-dna", e)
+                    handleNavigation(PRODUCT_PATH.businessDna, e)
                   }
                 >
                   Business DNA
                 </button>
                 <button
                   className="text-left px-3 py-2.5 rounded-xl hover:bg-secondary transition-colors text-sm font-medium"
-                  onClick={(e) => handleNavigation("/brand-kits", e)}
+                  onClick={(e) => handleNavigation(PRODUCT_PATH.brands, e)}
                 >
                   Brands
                 </button>
                 <button
                   className="text-left px-3 py-2.5 rounded-xl hover:bg-secondary transition-colors text-sm font-medium"
-                  onClick={(e) => handleNavigation("/products", e)}
+                  onClick={(e) => handleNavigation(PRODUCT_PATH.products, e)}
                 >
                   Products
                 </button>
@@ -313,9 +332,9 @@ const Header = () => {
               <>
                 <button
                   className="text-left px-3 py-2.5 rounded-xl hover:bg-secondary transition-colors text-sm font-medium"
-                  onClick={(e) => handleNavigation("/", e)}
+                  onClick={(e) => handleNavigation("/login", e)}
                 >
-                  Generator
+                  Brand Studio
                 </button>
                 <button
                   className="text-left px-3 py-2.5 rounded-xl hover:bg-secondary transition-colors text-sm font-medium"
@@ -323,7 +342,6 @@ const Header = () => {
                 >
                   Pricing
                 </button>
-                {/* Divider */}
                 <div className="border-t border-border my-1" />
                 <Button
                   variant="outline"
@@ -338,7 +356,7 @@ const Header = () => {
                   className="w-full justify-center mt-2 bg-primary hover:bg-primary/90"
                   onClick={(e) => handleNavigation("/signup", e)}
                 >
-                  Create Account
+                  Sign up
                 </Button>
               </>
             )}

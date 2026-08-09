@@ -61,7 +61,7 @@ describe('Phase 1 product path contract (ticket 12)', () => {
     expect(source).not.toMatch(/Prompt Studio/);
   });
 
-  it('home Generate path uses BrandGeneration, not legacy Generator', () => {
+  it('home does not revive Product Kit / ACTIVE_KIT consumer path', () => {
     const homePath = path.join(
       backendSrc,
       '..',
@@ -73,8 +73,8 @@ describe('Phase 1 product path contract (ticket 12)', () => {
     );
     const source = fs.readFileSync(homePath, 'utf8');
 
-    expect(source).toMatch(/BrandGeneration/);
-    expect(source).not.toMatch(/\bGenerator\b/);
+    // Primary create UX is covered by fetra-product-path.contract.spec.ts (ticket 05).
     expect(source).not.toMatch(/useActiveKit/);
+    expect(source).not.toMatch(/ACTIVE_KIT/);
   });
 });
