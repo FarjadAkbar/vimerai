@@ -1,8 +1,8 @@
 # 03 — Make a Post Job (Formats + AI image + Export)
 
-**What to build:** A User can run Make a Post: pick Brand + Product, choose a curated Format (`post` or `both`), run a Post Job that produces one AI-generated Instagram feed Post image (no caption), see a phone-style preview, Export/download the image, and Regenerate as a new credited job. Introduces the Format catalog used by later tickets. Create UX should feel Fetra-like (format cards, phone preview).
+**What to build:** Inside Brand Studio Posts (Blitz-like), a User can pick Brand + Product, choose a curated Format (`post` or `both`), run a Post Job that produces one AI-generated Instagram feed Post image (no caption), review phone-framed cards (accept/edit/export affordances), and Regenerate as a new credited job. Introduces the Format catalog used by later tickets.
 
-**Blocked by:** 01 — Thin Brand + manual Product (no Brand Kit gate)
+**Blocked by:** 01 — Thin Brand + manual Product; 02b — Brand Studio shell
 
 **Status:** ready-for-agent
 

@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { brandKitsApi } from '@/lib/api/brand-kits.api';
 import type {
   CreateBrandKitRequest,
+  GenerateBusinessDnaRequest,
   UpdateBrandKitRequest,
 } from '@/lib/api/brand-kits.api';
 
@@ -42,5 +43,16 @@ export const useUpdateBrandKit = () => {
 export const useUploadBrandKitLogo = () => {
   return useMutation({
     mutationFn: (file: File) => brandKitsApi.uploadLogo(file),
+  });
+};
+
+export const useGenerateBusinessDna = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (data: GenerateBusinessDnaRequest) =>
+      brandKitsApi.generateBusinessDna(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['brand-kits'] });
+    },
   });
 };

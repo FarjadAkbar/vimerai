@@ -1,3 +1,4 @@
+import type { BusinessDna } from '@/types/brand/business-dna';
 import type { Tone } from '@/types/generation/enums';
 
 export interface BrandKitColors {
@@ -30,6 +31,7 @@ export class BrandKit {
     public readonly audience: string,
     public readonly thingsToAvoid: string,
     public readonly aiInstructions: string | null,
+    public readonly businessDna: BusinessDna | null,
     public readonly createdAt: Date,
     public readonly updatedAt: Date,
   ) {}
@@ -52,6 +54,7 @@ export class BrandKit {
     audience: string,
     thingsToAvoid: string,
     aiInstructions: string | null = null,
+    businessDna: BusinessDna | null = null,
   ): BrandKit {
     BrandKit.assertTone(tone);
     const now = new Date();
@@ -68,6 +71,7 @@ export class BrandKit {
       audience,
       thingsToAvoid,
       aiInstructions,
+      businessDna,
       now,
       now,
     );
@@ -81,6 +85,7 @@ export class BrandKit {
     audience?: string;
     thingsToAvoid?: string;
     aiInstructions?: string | null;
+    businessDna?: BusinessDna | null;
   }): BrandKit {
     if (fields.tone !== undefined) {
       BrandKit.assertTone(fields.tone);
@@ -103,6 +108,9 @@ export class BrandKit {
       fields.aiInstructions !== undefined
         ? fields.aiInstructions
         : this.aiInstructions,
+      fields.businessDna !== undefined
+        ? fields.businessDna
+        : this.businessDna,
       this.createdAt,
       new Date(),
     );

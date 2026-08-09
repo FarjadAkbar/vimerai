@@ -121,6 +121,17 @@
   --color-3: oklch(69.6% 0.165 251);
   --color-4: oklch(80.2% 0.134 225);
   --color-5: oklch(90.7% 0.231 133);
+  /* Brand Studio (Fetra-like shell; not a Fetra visual clone) */
+  --studio-canvas: #f3f1ec;
+  --studio-sidebar: #faf9f7;
+  --studio-panel: #ebe8e2;
+  --studio-chip: #e4eef7;
+  --studio-border: #e2ddd4;
+  --studio-ink: #171717;
+  --studio-muted: #6b7280;
+  --studio-accent: #2563eb;
+  --studio-nav-active: #eceae4;
+  --studio-nav-hover: #f3f1ec;
 }
 
 .dark {

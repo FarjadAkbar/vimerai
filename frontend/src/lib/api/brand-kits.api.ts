@@ -12,6 +12,21 @@ export interface BrandKitColors {
   secondary?: string;
 }
 
+export interface BusinessDna {
+  websiteUrl: string;
+  typography: string | null;
+  colorPalette: string[];
+  tagline: string | null;
+  values: string[];
+  aesthetic: string[];
+  toneOfVoice: string | null;
+  imageStyle: string | null;
+  writingStyle: string | null;
+  industry: string | null;
+  primaryLanguage: string | null;
+  elevatorPitch: string | null;
+}
+
 export interface BrandKit {
   id: string;
   userId: string;
@@ -22,6 +37,7 @@ export interface BrandKit {
   audience: string;
   thingsToAvoid: string;
   aiInstructions: string | null;
+  businessDna: BusinessDna | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -42,6 +58,7 @@ export interface CreateBrandKitRequest {
   audience?: string;
   thingsToAvoid?: string;
   aiInstructions?: string;
+  businessDna?: BusinessDna | null;
 }
 
 export interface UpdateBrandKitRequest {
@@ -52,6 +69,11 @@ export interface UpdateBrandKitRequest {
   audience?: string;
   thingsToAvoid?: string;
   aiInstructions?: string | null;
+  businessDna?: BusinessDna | null;
+}
+
+export interface GenerateBusinessDnaRequest {
+  url: string;
 }
 
 export const brandKitsApi = {
@@ -70,6 +92,16 @@ export const brandKitsApi = {
     data: UpdateBrandKitRequest,
   ): Promise<BrandKitResponse> => {
     const response = await api.put<BrandKitResponse>(`/brand-kits/${id}`, data);
+    return response.data;
+  },
+
+  generateBusinessDna: async (
+    data: GenerateBusinessDnaRequest,
+  ): Promise<BrandKitResponse> => {
+    const response = await api.post<BrandKitResponse>(
+      '/brand-kits/business-dna',
+      data,
+    );
     return response.data;
   },
 

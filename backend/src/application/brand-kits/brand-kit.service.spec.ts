@@ -58,6 +58,34 @@ describe('BrandKitService', () => {
     expect(result.brandKit.tone).toBe('professional');
     expect(result.brandKit.audience).toBe('');
     expect(result.brandKit.thingsToAvoid).toBe('');
+    expect(result.brandKit.businessDna).toBeNull();
+  });
+
+  it('persists Business DNA on a Brand', async () => {
+    const result = await service.createBrandKit('user-1', {
+      name: 'NitroShine',
+      logoUrl: 'https://cdn.example.com/logo.png',
+      colors: { primary: '#E80000', secondary: '#1A1A1A' },
+      tone: 'professional',
+      audience: 'Car enthusiasts',
+      businessDna: {
+        websiteUrl: 'https://nitroshinepro.com/',
+        typography: 'Montserrat',
+        colorPalette: ['#FFFFFF'],
+        tagline: 'Showroom Shine Starts With Nitro Shine',
+        values: ['Reliability'],
+        aesthetic: ['Modern'],
+        toneOfVoice: 'Authoritative yet accessible',
+        imageStyle: 'High-contrast product shots',
+        writingStyle: 'Instructional',
+        industry: 'Automotive',
+        primaryLanguage: 'English',
+        elevatorPitch: 'Pro-grade care for home use.',
+      },
+    });
+
+    expect(result.brandKit.businessDna?.tagline).toContain('Showroom Shine');
+    expect(result.brandKit.businessDna?.typography).toBe('Montserrat');
   });
 
   it('lists only Brand Kits owned by the user', async () => {

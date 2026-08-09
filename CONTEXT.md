@@ -1,18 +1,18 @@
 # Vimerai
 
-Ecommerce-focused AI creative studio (Fetra-style): scrape or enter a Product, confirm a thin Brand, pick a curated Format, then run a Post Job or Video Job separately and Export the result.
+Ecommerce-focused AI creative studio (Fetra-style): paste a business URL to generate Business DNA, then create Posts and Videos separately in Brand Studio and Export the results.
 
 ## Language
 
 ### Product roadmap (locked)
 
 **MVP (Fetra-style create loop)**:
-Two separate create modes — Make a Post and Make a Video. Happy path: Product page URL scrape (or manual Product) → Brand Confirm → Format pick → one Post Job or one Video Job → Export. App create UX should feel Fetra-like (paste link, format cards, phone preview). Marketing-site clone, publish, trend scrape, and reference-URL recreate are out of MVP.
-_Avoid_: Multi-arm Generation (post+storyboard+video together); Posts-only concept sets; shipping publish in MVP; cloning Fetra’s marketing site before the create app UX
+Happy path: business/homepage URL → generate Business DNA (Brand Overview + Business Details) → Brand Studio with two separate modes — Make a Post (Blitz-like phone cards / Formats) and Make a Video (Viral Remix–like asset+generate, or simpler Video Job) → Export. Product page scrape (or manual Product) remains available to seed Product images for jobs. Thin Brand Confirm is the manual fallback when URL DNA is skipped. Marketing-site clone, publish, trend scrape, warmed accounts, AI Influencers, Calendar, and Video Director chat are out of MVP.
+_Avoid_: Multi-arm Generation (post+storyboard+video together); Posts-only concept sets; shipping publish in MVP; cloning Fetra’s marketing site before the create app UX; forcing thin-Brand-only when Business DNA from URL is the expected entry
 
-**Parked (former Phase 1 / Phase C)**:
-Multi-arm Generation, Reel Storyboard, Posts-only / Post Concepts, Length Tiers (Teaser/Promo), Goals, Creative Brief as a shared multi-arm artifact, section regenerate, caption packages, platform API publish, Workspace/team.
-_Avoid_: Treating parked Phase 1/C items as current MVP scope; calling this “Phase C”
+**Parked (former Phase 1 / Phase C / later Fetra surfaces)**:
+Multi-arm Generation, Reel Storyboard, Posts-only / Post Concepts, Length Tiers (Teaser/Promo), Goals, Creative Brief as a shared multi-arm artifact, section regenerate, caption packages, platform API publish, Workspace/team, Video Director chat agent, AI Influencers, Growth Team, Calendar, Warmed accounts.
+_Avoid_: Treating parked Phase 1/C items as current MVP scope; calling this “Phase C”; shipping Video Director as MVP Video entry
 
 ### Ownership
 
@@ -23,19 +23,35 @@ _Avoid_: Account (prefer User), tenant, workspace
 ### Brand & product
 
 **Brand**:
-The reusable thin identity used as context for Post Jobs and Video Jobs. Required fields: name, logo, primary color, tone. Created or updated via Brand Confirm after Product scrape/entry (or picked from existing Brands).
+The reusable identity used as context for Post Jobs and Video Jobs. Required core: name, logo, primary color, tone. May also hold Business DNA fields (website URL, color palette, typography, tagline, values, aesthetic, tone of voice, image style, writing style, industry, primary language, elevator pitch, audience/selling points). Created via Business DNA from a homepage URL, or via Brand Confirm as the manual fallback.
 _Avoid_: Brand Kit (deprecated), brand profile, brand settings, style guide
 
+**Business DNA**:
+The structured brand package generated from a business/homepage URL (scrape + LLM structuring) and persisted on a Brand. Presented as Brand Overview and Business Details before the user enters Brand Studio.
+_Avoid_: Brand Kit, brand profile, onboarding wizard (as the product name)
+
+**Brand Overview**:
+The Business DNA view of identity signals: name, website URL, logo, typography, brand colors, tagline, values, aesthetic, tone (and tone of voice), image style, writing style.
+_Avoid_: Brand Kit summary
+
+**Business Details**:
+The Business DNA view of commercial context: industry, primary language, elevator pitch, audience and core selling points. Product images for jobs stay on Product (PDP scrape or manual), not as a required Brand field.
+_Avoid_: Company profile, about page
+
 **Brand Confirm**:
-The short step after Product scrape/entry where the user confirms or edits Brand name, logo, primary color, and tone before running a job. Saving creates or updates a reusable Brand.
-_Avoid_: Full Brand Kit form, onboarding wizard
+The short manual path to create or edit the Brand core (name, logo, primary color, tone) when the user skips or overrides URL Business DNA. Saving creates or updates a reusable Brand.
+_Avoid_: Full Brand Kit form; treating Brand Confirm as the only MVP entry after Business DNA is expected
+
+**Brand Studio**:
+The primary authenticated app shell after Business DNA (or Brand Confirm). Houses separate Posts and Videos create modes plus access to Brands/Products — not the legacy multi-arm Generation home.
+_Avoid_: Generator home, dashboard (ambiguous), Fetra clone of warmed accounts / growth team
 
 **Brand Kit** _(deprecated)_:
-Former richer brand entity (name, logo, colors, tone, audience, things-to-avoid, optional AI instructions) required before Product/Generation. Replaced by thin Brand + Brand Confirm.
+Former richer brand entity (name, logo, colors, tone, audience, things-to-avoid, optional AI instructions) required before Product/Generation. Replaced by Brand + Business DNA / Brand Confirm. Do not use this term in new UI copy.
 _Avoid_: Using this term for new work
 
 **Tone**:
-A Brand voice preset. Closed set: Luxury, Professional, Playful, Bold, Friendly.
+A Brand voice preset used for job prompting. Closed set: Luxury, Professional, Playful, Bold, Friendly. Distinct from free-text tone of voice on Business DNA.
 _Avoid_: Style, voice (as a separate enum), mood
 
 **Product**:
@@ -43,8 +59,8 @@ A physical sellable item owned by the User. Required fields: name, description, 
 _Avoid_: Product Kit, SKU-as-entity, listing, item, digital download, Memory (as an entity)
 
 **Product scrape**:
-Fetching Product name, description, and images from a product page URL to seed or update a Product.
-_Avoid_: Import, sync, crawl (prefer scrape for this MVP action)
+Fetching Product name, description, and images from a product page URL to seed or update a Product. Distinct from Business DNA homepage analysis.
+_Avoid_: Import, sync, crawl (prefer scrape for this MVP action); treating a PDP URL as Business DNA input
 
 **Brand–Product link** _(deprecated for MVP)_:
 Former required association between Product and Brand Kit. MVP jobs take an explicit Brand and Product; a hard many-to-many link entity is not required for the create loop.
@@ -64,13 +80,25 @@ _Avoid_: Prompt template (as a consumer feature), custom prompt library
 A curated viral creative pattern the user picks before a job (e.g. meme CTA, problem-solution, listicle hook). Each Format is tagged `post`, `video`, or `both`. The create mode filters which Format cards appear. MVP Formats are a fixed owned library — not live trend scrape or “recreate this URL.”
 _Avoid_: Template (ambiguous), trend, Post Concept, Creative Brief
 
+**Make a Post**:
+The Brand Studio Posts mode (Blitz-like): browse Formats/templates, run a Post Job, review phone-framed cards, accept/edit/export. Separate from Make a Video.
+_Avoid_: Blitz (competitor product name in our glossary), Generation, bundling with Video
+
+**Make a Video**:
+The Brand Studio Videos mode (Viral Remix–like or simpler): choose Brand + Product (+ Format / reel platform), generate a Video Job, preview, Export. Separate from Make a Post. Video Director chat is parked.
+_Avoid_: Viral Remix (competitor product name in our glossary), Video Director, bundling with Post
+
 **Post Job**:
 One user-initiated Make a Post run for a Brand + Product + Format. Yields one Instagram feed Post image (AI-generated; Product images condition the model). No AI caption package. Regenerate starts a new Post Job with the same Brand + Product + Format and charges again.
 _Avoid_: Generation, multi-arm, Posts-only, Social Post with caption
 
 **Video Job**:
 One user-initiated Make a Video run for a Brand + Product + Format + reel platform (Instagram Reels or TikTok). Yields one ~15–30s 9:16 Video file. No AI caption package. Regenerate starts a new Video Job with the same inputs and charges again.
-_Avoid_: Generation, Length Tier, Promo stitch as MVP requirement, Reel caption
+_Avoid_: Generation, Length Tier, Promo stitch as MVP requirement, Reel caption, Video Director
+
+**Video Director** _(parked)_:
+Competitor-style chat agent that plans storyboards and videos conversationally. Not part of MVP; fallback Video entry is Make a Video / Video Job in Brand Studio.
+_Avoid_: Shipping Vivi-like chat as the only Video path in MVP
 
 **Generation** _(deprecated)_:
 Former umbrella for multi-arm or Posts-only create runs. Replaced by Post Job and Video Job as separate terms.

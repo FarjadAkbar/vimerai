@@ -2,6 +2,7 @@ import type {
   BrandKit,
   BrandKitColorsInput,
 } from '@/domain/brand-kit.entity';
+import type { BusinessDna } from '@/types/brand/business-dna';
 import type { Tone } from '@/types/generation/enums';
 
 export interface CreateBrandKitInput {
@@ -12,6 +13,7 @@ export interface CreateBrandKitInput {
   audience?: string;
   thingsToAvoid?: string;
   aiInstructions?: string | null;
+  businessDna?: BusinessDna | null;
 }
 
 export interface UpdateBrandKitInput {
@@ -22,6 +24,7 @@ export interface UpdateBrandKitInput {
   audience?: string;
   thingsToAvoid?: string;
   aiInstructions?: string | null;
+  businessDna?: BusinessDna | null;
 }
 
 export interface IBrandKitService {

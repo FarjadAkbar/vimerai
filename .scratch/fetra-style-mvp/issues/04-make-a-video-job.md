@@ -1,8 +1,8 @@
 # 04 — Make a Video Job (Formats + platform + Export)
 
-**What to build:** A User can run Make a Video: pick Brand + Product, choose a Format (`video` or `both`), pick Instagram Reels or TikTok, run a Video Job for a ~15–30s 9:16 Video (no caption), preview playback, Export/download, and Regenerate as a new credited job.
+**What to build:** Inside Brand Studio Videos (Viral Remix–like or simpler), a User can pick Brand + Product, choose a Format (`video` or `both`), pick Instagram Reels or TikTok, run a Video Job for a ~15–30s 9:16 Video (no caption), preview playback, Export/download, and Regenerate as a new credited job. Video Director chat remains parked.
 
-**Blocked by:** 01 — Thin Brand + manual Product (no Brand Kit gate); 03 — Make a Post Job (Format catalog)
+**Blocked by:** 01 — Thin Brand + manual Product; 02b — Brand Studio shell; 03 — Make a Post Job (Format catalog)
 
 **Status:** ready-for-agent
 
