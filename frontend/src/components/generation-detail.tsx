@@ -145,7 +145,7 @@ export function GenerationDetail({
       },
       {
         onSuccess: () =>
-          setMessage("Section regenerated with live Brand Kit/Product"),
+          setMessage("Section regenerated with live Brand/Product"),
         onError: (err) =>
           setError(
             getApiErrorMessage(err, "Could not regenerate this section"),
@@ -248,7 +248,7 @@ export function GenerationDetail({
             · {generation.goal.replaceAll("_", " ")}
           </p>
           <p className="text-sm text-muted-foreground">
-            Snapshot · Brand Kit {generation.snapshot.brandKit.name} (
+            Snapshot · Brand {generation.snapshot.brandKit.name} (
             {generation.snapshot.brandKit.tone}) · Product{" "}
             {generation.snapshot.product.name}
             {generation.snapshot.product.price

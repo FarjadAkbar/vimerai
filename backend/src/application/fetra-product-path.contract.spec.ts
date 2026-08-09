@@ -21,8 +21,40 @@ describe('Fetra product path contract (ticket 05)', () => {
     expect(source).toMatch(/posts:\s*["']\/studio\/posts["']/);
     expect(source).toMatch(/videos:\s*["']\/studio\/videos["']/);
     expect(source).toMatch(/businessDna:\s*["']\/studio\/business-dna["']/);
+    expect(source).toMatch(/brands:\s*["']\/studio\/brands["']/);
     expect(source).toMatch(/LEGACY_GENERATION_PRIMARY\s*=\s*false/);
     expect(source).not.toMatch(/\/generations/);
+    expect(source).not.toMatch(/brands:\s*["']\/brand-kits["']/);
+  });
+
+  it('retires /brand-kits as a user-facing path in favor of Business DNA', () => {
+    const nextConfig = fs.readFileSync(
+      path.join(repoRoot, 'frontend', 'next.config.ts'),
+      'utf8',
+    );
+    const brandKitsPage = read('app', 'brand-kits', 'page.tsx');
+    const sidebar = read('components', 'studio', 'studio-sidebar.tsx');
+    const header = read('components', 'header.tsx');
+    const products = read('app', 'products', 'page.tsx');
+    const brandGeneration = read('components', 'brand-generation.tsx');
+    const businessDna = read('app', 'studio', 'business-dna', 'page.tsx');
+
+    expect(nextConfig).toMatch(/source:\s*["']\/brand-kits["']/);
+    expect(nextConfig).toMatch(
+      /destination:\s*["']\/studio\/business-dna["']/,
+    );
+    expect(brandKitsPage).toMatch(/redirect/);
+    expect(brandKitsPage).toMatch(/PRODUCT_PATH\.businessDna|business-dna/);
+    expect(sidebar).toMatch(/PRODUCT_PATH\.businessDna/);
+    expect(sidebar).not.toMatch(/PRODUCT_PATH\.brands/);
+    expect(sidebar).not.toMatch(/label:\s*["']Brands["']/);
+    expect(header).not.toMatch(/>\s*Brands\s*</);
+    expect(header).not.toMatch(/PRODUCT_PATH\.brands/);
+    expect(products).not.toMatch(/href=["']\/brand-kits["']/);
+    expect(brandGeneration).not.toMatch(/Brand Kit/);
+    expect(brandGeneration).not.toMatch(/\/brand-kits/);
+    expect(businessDna).toMatch(/BrandConfirmForm|Brand Confirm/);
+    expect(businessDna).not.toMatch(/href=["']\/brand-kits["']/);
   });
 
   it('home defaults to Fetra create path; BrandGeneration only behind legacy flag', () => {

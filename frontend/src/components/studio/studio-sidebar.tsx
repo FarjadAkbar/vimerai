@@ -9,8 +9,6 @@ import {
   LayoutGrid,
   LogOut,
   Mail,
-  Package,
-  Sparkles,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { PRODUCT_PATH } from "@/lib/product-path";
@@ -30,8 +28,6 @@ const navItems = [
   { href: PRODUCT_PATH.posts, label: "Make a Post", icon: ImageIcon },
   { href: PRODUCT_PATH.videos, label: "Make a Video", icon: Clapperboard },
   { href: PRODUCT_PATH.businessDna, label: "Business DNA", icon: Dna },
-  { href: PRODUCT_PATH.brands, label: "Brands", icon: Sparkles },
-  { href: PRODUCT_PATH.products, label: "Products", icon: Package },
 ] as const;
 
 export function StudioSidebar() {

@@ -114,24 +114,6 @@ const Header = () => {
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={(e) =>
-                      handleNavigation(PRODUCT_PATH.brands, e)
-                    }
-                  >
-                    Brands
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={(e) =>
-                      handleNavigation(PRODUCT_PATH.products, e)
-                    }
-                  >
-                    Products
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
                     className="text-white"
                     onClick={(e) => handleNavigation("/pricing", e)}
                   >
@@ -328,22 +310,6 @@ const Header = () => {
                   }
                 >
                   Business DNA
-                </button>
-                <button
-                  className="text-left px-3 py-2.5 rounded-xl hover:bg-secondary transition-colors text-sm font-medium"
-                  onClick={(e) =>
-                    handleNavigation(PRODUCT_PATH.brands, e)
-                  }
-                >
-                  Brands
-                </button>
-                <button
-                  className="text-left px-3 py-2.5 rounded-xl hover:bg-secondary transition-colors text-sm font-medium"
-                  onClick={(e) =>
-                    handleNavigation(PRODUCT_PATH.products, e)
-                  }
-                >
-                  Products
                 </button>
                 <button
                   className="text-left px-3 py-2.5 rounded-xl hover:bg-secondary transition-colors text-sm font-medium"

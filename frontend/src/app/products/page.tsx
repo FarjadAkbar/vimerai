@@ -45,6 +45,7 @@ import {
 } from "@/lib/hooks/use-products";
 import { useUser } from "@/lib/hooks/use-user";
 import type { Product } from "@/lib/api/products.api";
+import { PRODUCT_PATH } from "@/lib/product-path";
 
 const productSchema = z.object({
   name: z.string().min(1).max(200),
@@ -154,8 +155,8 @@ export default function ProductsPage() {
       return (
         <p className="text-sm text-muted-foreground">
           Optional:{" "}
-          <Link href="/brand-kits" className="underline">
-            create a Brand
+          <Link href={PRODUCT_PATH.businessDna} className="underline">
+            create a Brand via Business DNA
           </Link>{" "}
           to link later for jobs.
         </p>
@@ -189,8 +190,8 @@ export default function ProductsPage() {
               Products
             </h1>
             <p className="text-muted-foreground mt-2">
-              Physical products with images and details for Post Jobs and Video
-              Jobs.
+              Demoted library — prefer scraping or creating a Product inline on
+              Make a Post / Make a Video. Records here still power jobs.
             </p>
           </div>
           <Button
