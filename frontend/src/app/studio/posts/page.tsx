@@ -164,9 +164,9 @@ export default function StudioPostsPage() {
       ) : !selectedProduct ? (
         <EmptyGuide
           title="Add a Product to continue"
-          body="Post Jobs need a Product with at least one image so the model can condition on it."
+          body="Paste a product page URL to scrape name, description, and images — or enter a Product manually."
           href="/products"
-          cta="Create Product"
+          cta="Scrape or create Product"
         />
       ) : (
         <>

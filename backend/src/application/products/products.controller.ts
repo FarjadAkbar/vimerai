@@ -15,7 +15,9 @@ import {
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { memoryStorage } from 'multer';
+import { ProductScrapeService } from '@/application/products/product-scrape.service';
 import { ProductService } from '@/application/products/product.service';
+import { ScrapeProductDto } from '@/application/products/dto/product-scrape.dto';
 import {
   CreateProductDto,
   UpdateProductDto,
@@ -26,11 +28,26 @@ import { JwtAuthGuard } from '@/infrastructure/auth/jwt-auth.guard';
 @Controller('products')
 @UseGuards(JwtAuthGuard)
 export class ProductsController {
-  constructor(private readonly productService: ProductService) {}
+  constructor(
+    private readonly productService: ProductService,
+    private readonly productScrapeService: ProductScrapeService,
+  ) {}
 
   @Get()
   async list(@CurrentUser() user: { userId: string }) {
     return this.productService.listProducts(user.userId);
+  }
+
+  @Post('scrape')
+  @HttpCode(HttpStatus.OK)
+  async scrape(
+    @CurrentUser() user: { userId: string },
+    @Body(new ValidationPipe({ whitelist: true, transform: true }))
+    dto: ScrapeProductDto,
+  ) {
+    return this.productScrapeService.scrapePreview(user.userId, {
+      url: dto.url,
+    });
   }
 
   @Post('images')
