@@ -66,9 +66,12 @@ async function downloadFromUrl(url: string, filename: string): Promise<boolean> 
 export function GenerationDetail({
   generation,
   onNewGeneration,
+  newGenerationLabel = "Open Brand Studio",
 }: {
   generation: GenerationRecord;
   onNewGeneration: () => void;
+  /** CTA leaving legacy Generation detail; defaults to Brand Studio (ticket 05). */
+  newGenerationLabel?: string;
 }) {
   const updateGeneration = useUpdateGeneration();
   const regenerateSection = useRegenerateSection();
@@ -142,7 +145,7 @@ export function GenerationDetail({
       },
       {
         onSuccess: () =>
-          setMessage("Section regenerated with live Brand Kit/Product"),
+          setMessage("Section regenerated with live Brand/Product"),
         onError: (err) =>
           setError(
             getApiErrorMessage(err, "Could not regenerate this section"),
@@ -245,7 +248,7 @@ export function GenerationDetail({
             · {generation.goal.replaceAll("_", " ")}
           </p>
           <p className="text-sm text-muted-foreground">
-            Snapshot · Brand Kit {generation.snapshot.brandKit.name} (
+            Snapshot · Brand {generation.snapshot.brandKit.name} (
             {generation.snapshot.brandKit.tone}) · Product{" "}
             {generation.snapshot.product.name}
             {generation.snapshot.product.price
@@ -901,7 +904,7 @@ export function GenerationDetail({
           {updateGeneration.isPending ? "Saving…" : "Save edits"}
         </Button>
         <Button type="button" variant="outline" onClick={onNewGeneration}>
-          New Generation
+          {newGenerationLabel}
         </Button>
       </div>
     </div>

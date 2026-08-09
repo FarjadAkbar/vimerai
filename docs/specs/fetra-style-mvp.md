@@ -110,7 +110,7 @@ Pivot Vimerai to a Fetra-style ecommerce create loop (ADR-0031 + ADR-0032): past
 - ADR-0031 is the product direction; ADR-0032 expands Brand with Business DNA from homepage URL and Brand Studio as the post-DNA shell. Phase 1 / Phase C roadmap ADRs are historical until code migrates.
 - ADR-0023 remains: Export only, no Meta/TikTok publish.
 - ADR-0026’s “one Generation seam” is superseded for new work by dual Post Job / Video Job seams; modality provider split remains.
-- ADR-0015 vendor split (OpenAI-style image/text vs fal video) may continue unless a later ADR changes it; Post Jobs need image generation always-on.
+- ADR-0015’s OpenAI-for-copy / fal-for-video split still holds for text vs video; Post Job images use fal (`IImageGenerationProvider` → fal Kontext) with Product image conditioning.
 - ADR-0016 (Product photo default Post image) is superseded for MVP by always AI Post image.
 - Curated Formats only — no trend ingest ToS risk in MVP.
 

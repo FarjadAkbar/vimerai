@@ -7,6 +7,8 @@ import { AuthModule } from './application/auth/auth.module';
 import { GenerationModule } from './application/generation/generation.module';
 import { BrandKitsModule } from './application/brand-kits/brand-kits.module';
 import { ProductsModule } from './application/products/products.module';
+import { PostJobsModule } from './application/post-jobs/post-jobs.module';
+import { VideoJobsModule } from './application/video-jobs/video-jobs.module';
 import { VideosModule } from './application/videos/videos.module';
 import { SubscriptionModule } from './application/subscription/subscription.module';
 import { UsersModule } from './application/users/users.module';
@@ -18,6 +20,7 @@ import videoGenerationConfig from './infrastructure/config/video-generation.conf
 import storageConfig from './infrastructure/config/storage.config';
 import emailConfig from './infrastructure/config/email.config';
 import openaiConfig from './infrastructure/config/openai.config';
+import imageGenerationConfig from './infrastructure/config/image-generation.config';
 
 @Module({
   imports: [
@@ -30,6 +33,7 @@ import openaiConfig from './infrastructure/config/openai.config';
         jwtConfig,
         paymentConfig,
         videoGenerationConfig,
+        imageGenerationConfig,
         storageConfig,
         emailConfig,
         openaiConfig,
@@ -40,6 +44,8 @@ import openaiConfig from './infrastructure/config/openai.config';
     GenerationModule,
     BrandKitsModule,
     ProductsModule,
+    PostJobsModule,
+    VideoJobsModule,
     VideosModule,
     SubscriptionModule,
     UsersModule,

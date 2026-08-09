@@ -23,7 +23,7 @@ _Avoid_: Account (prefer User), tenant, workspace
 ### Brand & product
 
 **Brand**:
-The reusable identity used as context for Post Jobs and Video Jobs. Required core: name, logo, primary color, tone. May also hold Business DNA fields (website URL, color palette, typography, tagline, values, aesthetic, tone of voice, image style, writing style, industry, primary language, elevator pitch, audience/selling points). Created via Business DNA from a homepage URL, or via Brand Confirm as the manual fallback.
+The reusable identity used as context for Post Jobs and Video Jobs. Required core: name, logo, primary color, tone. May also hold Business DNA fields (website URL, color palette, typography, tagline, values, aesthetic, tone of voice, image style, writing style, industry, primary language, elevator pitch, audience/selling points). Created via Business DNA from a homepage URL (`/studio/business-dna`) or via Brand Confirm (inline on that page). A demoted Brands list lives at `/studio/brands` for deep links — not primary nav. Do not send users to `/brand-kits` (redirects to Business DNA).
 _Avoid_: Brand Kit (deprecated), brand profile, brand settings, style guide
 
 **Business DNA**:
@@ -39,12 +39,12 @@ The Business DNA view of commercial context: industry, primary language, elevato
 _Avoid_: Company profile, about page
 
 **Brand Confirm**:
-The short manual path to create or edit the Brand core (name, logo, primary color, tone) when the user skips or overrides URL Business DNA. Saving creates or updates a reusable Brand.
+The short manual path to create or edit the Brand core (name, logo, primary color, tone) when the user skips or overrides URL Business DNA — offered inline on Business DNA, not as a Brand Kit page. Saving creates or updates a reusable Brand.
 _Avoid_: Full Brand Kit form; treating Brand Confirm as the only MVP entry after Business DNA is expected
 
 **Brand Studio**:
-The primary authenticated app shell after Business DNA (or Brand Confirm). Houses separate Posts and Videos create modes plus access to Brands/Products — not the legacy multi-arm Generation home.
-_Avoid_: Generator home, dashboard (ambiguous), Fetra clone of warmed accounts / growth team
+The primary authenticated app shell after Business DNA (or Brand Confirm). Houses separate Posts and Videos create modes plus Business DNA — not standalone Brands/Products library nav, and not the legacy multi-arm Generation home. Product scrape/create happens inline on Posts/Videos.
+_Avoid_: Generator home, dashboard (ambiguous), Fetra clone of warmed accounts / growth team; sending users to Brand Kit / Products library pages for setup
 
 **Brand Kit** _(deprecated)_:
 Former richer brand entity (name, logo, colors, tone, audience, things-to-avoid, optional AI instructions) required before Product/Generation. Replaced by Brand + Business DNA / Brand Confirm. Do not use this term in new UI copy.
