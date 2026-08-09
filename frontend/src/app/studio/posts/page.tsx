@@ -13,8 +13,10 @@ import {
   X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { InlineProductCreate } from "@/components/studio/inline-product-create";
 import { getApiErrorMessage } from "@/lib/api/errors";
 import type { PostJob } from "@/lib/api/post-jobs.api";
+import { PRODUCT_PATH } from "@/lib/product-path";
 import { useBrandKits } from "@/lib/hooks/use-brand-kits";
 import { useFormats } from "@/lib/hooks/use-formats";
 import {
@@ -45,6 +47,7 @@ export default function StudioPostsPage() {
   const [activeJob, setActiveJob] = useState<PostJob | null>(null);
   const [acceptedJobId, setAcceptedJobId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [addingProduct, setAddingProduct] = useState(false);
   const touchStartX = useRef<number | null>(null);
 
   useEffect(() => {
@@ -169,15 +172,23 @@ export default function StudioPostsPage() {
         <EmptyGuide
           title="Generate Business DNA first"
           body="A Brand is required before you can run a Post Job."
-          href="/studio/business-dna"
+          href={PRODUCT_PATH.businessDna}
           cta="Business DNA"
         />
-      ) : !selectedProduct ? (
-        <EmptyGuide
-          title="Add a Product to continue"
-          body="Post Jobs need a Product with at least one image so the model can condition on it."
-          href="/products"
-          cta="Create Product"
+      ) : products.length === 0 || addingProduct ? (
+        <InlineProductCreate
+          title={
+            products.length > 0
+              ? "Add another Product"
+              : "Add a Product to continue"
+          }
+          onCreated={(product) => {
+            setProductId(product.id);
+            setAddingProduct(false);
+          }}
+          onCancel={
+            products.length > 0 ? () => setAddingProduct(false) : undefined
+          }
         />
       ) : (
         <>
@@ -198,12 +209,13 @@ export default function StudioPostsPage() {
                 options={products.map((p) => ({ value: p.id, label: p.name }))}
               />
             </div>
-            <Link
-              href="/products"
+            <button
+              type="button"
+              onClick={() => setAddingProduct(true)}
               className="mb-2.5 text-sm text-[var(--studio-muted)] underline-offset-2 hover:underline"
             >
-              Manage Products
-            </Link>
+              Add Product
+            </button>
           </div>
 
           <div className="mt-10 flex min-h-[28rem] flex-col items-center justify-center">
@@ -286,8 +298,10 @@ export default function StudioPostsPage() {
                       activeJob?.status === "failed"
                         ? (activeJob.error ?? "Try again")
                         : previewReady
-                          ? selectedProduct.name
-                          : (selectedFormat?.description ?? selectedProduct.name)
+                          ? (selectedProduct?.name ?? "Product")
+                          : (selectedFormat?.description ??
+                            selectedProduct?.name ??
+                            "Product")
                     }
                     imageUrl={previewReady ? activeJob.postImageUrl : null}
                     busy={busy}

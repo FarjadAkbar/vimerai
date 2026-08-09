@@ -6,7 +6,7 @@
 
 **Status:** in-progress (shell shipped on `feat/fetra-brand-dna-from-url`)
 
-- [x] Authenticated Brand Studio layout with sidebar IA (Posts, Videos, Brands/Business DNA, Products)
+- [x] Authenticated Brand Studio layout with sidebar IA (Posts, Videos, Business DNA — Brands/Products libraries demoted; ADR-0033)
 - [x] Posts route is visually distinct and phone-card oriented (Format pick / job placeholder until ticket 03)
 - [x] Videos route is visually distinct asset+generate oriented (placeholder until ticket 04)
 - [x] No warmed accounts, AI Influencers, Calendar, Growth Team, or Video Director chat in MVP nav

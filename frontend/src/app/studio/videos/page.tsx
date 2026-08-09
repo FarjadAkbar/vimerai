@@ -10,12 +10,14 @@ import {
   RefreshCw,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { InlineProductCreate } from "@/components/studio/inline-product-create";
 import { getApiErrorMessage } from "@/lib/api/errors";
 import {
   REEL_PLATFORM_OPTIONS,
   type ReelPlatform,
   type VideoJob,
 } from "@/lib/api/video-jobs.api";
+import { PRODUCT_PATH } from "@/lib/product-path";
 import { useBrandKits } from "@/lib/hooks/use-brand-kits";
 import { useFormats } from "@/lib/hooks/use-formats";
 import { useProducts } from "@/lib/hooks/use-products";
@@ -47,6 +49,7 @@ export default function StudioVideosPage() {
     useState<ReelPlatform>("instagram_reels");
   const [activeJob, setActiveJob] = useState<VideoJob | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [addingProduct, setAddingProduct] = useState(false);
   const touchStartX = useRef<number | null>(null);
 
   useEffect(() => {
@@ -174,15 +177,23 @@ export default function StudioVideosPage() {
         <EmptyGuide
           title="Generate Business DNA first"
           body="A Brand is required before you can run a Video Job."
-          href="/studio/business-dna"
+          href={PRODUCT_PATH.businessDna}
           cta="Business DNA"
         />
-      ) : !selectedProduct ? (
-        <EmptyGuide
-          title="Add a Product to continue"
-          body="Video Jobs need a Product with at least one image so the model can condition on it."
-          href="/products"
-          cta="Create Product"
+      ) : products.length === 0 || addingProduct ? (
+        <InlineProductCreate
+          title={
+            products.length > 0
+              ? "Add another Product"
+              : "Add a Product to continue"
+          }
+          onCreated={(product) => {
+            setProductId(product.id);
+            setAddingProduct(false);
+          }}
+          onCancel={
+            products.length > 0 ? () => setAddingProduct(false) : undefined
+          }
         />
       ) : (
         <>
@@ -214,12 +225,13 @@ export default function StudioVideosPage() {
                 }))}
               />
             </div>
-            <Link
-              href="/products"
+            <button
+              type="button"
+              onClick={() => setAddingProduct(true)}
               className="mb-2.5 text-sm text-[var(--studio-muted)] underline-offset-2 hover:underline"
             >
-              Manage Products
-            </Link>
+              Add Product
+            </button>
           </div>
 
           <div className="mt-10 flex min-h-[28rem] flex-col items-center justify-center">
@@ -304,9 +316,9 @@ export default function StudioVideosPage() {
                       activeJob?.status === "failed"
                         ? (activeJob.error ?? "Try again")
                         : previewReady
-                          ? `${selectedProduct.name} · ${platformLabel}`
+                          ? `${selectedProduct?.name ?? "Product"} · ${platformLabel}`
                           : (selectedFormat?.description ??
-                            `${selectedProduct.name} · ${platformLabel}`)
+                            `${selectedProduct?.name ?? "Product"} · ${platformLabel}`)
                     }
                     videoUrl={previewReady ? activeJob.videoUrl : null}
                     busy={busy}

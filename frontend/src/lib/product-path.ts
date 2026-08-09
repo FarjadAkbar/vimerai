@@ -1,13 +1,16 @@
 /**
- * Primary Fetra create path (ADR-0031 / ticket 05).
- * Legacy multi-arm Generation UI stays in the repo but is not the default entry.
+ * Primary Fetra create path (ADR-0031 / ADR-0033).
+ * Brand comes from Business DNA; Product is scraped/created inline on Posts/Videos.
+ * Legacy Brands/Products library pages remain in the repo but are not primary nav.
  */
 export const PRODUCT_PATH = {
   studio: "/studio",
   posts: "/studio/posts",
   videos: "/studio/videos",
   businessDna: "/studio/business-dna",
-  brands: "/brand-kits",
+  /** @deprecated Demoted library — not primary nav (use Business DNA). */
+  brands: "/studio/brands",
+  /** @deprecated Demoted library — not primary nav (inline scrape/create). */
   products: "/products",
 } as const;
 
