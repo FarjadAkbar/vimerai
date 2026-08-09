@@ -49,18 +49,19 @@ describe('ProductService', () => {
     service = new ProductService(products, brandKits, storageFake());
   });
 
-  it('blocks Product create when the user has no Brand Kit', async () => {
-    await expect(
-      service.createProduct('user-1', {
-        name: 'Serum',
-        description: 'Hydrating',
-        imageUrls: ['https://cdn.example.com/p.jpg'],
-        landingPageUrl: 'https://shop.example.com/serum',
-      }),
-    ).rejects.toBeInstanceOf(BadRequestException);
+  it('creates a Product with no Brand links when the user has no Brand', async () => {
+    const result = await service.createProduct('user-1', {
+      name: 'Serum',
+      description: 'Hydrating',
+      imageUrls: ['https://cdn.example.com/p.jpg'],
+      landingPageUrl: 'https://shop.example.com/serum',
+    });
+
+    expect(result.product.name).toBe('Serum');
+    expect(result.product.brandKitIds).toEqual([]);
   });
 
-  it('default-links a Product when the user has exactly one Brand Kit', async () => {
+  it('creates a Product without Brand links even when Brands exist', async () => {
     await seedBrandKit(brandKits, 'user-1', 'kit-1', 'Nitro');
 
     const result = await service.createProduct('user-1', {
@@ -72,22 +73,13 @@ describe('ProductService', () => {
     });
 
     expect(result.product.name).toBe('Serum');
-    expect(result.product.brandKitIds).toEqual(['kit-1']);
+    expect(result.product.brandKitIds).toEqual([]);
     expect(result.product.price).toBe('49.00');
   });
 
-  it('requires Brand Kit ids when the user has multiple Brand Kits', async () => {
+  it('optionally links Brands when brandKitIds are provided', async () => {
     await seedBrandKit(brandKits, 'user-1', 'kit-1', 'Nitro');
     await seedBrandKit(brandKits, 'user-1', 'kit-2', 'Aura');
-
-    await expect(
-      service.createProduct('user-1', {
-        name: 'Serum',
-        description: 'Hydrating',
-        imageUrls: ['https://cdn.example.com/p.jpg'],
-        landingPageUrl: 'https://shop.example.com/serum',
-      }),
-    ).rejects.toBeInstanceOf(BadRequestException);
 
     const linked = await service.createProduct('user-1', {
       name: 'Serum',
@@ -100,15 +92,38 @@ describe('ProductService', () => {
     expect(linked.product.brandKitIds.sort()).toEqual(['kit-1', 'kit-2']);
   });
 
-  it('lists only Products owned by the user with their links', async () => {
-    await seedBrandKit(brandKits, 'user-1', 'kit-1', 'Nitro');
+  it('rejects Brand links the user does not own', async () => {
+    await seedBrandKit(brandKits, 'user-2', 'kit-other', 'Other');
+
+    await expect(
+      service.createProduct('user-1', {
+        name: 'Serum',
+        description: 'Hydrating',
+        imageUrls: ['https://cdn.example.com/p.jpg'],
+        landingPageUrl: 'https://shop.example.com/serum',
+        brandKitIds: ['kit-other'],
+      }),
+    ).rejects.toBeInstanceOf(BadRequestException);
+  });
+
+  it('allows Product create with empty source URL', async () => {
+    const result = await service.createProduct('user-1', {
+      name: 'Serum',
+      description: 'Hydrating',
+      imageUrls: ['https://cdn.example.com/p.jpg'],
+      landingPageUrl: '',
+    });
+
+    expect(result.product.landingPageUrl).toBe('');
+  });
+
+  it('lists only Products owned by the user', async () => {
     await service.createProduct('user-1', {
       name: 'Mine',
       description: 'Desc',
       imageUrls: ['https://cdn.example.com/a.jpg'],
       landingPageUrl: 'https://shop.example.com/a',
     });
-    await seedBrandKit(brandKits, 'user-2', 'kit-other', 'Other');
     await service.createProduct('user-2', {
       name: 'Theirs',
       description: 'Desc',
@@ -122,7 +137,6 @@ describe('ProductService', () => {
   });
 
   it('forbids updating another user Product', async () => {
-    await seedBrandKit(brandKits, 'user-1', 'kit-1', 'Nitro');
     const created = await service.createProduct('user-1', {
       name: 'Serum',
       description: 'Hydrating',

@@ -48,7 +48,13 @@ const productSchema = z.object({
   name: z.string().min(1).max(200),
   description: z.string().min(1).max(5000),
   imageUrls: z.array(z.string().url()).min(1, "Add at least one image"),
-  landingPageUrl: z.string().url(),
+  landingPageUrl: z
+    .string()
+    .optional()
+    .refine(
+      (value) => !value || value === "" || z.string().url().safeParse(value).success,
+      "Enter a valid URL",
+    ),
   price: z.string().optional(),
   brandKitIds: z.array(z.string().uuid()).optional(),
 });
@@ -78,7 +84,6 @@ export default function ProductsPage() {
   const [editing, setEditing] = useState<Product | null>(null);
 
   const brandKits = brandKitsData?.brandKits ?? [];
-  const needsExplicitKits = brandKits.length > 1;
 
   const formCreate = useForm<ProductFormInput>({
     resolver: zodResolver(productSchema),
@@ -99,7 +104,7 @@ export default function ProductsPage() {
     name: values.name,
     description: values.description,
     imageUrls: values.imageUrls,
-    landingPageUrl: values.landingPageUrl,
+    landingPageUrl: values.landingPageUrl || undefined,
     price: values.price || undefined,
     brandKitIds:
       values.brandKitIds && values.brandKitIds.length > 0
@@ -143,24 +148,18 @@ export default function ProductsPage() {
     if (brandKits.length === 0) {
       return (
         <p className="text-sm text-muted-foreground">
+          Optional:{" "}
           <Link href="/brand-kits" className="underline">
-            Create a Brand Kit
+            create a Brand
           </Link>{" "}
-          before adding Products.
-        </p>
-      );
-    }
-    if (!needsExplicitKits) {
-      return (
-        <p className="text-sm text-muted-foreground">
-          Will link to your Brand Kit: <strong>{brandKits[0].name}</strong>
+          to link later for jobs.
         </p>
       );
     }
     const selected = form.watch("brandKitIds") ?? [];
     return (
       <div className="space-y-2">
-        <FormLabel>Brand Kits</FormLabel>
+        <FormLabel>Brands (optional)</FormLabel>
         {brandKits.map((kit) => (
           <label key={kit.id} className="flex items-center gap-2 text-sm">
             <input
@@ -185,11 +184,11 @@ export default function ProductsPage() {
               Products
             </h1>
             <p className="text-muted-foreground mt-2">
-              Physical products linked to your Brand Kits for Generation.
+              Physical products with images and details for Post Jobs and Video
+              Jobs.
             </p>
           </div>
           <Button
-            disabled={brandKits.length === 0}
             onClick={() => {
               formCreate.reset(emptyValues);
               setCreateOpen(true);
@@ -216,26 +215,12 @@ export default function ProductsPage() {
           <div className="flex justify-center py-16">
             <Spinner />
           </div>
-        ) : brandKits.length === 0 ? (
-          <Card>
-            <CardHeader>
-              <CardTitle>Brand Kit required</CardTitle>
-              <CardDescription>
-                Create a Brand Kit first, then add Products.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Button asChild>
-                <Link href="/brand-kits">Go to Brand Kits</Link>
-              </Button>
-            </CardContent>
-          </Card>
         ) : (productsData?.products.length ?? 0) === 0 ? (
           <Card>
             <CardHeader>
               <CardTitle>No Products yet</CardTitle>
               <CardDescription>
-                Add a product with images and a landing page URL.
+                Add a product with images. Source URL is optional.
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -279,9 +264,12 @@ export default function ProductsPage() {
                     className="h-14 w-14 rounded object-cover bg-muted"
                   />
                   <div className="text-sm text-muted-foreground">
-                    {product.price ? `$${product.price}` : "No price"} ·{" "}
-                    {product.brandKitIds.length} Brand Kit
-                    {product.brandKitIds.length === 1 ? "" : "s"}
+                    {product.price ? `$${product.price}` : "No price"}
+                    {product.brandKitIds.length > 0
+                      ? ` · ${product.brandKitIds.length} Brand${
+                          product.brandKitIds.length === 1 ? "" : "s"
+                        }`
+                      : ""}
                   </div>
                 </CardContent>
               </Card>
@@ -295,19 +283,13 @@ export default function ProductsPage() {
           <DialogHeader>
             <DialogTitle>Create Product</DialogTitle>
             <DialogDescription>
-              Required: name, description, images, landing page.
+              Required: name, description, images. Source URL is optional.
             </DialogDescription>
           </DialogHeader>
           <Form {...formCreate}>
             <form
               className="space-y-4"
               onSubmit={formCreate.handleSubmit((values) => {
-                if (needsExplicitKits && !(values.brandKitIds?.length)) {
-                  formCreate.setError("brandKitIds", {
-                    message: "Select at least one Brand Kit",
-                  });
-                  return;
-                }
                 createProduct.mutate(toPayload(values), {
                   onSuccess: () => setCreateOpen(false),
                 });
@@ -339,12 +321,6 @@ export default function ProductsPage() {
               className="space-y-4"
               onSubmit={formEdit.handleSubmit((values) => {
                 if (!editing) return;
-                if (needsExplicitKits && !(values.brandKitIds?.length)) {
-                  formEdit.setError("brandKitIds", {
-                    message: "Select at least one Brand Kit",
-                  });
-                  return;
-                }
                 updateProduct.mutate(
                   { id: editing.id, data: toPayload(values) },
                   { onSuccess: () => setEditing(null) },
@@ -415,7 +391,7 @@ function ProductFields({
         name="landingPageUrl"
         render={({ field }) => (
           <FormItem>
-            <FormLabel>Landing page URL</FormLabel>
+            <FormLabel>Source URL (optional)</FormLabel>
             <FormControl>
               <Input placeholder="https://" {...field} />
             </FormControl>

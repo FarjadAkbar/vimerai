@@ -25,7 +25,7 @@ export interface CreateProductRequest {
   name: string;
   description: string;
   imageUrls: string[];
-  landingPageUrl: string;
+  landingPageUrl?: string;
   price?: string;
   brandKitIds?: string[];
 }

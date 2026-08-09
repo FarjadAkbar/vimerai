@@ -15,9 +15,10 @@ class BrandKitColorsDto {
   @IsNotEmpty()
   primary: string;
 
+  @IsOptional()
   @IsString()
   @IsNotEmpty()
-  secondary: string;
+  secondary?: string;
 }
 
 const TONES = [
@@ -45,15 +46,15 @@ export class CreateBrandKitDto {
   @IsIn(TONES)
   tone: (typeof TONES)[number];
 
+  @IsOptional()
   @IsString()
-  @IsNotEmpty()
   @MaxLength(500)
-  audience: string;
+  audience?: string;
 
+  @IsOptional()
   @IsString()
-  @IsNotEmpty()
   @MaxLength(1000)
-  thingsToAvoid: string;
+  thingsToAvoid?: string;
 
   @IsOptional()
   @IsString()

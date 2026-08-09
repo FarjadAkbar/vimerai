@@ -7,6 +7,7 @@ import {
   IsUrl,
   IsUUID,
   MaxLength,
+  ValidateIf,
 } from 'class-validator';
 
 export class CreateProductDto {
@@ -25,8 +26,10 @@ export class CreateProductDto {
   @IsUrl({ require_tld: false }, { each: true })
   imageUrls: string[];
 
+  @IsOptional()
+  @ValidateIf((_, value) => value !== '' && value != null)
   @IsUrl({ require_tld: false })
-  landingPageUrl: string;
+  landingPageUrl?: string;
 
   @IsOptional()
   @IsString()
@@ -59,6 +62,7 @@ export class UpdateProductDto {
   imageUrls?: string[];
 
   @IsOptional()
+  @ValidateIf((_, value) => value !== '' && value != null)
   @IsUrl({ require_tld: false })
   landingPageUrl?: string;
 
@@ -69,7 +73,6 @@ export class UpdateProductDto {
 
   @IsOptional()
   @IsArray()
-  @ArrayMinSize(1)
   @IsUUID('4', { each: true })
   brandKitIds?: string[];
 }

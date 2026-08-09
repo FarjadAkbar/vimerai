@@ -1,129 +1,133 @@
 # Vimerai
 
-AI creative studio that turns ecommerce brand and product context into marketing content (social posts, reel storyboards, and short-form video).
+Ecommerce-focused AI creative studio (Fetra-style): scrape or enter a Product, confirm a thin Brand, pick a curated Format, then run a Post Job or Video Job separately and Export the result.
 
 ## Language
 
 ### Product roadmap (locked)
 
-**Phase 1 (B+A)**:
-A single generation flow that produces real short-form video and social post / storyboard content together — not video-only, not copy-only.
-_Avoid_: Shipping posts without video first; shipping video without companion copy first
+**MVP (Fetra-style create loop)**:
+Two separate create modes — Make a Post and Make a Video. Happy path: Product page URL scrape (or manual Product) → Brand Confirm → Format pick → one Post Job or one Video Job → Export. App create UX should feel Fetra-like (paste link, format cards, phone preview). Marketing-site clone, publish, trend scrape, and reference-URL recreate are out of MVP.
+_Avoid_: Multi-arm Generation (post+storyboard+video together); Posts-only concept sets; shipping publish in MVP; cloning Fetra’s marketing site before the create app UX
 
-**Phase C (harden B+A)**:
-Make the shipped B+A loop honest and trustworthy before new domains (publish, Shopify, Workspace, studio chrome redesign). **First implementable slice:** (1) real Promo stitch via fal merge-videos into one playable ~60s Video, (2) Brand Kit colors and logo URL in prompt layers and AI Post image prompts, (3) English language lock on Generation copy. Sibling parallel Storyboard/Video arms and creative-partner progress UX remain Phase C backlog, not in the first slice. AI Post image “looks like Product photo” stays parked (model/conditioning) unless later proven to be a product bug (e.g. silent Product-photo fallback). Brand Kit preferred-language field is deferred.
-_Avoid_: Treating Phase C as Workspace/publish/Shopify; calling this “Phase 2” until a separate Phase 2 is locked; shipping colors-in-layers before honest Promo stitch; expanding the first slice to include parallel arms or progress UX
+**Parked (former Phase 1 / Phase C)**:
+Multi-arm Generation, Reel Storyboard, Posts-only / Post Concepts, Length Tiers (Teaser/Promo), Goals, Creative Brief as a shared multi-arm artifact, section regenerate, caption packages, platform API publish, Workspace/team.
+_Avoid_: Treating parked Phase 1/C items as current MVP scope; calling this “Phase C”
 
 ### Ownership
 
 **User**:
-The authenticated account that owns Brand Kits, Products, Generations, and billing. Phase 1 has no Workspace, team, or org layer.
+The authenticated account that owns Brands, Products, Post Jobs, Video Jobs, and billing. MVP has no Workspace, team, or org layer.
 _Avoid_: Account (prefer User), tenant, workspace
 
 ### Brand & product
 
-**Brand Kit**:
-The reusable identity and voice of a brand used as context for every Generation. Phase 1 required fields: name, logo, colors, tone, audience, things-to-avoid. All other brand fields are optional. Creating a Brand Kit is required before creating a Product.
-_Avoid_: Product Kit, brand profile, brand settings, style guide
+**Brand**:
+The reusable thin identity used as context for Post Jobs and Video Jobs. Required fields: name, logo, primary color, tone. Created or updated via Brand Confirm after Product scrape/entry (or picked from existing Brands).
+_Avoid_: Brand Kit (deprecated), brand profile, brand settings, style guide
+
+**Brand Confirm**:
+The short step after Product scrape/entry where the user confirms or edits Brand name, logo, primary color, and tone before running a job. Saving creates or updates a reusable Brand.
+_Avoid_: Full Brand Kit form, onboarding wizard
+
+**Brand Kit** _(deprecated)_:
+Former richer brand entity (name, logo, colors, tone, audience, things-to-avoid, optional AI instructions) required before Product/Generation. Replaced by thin Brand + Brand Confirm.
+_Avoid_: Using this term for new work
 
 **Tone**:
-A Brand Kit voice preset. Phase 1 closed set: Luxury, Professional, Playful, Bold, Friendly. Finer voice control uses optional AI instructions, not more tone labels.
+A Brand voice preset. Closed set: Luxury, Professional, Playful, Bold, Friendly.
 _Avoid_: Style, voice (as a separate enum), mood
 
 **Product**:
-A physical sellable item that can be linked to one or more Brand Kits. Phase 1 required fields: name, description, images, landing page URL. Price is optional. All other product fields are optional. Phase 1 does not focus on digital products.
-_Avoid_: Product Kit, SKU-as-entity, listing, item, digital download
+A physical sellable item owned by the User. Required fields: name, description, images, source URL when scraped. Price is optional. Happy path: scrape a product page URL (Shopify and similar storefronts first) to fetch images and details; manual entry is the fallback. The saved Product record is the generation context for later jobs (no separate Memory entity).
+_Avoid_: Product Kit, SKU-as-entity, listing, item, digital download, Memory (as an entity)
 
-**Brand–Product link**:
-The association between a Product and a Brand Kit. A Product must have at least one link. If the user has exactly one Brand Kit, new Products are linked to it by default.
-_Avoid_: Ownership (prefer “link”), membership
+**Product scrape**:
+Fetching Product name, description, and images from a product page URL to seed or update a Product.
+_Avoid_: Import, sync, crawl (prefer scrape for this MVP action)
+
+**Brand–Product link** _(deprecated for MVP)_:
+Former required association between Product and Brand Kit. MVP jobs take an explicit Brand and Product; a hard many-to-many link entity is not required for the create loop.
+_Avoid_: Requiring Brand Kit links before Product exists
 
 **Product Kit** _(deprecated)_:
-Former filesystem package that mixed brand, product, shot templates, and model config. Replaced by Brand Kit + Product.
+Former filesystem package that mixed brand, product, shot templates, and model config.
 _Avoid_: Using this term for new work
 
-**Prompt Studio** _(deprecated for Phase 1)_:
-Former user-facing prompt template editor. Phase 1 Generations are driven by Brand Kit + Product + Goal + system templates; optional Brand Kit AI instructions are the only user prompt escape hatch.
+**Prompt Studio** _(deprecated)_:
+Former user-facing prompt template editor. Jobs are driven by Brand + Product + Format.
 _Avoid_: Prompt template (as a consumer feature), custom prompt library
 
-### Generation
+### Formats & jobs
 
-**Generation**:
-One user-initiated create action that yields one or more Content Outputs (and, in Posts-only, Post Concepts) for a Product under a Brand Kit and Goal. Requires an existing Brand Kit and Product — Generation is blocked until both exist. Two paths: **multi-arm** (Social Post + Reel Storyboard + Video; Phase 1 defaults Length Tier Teaser, feed Instagram, reel Instagram Reels, Post image Product photo) and **Posts-only** (see Posts-only Generation). Brand Kit auto-selected when the Product has one link (must choose when multiple). Stores a snapshot of the Brand Kit and Product fields used; reopen shows that snapshot. Regenerate and section-regenerate use the live Brand Kit and Product. Multi-arm arms may complete independently: partial success keeps finished Content Outputs; failed arms are retryable without recharging for work that already succeeded.
-_Avoid_: Job (prefer in implementation only), render, run
+**Format**:
+A curated viral creative pattern the user picks before a job (e.g. meme CTA, problem-solution, listicle hook). Each Format is tagged `post`, `video`, or `both`. The create mode filters which Format cards appear. MVP Formats are a fixed owned library — not live trend scrape or “recreate this URL.”
+_Avoid_: Template (ambiguous), trend, Post Concept, Creative Brief
 
-**Posts-only Generation**:
-A Generation path that skips Video and Reel Storyboard. Happy path: Product + Goal → exactly ten Instagram Post Concepts → user selects up to three → each selected Post Concept renders as a Social Post with an AI-generated Post image (Product photo is not offered in this path). Credits: charge for the Post Concept set; charge again per rendered Social Post. Competitor Task brief and soft memory are deferred.
-_Avoid_: Multi-arm Generation, posts mode (prefer Posts-only Generation), video-off checkbox as the name of the path
+**Post Job**:
+One user-initiated Make a Post run for a Brand + Product + Format. Yields one Instagram feed Post image (AI-generated; Product images condition the model). No AI caption package. Regenerate starts a new Post Job with the same Brand + Product + Format and charges again.
+_Avoid_: Generation, multi-arm, Posts-only, Social Post with caption
 
-**Content Output**:
-A concrete generated artifact the user can view, edit, and export. Phase 1 types: Social Post, Reel Storyboard, Video. Post Concepts are not Content Outputs. Phase 1 editing is structured fields and scene lists (including reorder): the user can change text and simple fields directly and save with no AI call. Section regenerate is optional when they want the AI to rewrite a part. Freeform design canvas and version history are deferred.
-_Avoid_: Result, asset (assets are inputs), creative, Post Concept
+**Video Job**:
+One user-initiated Make a Video run for a Brand + Product + Format + reel platform (Instagram Reels or TikTok). Yields one ~15–30s 9:16 Video file. No AI caption package. Regenerate starts a new Video Job with the same inputs and charges again.
+_Avoid_: Generation, Length Tier, Promo stitch as MVP requirement, Reel caption
 
-**Manual edit**:
-A user change to a Content Output field (headline, body, CTA, hashtags, scene text, etc.) saved without calling the AI. Preferred for small tweaks to avoid token cost.
-_Avoid_: Regenerate, section regenerate
+**Generation** _(deprecated)_:
+Former umbrella for multi-arm or Posts-only create runs. Replaced by Post Job and Video Job as separate terms.
+_Avoid_: Using Generation as the user-facing or domain umbrella for new work
 
-**Section regenerate**:
-An AI request that rewrites only a chosen part of a Content Output (e.g. hashtags, one storyboard scene, CTA) using the live Brand Kit and Product. Used when the user wants a new AI suggestion, not for typos or light wording tweaks.
-_Avoid_: Full regenerate (that regenerates the whole Generation or whole Content Output), manual edit
+**Posts-only Generation** _(deprecated)_:
+Former path that produced Post Concepts then rendered Social Posts.
+_Avoid_: Using this path in MVP
 
-**Social Post**:
-A platform-specific **feed** post for Instagram or Facebook: caption package (headline, body, CTA, caption, hashtags) plus a post image. Phase 1 multi-arm Generation: one Social Post per Generation; feed platform is Instagram or Facebook (user picks; default Instagram). Image mode is either **use Product photo** (default when Product images exist) or **AI-generated image** (optional), with Product images used as conditioning when generating. Delivered via Export, not API publish. Posts-only Generation may yield multiple Social Posts from selected Post Concepts (see Post Concept).
-_Avoid_: Caption-only, tweet, listing, reel caption (that belongs on Video), Post Concept (directions before a Social Post exists)
+**Post Concept** _(deprecated)_:
+Former alternate Instagram direction card before committing to a Social Post.
+_Avoid_: Format (Formats are curated patterns, not concept brainstorm sets)
 
-**Post Concept**:
-One alternate Instagram feed direction shown before the user commits to a Social Post. Fields: hook, visual idea, and angle (why it fits the Goal). Not a Content Output and not a Social Post until the user selects it and it is rendered. Posts-only Generation produces exactly ten Post Concepts; the user may select up to three to render as Social Posts.
-_Avoid_: Creative Brief, concept card, post direction, Social Post, outline
+**Content Output** _(deprecated as umbrella)_:
+Former shared term for Social Post, Reel Storyboard, and Video from one Generation. MVP artifacts are the Post image from a Post Job and the Video from a Video Job.
+_Avoid_: Forcing a shared Content Output type in the glossary
+
+**Social Post** _(deprecated name for MVP artifact)_:
+Prefer **Post image** for the Instagram-ready still from a Post Job. Former Social Post included a caption package and optional Facebook feed.
+_Avoid_: Caption package, Facebook feed in MVP
 
 **Post image**:
-The visual attached to a Social Post — either a selected Product Asset or an AI-generated still.
-_Avoid_: Thumbnail, creative, asset (assets are inputs; a Post image is part of a Content Output)
+The AI-generated Instagram feed still produced by a Post Job. Always AI-generated in MVP (not “use Product photo” as a mode). Delivered via Export.
+_Avoid_: Thumbnail, captioned Social Post, Product photo mode
 
 **Reel platform**:
-Where the Video is intended to be published. Phase 1: Instagram Reels or TikTok (user picks).
-_Avoid_: Feed platform, Social Post platform
+Where the Video is intended to be published manually. MVP: Instagram Reels or TikTok (user picks on Video Job).
+_Avoid_: Feed platform
 
-**Reel caption**:
-Copy that accompanies the Video for the chosen Reel platform (distinct from the feed Social Post caption package).
-_Avoid_: Social Post, feed caption
+**Reel caption** _(deprecated for MVP)_:
+Former AI copy accompanying a Video. MVP exports the Video file only; users write platform captions outside the app.
+_Avoid_: Generating captions for Video Jobs in MVP
 
-**Reel Storyboard**:
-A scene-by-scene plan for a marketing reel — not the rendered Video. Every reel plan follows four beats: hook, attention, product display, and connection with the viewer (plus overlays, voice-over, music/transitions, ending CTA as needed). In Phase 1 it is generated as a sibling of the Video from a shared creative brief, not as the driver of the video render.
-_Avoid_: Storyboard-as-video, script-only, ad storyboard (we make marketing reels, not ad-buy creatives)
+**Reel Storyboard** _(parked)_:
+Former scene-by-scene reel plan. Not part of MVP.
+_Avoid_: Shipping storyboard as a sibling of Video Job
 
-**Creative Brief**:
-The shared structured intent (hook, attention, product display, viewer connection, tone, CTA, goal, length tier) produced once per Generation and fed in parallel to Social Post, Reel Storyboard, and Video arms. Text arms (brief, Social Post, Reel Storyboard, Reel caption) use an LLM text provider; Video uses the video provider. Distinct from Post Concept (many alternate Instagram directions in Posts-only).
-_Avoid_: Prompt (implementation), master prompt, outline, Post Concept
+**Creative Brief** _(parked)_:
+Former shared multi-arm intent object. Format + Brand + Product replace it for MVP jobs.
+_Avoid_: Using Creative Brief as a required MVP entity
 
-**Prompt layers**:
-The fixed order of context sent into text generation: (1) quality and safety rules — including Phase C default **write all copy in English** (2) Brand Kit — including name, tone, audience, things-to-avoid, primary/secondary colors, logo URL as context, and optional AI instructions (3) Product (4) Goal, Length Tier, and platforms (5) output schema for the requested artifact. Section regenerate reuses layers and swaps only the output schema / target section. Optional AI Post image prompts also receive Brand Kit colors and logo context; Phase C does not inject colors into fal Video prompts. Brand Kit preferred-language as a user field is deferred.
-_Avoid_: Ad hoc prompt string, Prompt Studio template
+**Length Tier** _(parked)_:
+Former Teaser (~8–10s) vs Promo (~60s) choice. MVP Video Jobs target ~15–30s without a user-facing Length Tier control.
+_Avoid_: Teaser/Promo as MVP UX
 
-**Length Tier**:
-The user-selected target duration for a Generation’s Video (and matching Reel Storyboard scope). Phase 1 tiers: **Teaser** (~8–10s, default, fast) and **Promo** (~60s, queued, higher cost). Promo Video is produced by stitching short clips aligned to reel beats; a native long-form provider can replace that later without changing the Length Tier UX. Billing uses weighted credits (Teaser costs less than Promo).
-_Avoid_: Mode (conflicts with existing fal fast/cinematic/avatar), quality preset
-
-**Generation credit**:
-The usage unit deducted for a Generation. Multi-arm cost is weighted by Length Tier (e.g. Teaser = 1, Promo = 4). Posts-only charges 1 credit for the ten-Post-Concept set, then 1 credit per rendered Social Post (AI Post image included in that render charge). Manual edits cost zero. Text section regenerate is free (fair-use limited). Regenerating a Video shot costs credits (e.g. 1 per shot).
-_Avoid_: Token (LLM billing), video credit (as a separate meter in Phase 1)
-
-**Shot**:
-One short rendered clip that is part of a Promo Video stitch (typically one reel beat). Teaser Video is a single shot. Promo stitches beat Shots into one Video via the video provider’s merge/stitch capability (fal merge-videos in Phase C).
-_Avoid_: Scene (prefer for storyboard narrative units), segment
-
-**Video**:
-The rendered marketing-reel Video Content Output from a Generation, plus its Reel caption for the chosen Reel platform (Instagram Reels or TikTok). Length follows the chosen Length Tier. Phase 1 delivery is export/download — not platform API publishing.
-_Avoid_: Reel (prefer Reel Storyboard for the plan; Video for the file), ad, clip, render
+**Goal** _(parked)_:
+Former marketing objective enum on Generation. Format selection steers creative angle in MVP.
+_Avoid_: Requiring Goal before Post Job or Video Job
 
 **Export**:
-Downloading or copying Content Output media and text for the user to post manually on social platforms. Phase 1 has no in-app publish or schedule.
+Downloading the Post image or Video file for the user to post manually on social platforms. MVP has no in-app publish or schedule.
 _Avoid_: Publish, schedule, post (as a platform API action)
 
-**Goal**:
-The marketing objective that steers a Generation. Phase 1 Goals: Increase sales, Product launch, Brand awareness. Other goals (seasonal, flash sale, retargeting, lead gen) are deferred.
-_Avoid_: Campaign objective (until Campaign exists as an entity), intent
-
 **Asset**:
-An input media file (image, video, logo) attached to a Brand Kit or Product — not a generated Content Output. Product images condition Video and optional AI Post images.
-_Avoid_: File, media, creative
+An input media file (image, video, logo) attached to a Brand or Product — not a job output. Product images condition Post image and Video generation.
+_Avoid_: File, media, creative (for inputs)
+
+**Credit**:
+The usage unit deducted per Post Job or Video Job (including regenerate as a new job). Exact weights TBD in implementation/billing design.
+_Avoid_: Token (LLM billing), Generation credit (deprecated name)

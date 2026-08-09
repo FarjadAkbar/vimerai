@@ -43,7 +43,7 @@ export class ProductService implements IProductService {
       input.name,
       input.description,
       input.imageUrls,
-      input.landingPageUrl,
+      input.landingPageUrl ?? '',
       brandKitIds,
       input.price ?? null,
     );
@@ -71,7 +71,7 @@ export class ProductService implements IProductService {
 
     let brandKitIds = input.brandKitIds;
     if (brandKitIds !== undefined) {
-      brandKitIds = await this.resolveBrandKitIds(userId, brandKitIds, true);
+      brandKitIds = await this.resolveBrandKitIds(userId, brandKitIds);
     }
 
     const updated = existing.update({
@@ -97,32 +97,19 @@ export class ProductService implements IProductService {
   private async resolveBrandKitIds(
     userId: string,
     requestedIds: string[] | undefined,
-    requireExplicit = false,
   ): Promise<string[]> {
+    if (!requestedIds || requestedIds.length === 0) {
+      return [];
+    }
+
     const kits = await this.brandKitRepository.findByUserId(userId);
-    if (kits.length === 0) {
+    const owned = new Set(kits.map((kit) => kit.id));
+    const invalid = requestedIds.filter((id) => !owned.has(id));
+    if (invalid.length > 0) {
       throw new BadRequestException(
-        'Create a Brand Kit before adding a Product',
+        'One or more Brands are invalid or not owned by you',
       );
     }
-
-    if (requestedIds && requestedIds.length > 0) {
-      const owned = new Set(kits.map((kit) => kit.id));
-      const invalid = requestedIds.filter((id) => !owned.has(id));
-      if (invalid.length > 0) {
-        throw new BadRequestException(
-          'One or more Brand Kits are invalid or not owned by you',
-        );
-      }
-      return [...new Set(requestedIds)];
-    }
-
-    if (requireExplicit || kits.length > 1) {
-      throw new BadRequestException(
-        'Select at least one Brand Kit to link this Product',
-      );
-    }
-
-    return [kits[0].id];
+    return [...new Set(requestedIds)];
   }
 }

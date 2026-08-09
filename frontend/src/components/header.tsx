@@ -94,7 +94,7 @@ const Header = () => {
                     size="sm"
                     onClick={(e) => handleNavigation("/brand-kits", e)}
                   >
-                    Brand Kits
+                    Brands
                   </Button>
                   <Button
                     variant="ghost"
@@ -303,7 +303,7 @@ const Header = () => {
                   className="text-left px-3 py-2.5 rounded-xl hover:bg-secondary transition-colors text-sm font-medium"
                   onClick={(e) => handleNavigation("/brand-kits", e)}
                 >
-                  Brand Kits
+                  Brands
                 </button>
                 <button
                   className="text-left px-3 py-2.5 rounded-xl hover:bg-secondary transition-colors text-sm font-medium"
