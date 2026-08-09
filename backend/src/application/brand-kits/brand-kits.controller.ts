@@ -16,17 +16,34 @@ import {
 import { FileInterceptor } from '@nestjs/platform-express';
 import { memoryStorage } from 'multer';
 import { BrandKitService } from '@/application/brand-kits/brand-kit.service';
+import { BusinessDnaService } from '@/application/brand-kits/business-dna.service';
 import {
   CreateBrandKitDto,
   UpdateBrandKitDto,
 } from '@/application/brand-kits/dto/brand-kit.dto';
+import { GenerateBusinessDnaDto } from '@/application/brand-kits/dto/business-dna.dto';
 import { CurrentUser } from '@/infrastructure/auth/current-user.decorator';
 import { JwtAuthGuard } from '@/infrastructure/auth/jwt-auth.guard';
 
 @Controller('brand-kits')
 @UseGuards(JwtAuthGuard)
 export class BrandKitsController {
-  constructor(private readonly brandKitService: BrandKitService) {}
+  constructor(
+    private readonly brandKitService: BrandKitService,
+    private readonly businessDnaService: BusinessDnaService,
+  ) {}
+
+  @Post('business-dna')
+  @HttpCode(HttpStatus.CREATED)
+  async generateBusinessDna(
+    @CurrentUser() user: { userId: string },
+    @Body(new ValidationPipe({ whitelist: true, transform: true }))
+    dto: GenerateBusinessDnaDto,
+  ) {
+    return this.businessDnaService.generateFromUrl(user.userId, {
+      url: dto.url,
+    });
+  }
 
   @Get()
   async list(@CurrentUser() user: { userId: string }) {

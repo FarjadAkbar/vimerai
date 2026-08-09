@@ -6,6 +6,7 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 import { BrandKit, type BrandKitColors } from '@/domain/brand-kit.entity';
+import type { BusinessDna } from '@/types/brand/business-dna';
 import type { Tone } from '@/types/generation/enums';
 
 @Entity('brand_kits')
@@ -37,6 +38,9 @@ export class BrandKitEntity {
   @Column({ type: 'text', nullable: true })
   aiInstructions: string | null;
 
+  @Column({ type: 'jsonb', nullable: true })
+  businessDna: BusinessDna | null;
+
   @CreateDateColumn()
   createdAt: Date;
 
@@ -54,6 +58,7 @@ export class BrandKitEntity {
       entity.audience,
       entity.thingsToAvoid,
       entity.aiInstructions,
+      entity.businessDna ?? null,
       entity.createdAt,
       entity.updatedAt,
     );
@@ -70,6 +75,7 @@ export class BrandKitEntity {
     entity.audience = domain.audience;
     entity.thingsToAvoid = domain.thingsToAvoid;
     entity.aiInstructions = domain.aiInstructions;
+    entity.businessDna = domain.businessDna;
     if (domain.createdAt) entity.createdAt = domain.createdAt;
     if (domain.updatedAt) entity.updatedAt = domain.updatedAt;
     return entity;

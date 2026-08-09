@@ -38,6 +38,7 @@ export class BrandKitService implements IBrandKitService {
       input.audience ?? '',
       input.thingsToAvoid ?? '',
       input.aiInstructions ?? null,
+      input.businessDna ?? null,
     );
     await this.brandKitRepository.create(brandKit);
     return { brandKit };
