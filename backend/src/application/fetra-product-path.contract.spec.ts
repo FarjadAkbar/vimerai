@@ -47,14 +47,33 @@ describe('Fetra product path contract (ticket 05)', () => {
     expect(brandKitsPage).toMatch(/PRODUCT_PATH\.businessDna|business-dna/);
     expect(sidebar).toMatch(/PRODUCT_PATH\.businessDna/);
     expect(sidebar).not.toMatch(/PRODUCT_PATH\.brands/);
+    expect(sidebar).not.toMatch(/PRODUCT_PATH\.products/);
     expect(sidebar).not.toMatch(/label:\s*["']Brands["']/);
+    expect(sidebar).not.toMatch(/label:\s*["']Products["']/);
     expect(header).not.toMatch(/>\s*Brands\s*</);
+    expect(header).not.toMatch(/>\s*Products\s*</);
     expect(header).not.toMatch(/PRODUCT_PATH\.brands/);
+    expect(header).not.toMatch(/PRODUCT_PATH\.products/);
     expect(products).not.toMatch(/href=["']\/brand-kits["']/);
     expect(brandGeneration).not.toMatch(/Brand Kit/);
     expect(brandGeneration).not.toMatch(/\/brand-kits/);
     expect(businessDna).toMatch(/BrandConfirmForm|Brand Confirm/);
     expect(businessDna).not.toMatch(/href=["']\/brand-kits["']/);
+  });
+
+  it('Posts/Videos empty Product path uses inline scrape/create, not /products library', () => {
+    const posts = read('app', 'studio', 'posts', 'page.tsx');
+    const videos = read('app', 'studio', 'videos', 'page.tsx');
+    const inline = read('components', 'studio', 'inline-product-create.tsx');
+
+    expect(inline).toMatch(/useScrapeProduct|productsApi\.scrape|scrapeProduct/);
+    expect(inline).toMatch(/useCreateProduct|productsApi\.create|createProduct/);
+    expect(posts).toMatch(/InlineProductCreate/);
+    expect(videos).toMatch(/InlineProductCreate/);
+    expect(posts).not.toMatch(/Manage Products/);
+    expect(videos).not.toMatch(/Manage Products/);
+    expect(posts).not.toMatch(/href=["']\/products["']/);
+    expect(videos).not.toMatch(/href=["']\/products["']/);
   });
 
   it('home defaults to Fetra create path; BrandGeneration only behind legacy flag', () => {
