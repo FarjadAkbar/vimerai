@@ -74,7 +74,7 @@ App: `http://localhost:3000` when the frontend owns that port — if backend als
 
 **Frontend:** Next.js App Router, TanStack Query, React Hook Form + Zod.
 
-**Backend:** NestJS clean architecture — application services behind ports (`IGenerationService`, text/image/video providers), TypeORM + PostgreSQL, fal.ai for Video (including Promo stitch via `ffmpeg-api/merge-videos`), OpenAI for text / optional AI Post images.
+**Backend:** NestJS clean architecture — application services behind ports (`IGenerationService`, text/image/video providers), TypeORM + PostgreSQL, fal.ai for Video (including Promo stitch via `ffmpeg-api/merge-videos`) and AI Post images (`flux-pro/kontext`), OpenAI for text.
 
 **Core entities:** User, Brand Kit, Product, Generation (with Content Outputs: Social Post, Reel Storyboard, Video / Shots), Subscription / Generation credits.
 
@@ -107,8 +107,8 @@ See [`backend/.env.example`](backend/.env.example). Minimums:
 
 - Database: `DB_HOST`, `DB_PORT`, `DB_USERNAME`, `DB_PASSWORD`, `DB_NAME`
 - Auth: `JWT_SECRET`
-- Video: `FAL_KEY` (and optional `FAL_BASE_URL` / `FAL_MODEL`)
-- Text / AI Post image: `OPENAI_API_KEY`
+- Video / AI Post image: `FAL_KEY` (optional `FAL_BASE_URL` / `FAL_MODEL` / `FAL_IMAGE_MODEL`)
+- Text: `OPENAI_API_KEY`
 - Storage: `STORAGE_TYPE=local` or S3/R2 credentials when fal needs public Asset URLs
 - Billing: PayPal or Stripe vars per `PAYMENT_PROVIDER`
 

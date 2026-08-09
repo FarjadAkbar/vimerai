@@ -18,6 +18,7 @@ import videoGenerationConfig from './infrastructure/config/video-generation.conf
 import storageConfig from './infrastructure/config/storage.config';
 import emailConfig from './infrastructure/config/email.config';
 import openaiConfig from './infrastructure/config/openai.config';
+import imageGenerationConfig from './infrastructure/config/image-generation.config';
 
 @Module({
   imports: [
@@ -30,6 +31,7 @@ import openaiConfig from './infrastructure/config/openai.config';
         jwtConfig,
         paymentConfig,
         videoGenerationConfig,
+        imageGenerationConfig,
         storageConfig,
         emailConfig,
         openaiConfig,
