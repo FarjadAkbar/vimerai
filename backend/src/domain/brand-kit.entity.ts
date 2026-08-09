@@ -2,7 +2,12 @@ import type { Tone } from '@/types/generation/enums';
 
 export interface BrandKitColors {
   primary: string;
-  /** Optional on thin Brand Confirm input; persisted secondary defaults to primary. */
+  secondary: string;
+}
+
+/** Thin Brand Confirm input may omit secondary (defaults to primary). */
+export interface BrandKitColorsInput {
+  primary: string;
   secondary?: string;
 }
 
@@ -42,7 +47,7 @@ export class BrandKit {
     userId: string,
     name: string,
     logoUrl: string,
-    colors: BrandKitColors,
+    colors: BrandKitColorsInput,
     tone: Tone,
     audience: string,
     thingsToAvoid: string,
@@ -71,7 +76,7 @@ export class BrandKit {
   update(fields: {
     name?: string;
     logoUrl?: string;
-    colors?: BrandKitColors;
+    colors?: BrandKitColorsInput;
     tone?: Tone;
     audience?: string;
     thingsToAvoid?: string;
