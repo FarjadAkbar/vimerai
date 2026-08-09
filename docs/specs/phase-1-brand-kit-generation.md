@@ -120,5 +120,5 @@ Phase 1 turns Vimerai into a Brand Kit–driven creative studio: users set up a 
 - Glossary and decisions: root `CONTEXT.md` and `docs/adr/0001`–`0026`.
 - Primary test seam confirmed: `IGenerationService` + modality providers (ADR 0026).
 - UI redesign explicitly deferred (ADR 0025); ship flows on existing shell.
-- AI Post image vendor (OpenAI vs fal) remains a runtime/config choice behind `IImageGenerationProvider`.
+- AI Post image vendor is fal behind `IImageGenerationProvider` (Product-conditioned Kontext); OpenAI remains for text only.
 - When implementing, retire Product Kit loader and Prompt Studio consumer paths as part of cutting over to Brand Kit + Product.
