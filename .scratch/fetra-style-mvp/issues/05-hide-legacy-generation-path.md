@@ -4,9 +4,9 @@
 
 **Blocked by:** 03 — Make a Post Job; 04 — Make a Video Job
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] Home and primary nav lead to Make a Post / Make a Video (not multi-arm Generation as the default)
-- [ ] Brand Kit–gated Generate and Posts-only / storyboard-first flows are hidden or clearly non-primary
-- [ ] Post Job and Video Job libraries (or clearly typed history) are reachable without opening legacy Generation as the main library
-- [ ] Contract/guard test asserts the primary product path does not require the old Generation create UX
+- [x] Home and primary nav lead to Make a Post / Make a Video (not multi-arm Generation as the default)
+- [x] Brand Kit–gated Generate and Posts-only / storyboard-first flows are hidden or clearly non-primary
+- [x] Post Job and Video Job libraries (or clearly typed history) are reachable without opening legacy Generation as the main library
+- [x] Contract/guard test asserts the primary product path does not require the old Generation create UX

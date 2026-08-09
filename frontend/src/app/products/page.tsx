@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Package, Pencil, Plus, X } from "lucide-react";
+import { Link2, Package, Pencil, Plus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -34,15 +34,18 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Spinner } from "@/components/ui/spinner";
+import { getApiErrorMessage } from "@/lib/api/errors";
 import { useBrandKits } from "@/lib/hooks/use-brand-kits";
 import {
   useCreateProduct,
   useProducts,
+  useScrapeProduct,
   useUpdateProduct,
   useUploadProductImage,
 } from "@/lib/hooks/use-products";
 import { useUser } from "@/lib/hooks/use-user";
 import type { Product } from "@/lib/api/products.api";
+import { PRODUCT_PATH } from "@/lib/product-path";
 
 const productSchema = z.object({
   name: z.string().min(1).max(200),
@@ -78,10 +81,13 @@ export default function ProductsPage() {
   const { data: brandKitsData } = useBrandKits(isLoggedIn);
   const createProduct = useCreateProduct();
   const updateProduct = useUpdateProduct();
+  const scrapeProduct = useScrapeProduct();
   const uploadImage = useUploadProductImage();
 
   const [createOpen, setCreateOpen] = useState(false);
   const [editing, setEditing] = useState<Product | null>(null);
+  const [scrapeUrl, setScrapeUrl] = useState("");
+  const [scrapeError, setScrapeError] = useState<string | null>(null);
 
   const brandKits = brandKitsData?.brandKits ?? [];
 
@@ -149,8 +155,8 @@ export default function ProductsPage() {
       return (
         <p className="text-sm text-muted-foreground">
           Optional:{" "}
-          <Link href="/brand-kits" className="underline">
-            create a Brand
+          <Link href={PRODUCT_PATH.businessDna} className="underline">
+            create a Brand via Business DNA
           </Link>{" "}
           to link later for jobs.
         </p>
@@ -184,13 +190,15 @@ export default function ProductsPage() {
               Products
             </h1>
             <p className="text-muted-foreground mt-2">
-              Physical products with images and details for Post Jobs and Video
-              Jobs.
+              Demoted library — prefer scraping or creating a Product inline on
+              Make a Post / Make a Video. Records here still power jobs.
             </p>
           </div>
           <Button
             onClick={() => {
               formCreate.reset(emptyValues);
+              setScrapeUrl("");
+              setScrapeError(null);
               setCreateOpen(true);
             }}
           >
@@ -220,11 +228,21 @@ export default function ProductsPage() {
             <CardHeader>
               <CardTitle>No Products yet</CardTitle>
               <CardDescription>
-                Add a product with images. Source URL is optional.
+                Paste a product page URL to scrape details, or enter them
+                manually. Source URL is kept when scraped.
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <Button onClick={() => setCreateOpen(true)}>Create Product</Button>
+              <Button
+                onClick={() => {
+                  formCreate.reset(emptyValues);
+                  setScrapeUrl("");
+                  setScrapeError(null);
+                  setCreateOpen(true);
+                }}
+              >
+                Create Product
+              </Button>
             </CardContent>
           </Card>
         ) : (
@@ -263,13 +281,25 @@ export default function ProductsPage() {
                     alt={product.name}
                     className="h-14 w-14 rounded object-cover bg-muted"
                   />
-                  <div className="text-sm text-muted-foreground">
-                    {product.price ? `$${product.price}` : "No price"}
-                    {product.brandKitIds.length > 0
-                      ? ` · ${product.brandKitIds.length} Brand${
-                          product.brandKitIds.length === 1 ? "" : "s"
-                        }`
-                      : ""}
+                  <div className="min-w-0 text-sm text-muted-foreground">
+                    <div>
+                      {product.price ? `$${product.price}` : "No price"}
+                      {product.brandKitIds.length > 0
+                        ? ` · ${product.brandKitIds.length} Brand${
+                            product.brandKitIds.length === 1 ? "" : "s"
+                          }`
+                        : ""}
+                    </div>
+                    {product.landingPageUrl ? (
+                      <a
+                        href={product.landingPageUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="mt-1 block truncate underline-offset-2 hover:underline"
+                      >
+                        {product.landingPageUrl}
+                      </a>
+                    ) : null}
                   </div>
                 </CardContent>
               </Card>
@@ -278,14 +308,86 @@ export default function ProductsPage() {
         )}
       </div>
 
-      <Dialog open={createOpen} onOpenChange={setCreateOpen}>
+      <Dialog
+        open={createOpen}
+        onOpenChange={(open) => {
+          setCreateOpen(open);
+          if (!open) {
+            setScrapeError(null);
+          }
+        }}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Create Product</DialogTitle>
             <DialogDescription>
-              Required: name, description, images. Source URL is optional.
+              Paste a product page URL to scrape name, description, and images,
+              then confirm. Or fill the form manually if scrape fails.
             </DialogDescription>
           </DialogHeader>
+          <div className="space-y-2 rounded-md border p-3">
+            <label className="text-sm font-medium" htmlFor="product-scrape-url">
+              Product page URL
+            </label>
+            <div className="flex gap-2">
+              <Input
+                id="product-scrape-url"
+                placeholder="https://shop.example.com/products/…"
+                value={scrapeUrl}
+                onChange={(event) => {
+                  setScrapeUrl(event.target.value);
+                  setScrapeError(null);
+                }}
+              />
+              <Button
+                type="button"
+                variant="secondary"
+                disabled={
+                  scrapeProduct.isPending || scrapeUrl.trim().length === 0
+                }
+                onClick={async () => {
+                  setScrapeError(null);
+                  try {
+                    const result = await scrapeProduct.mutateAsync({
+                      url: scrapeUrl.trim(),
+                    });
+                    formCreate.reset({
+                      name: result.scrape.name,
+                      description: result.scrape.description,
+                      imageUrls: result.scrape.imageUrls,
+                      landingPageUrl: result.scrape.sourceUrl,
+                      price: result.scrape.price ?? "",
+                      brandKitIds: formCreate.getValues("brandKitIds") ?? [],
+                    });
+                  } catch (error) {
+                    setScrapeError(
+                      getApiErrorMessage(
+                        error,
+                        "Scrape failed — enter Product details manually",
+                      ),
+                    );
+                  }
+                }}
+              >
+                {scrapeProduct.isPending ? (
+                  "Scraping…"
+                ) : (
+                  <>
+                    <Link2 className="mr-1.5 h-4 w-4" />
+                    Scrape
+                  </>
+                )}
+              </Button>
+            </div>
+            {scrapeError ? (
+              <p className="text-sm text-destructive">{scrapeError}</p>
+            ) : (
+              <p className="text-xs text-muted-foreground">
+                Shopify-like product pages work best. Manual entry stays
+                available below.
+              </p>
+            )}
+          </div>
           <Form {...formCreate}>
             <form
               className="space-y-4"
@@ -303,7 +405,7 @@ export default function ProductsPage() {
               />
               <DialogFooter>
                 <Button type="submit" disabled={createProduct.isPending}>
-                  {createProduct.isPending ? "Saving…" : "Create"}
+                  {createProduct.isPending ? "Saving…" : "Confirm & save"}
                 </Button>
               </DialogFooter>
             </form>

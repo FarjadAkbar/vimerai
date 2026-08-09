@@ -39,9 +39,33 @@ export interface UpdateProductRequest {
   brandKitIds?: string[];
 }
 
+export interface ProductScrapeResult {
+  sourceUrl: string;
+  name: string;
+  description: string;
+  imageUrls: string[];
+  price: string | null;
+}
+
+export interface ScrapeProductRequest {
+  url: string;
+}
+
+export interface ScrapeProductResponse {
+  scrape: ProductScrapeResult;
+}
+
 export const productsApi = {
   list: async (): Promise<ProductsListResponse> => {
     const response = await api.get<ProductsListResponse>('/products');
+    return response.data;
+  },
+
+  scrape: async (data: ScrapeProductRequest): Promise<ScrapeProductResponse> => {
+    const response = await api.post<ScrapeProductResponse>(
+      '/products/scrape',
+      data,
+    );
     return response.data;
   },
 

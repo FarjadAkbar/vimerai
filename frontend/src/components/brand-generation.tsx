@@ -28,6 +28,7 @@ import {
   type Goal,
   LENGTH_TIER_CREDIT_WEIGHT,
 } from "@/lib/api/generations.api";
+import { PRODUCT_PATH } from "@/lib/product-path";
 import { GenerationDetail } from "@/components/generation-detail";
 
 const goals: { value: Goal; label: string }[] = [
@@ -102,7 +103,7 @@ export function BrandGeneration() {
       <div className="rounded-2xl border border-border/60 bg-background/70 p-8 text-center space-y-4 backdrop-blur">
         <p className="text-muted-foreground">
           Sign in to generate Social Posts, Reel Storyboards, and Teaser videos
-          from your Brand Kit and Products.
+          from your Brand and Products.
         </p>
         <Button onClick={() => router.push("/login")}>Sign in</Button>
       </div>
@@ -120,13 +121,13 @@ export function BrandGeneration() {
   if (brandKits.length === 0) {
     return (
       <div className="rounded-2xl border border-border/60 bg-background/70 p-8 text-center space-y-4 backdrop-blur">
-        <h2 className="text-xl font-semibold">Create a Brand Kit first</h2>
+        <h2 className="text-xl font-semibold">Create a Brand first</h2>
         <p className="text-muted-foreground">
           Generate needs your brand voice, colors, and tone before it can build
           a content bundle.
         </p>
         <Button asChild>
-          <Link href="/brand-kits">Go to Brand Kits</Link>
+          <Link href={PRODUCT_PATH.businessDna}>Go to Business DNA</Link>
         </Button>
       </div>
     );
@@ -137,10 +138,10 @@ export function BrandGeneration() {
       <div className="rounded-2xl border border-border/60 bg-background/70 p-8 text-center space-y-4 backdrop-blur">
         <h2 className="text-xl font-semibold">Add a Product</h2>
         <p className="text-muted-foreground">
-          Pick a Product and a Goal to generate your Teaser bundle.
+          Scrape or create a Product inline from Make a Post or Make a Video.
         </p>
         <Button asChild>
-          <Link href="/products">Go to Products</Link>
+          <Link href={PRODUCT_PATH.posts}>Make a Post</Link>
         </Button>
       </div>
     );
@@ -249,10 +250,10 @@ export function BrandGeneration() {
               name="brandKitId"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Brand Kit</FormLabel>
+                  <FormLabel>Brand</FormLabel>
                   <FormControl>
                     <select {...field} className={selectClassName}>
-                      <option value="">Select a Brand Kit</option>
+                      <option value="">Select a Brand</option>
                       {linkedKitIds.map((id) => {
                         const kit = brandKits.find((item) => item.id === id);
                         return (
