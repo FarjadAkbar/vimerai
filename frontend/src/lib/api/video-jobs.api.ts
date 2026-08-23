@@ -38,6 +38,12 @@ export interface VideoJobSnapshot {
   product: VideoJobProductSnapshot;
   format: VideoJobFormatSnapshot;
   reelPlatform: ReelPlatform;
+  viralRemix?: {
+    referenceVideoUrl: string;
+    productImageUrl: string | null;
+    personImageUrl: string | null;
+    instructions: string | null;
+  };
 }
 
 export interface VideoJob {
@@ -66,10 +72,14 @@ export interface VideoJobsListResponse {
 }
 
 export interface CreateVideoJobRequest {
-  brandId: string;
-  productId: string;
+  brandId?: string;
+  productId?: string;
   formatId: string;
-  reelPlatform: ReelPlatform;
+  reelPlatform?: ReelPlatform;
+  referenceVideoUrl?: string;
+  productImageUrl?: string;
+  personImageUrl?: string;
+  instructions?: string;
 }
 
 export const REEL_PLATFORM_OPTIONS: Array<{
@@ -99,6 +109,17 @@ export const videoJobsApi = {
   regenerate: async (id: string): Promise<VideoJobResponse> => {
     const response = await api.post<VideoJobResponse>(
       `/video-jobs/${id}/regenerate`,
+    );
+    return response.data;
+  },
+
+  uploadReferenceVideo: async (file: File): Promise<{ videoUrl: string }> => {
+    const formData = new FormData();
+    formData.append('file', file);
+    const response = await api.post<{ videoUrl: string }>(
+      '/video-jobs/reference-videos',
+      formData,
+      { headers: { 'Content-Type': 'multipart/form-data' } },
     );
     return response.data;
   },

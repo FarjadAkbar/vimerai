@@ -14,10 +14,11 @@ import { DatabaseModule } from '@/infrastructure/persistence/database.module';
 import { TypeOrmBrandKitRepository } from '@/infrastructure/persistence/typeorm/repositories/brand-kit.repository';
 import { TypeOrmProductRepository } from '@/infrastructure/persistence/typeorm/repositories/product.repository';
 import { TypeOrmVideoJobRepository } from '@/infrastructure/persistence/typeorm/repositories/video-job.repository';
+import { StorageModule } from '@/infrastructure/storage/storage.module';
 import { VideoGenerationModule } from '@/infrastructure/video-generation/video-generation.module';
 
 @Module({
-  imports: [DatabaseModule, SubscriptionModule, VideoGenerationModule],
+  imports: [DatabaseModule, StorageModule, SubscriptionModule, VideoGenerationModule],
   controllers: [VideoJobsController],
   providers: [
     CuratedFormatCatalog,

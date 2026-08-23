@@ -29,3 +29,9 @@ export const useRegenerateVideoJob = () => {
     },
   });
 };
+
+export const useUploadReferenceVideo = () => {
+  return useMutation({
+    mutationFn: (file: File) => videoJobsApi.uploadReferenceVideo(file),
+  });
+};

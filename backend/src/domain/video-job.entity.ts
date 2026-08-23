@@ -37,6 +37,12 @@ export interface VideoJobSnapshot {
   product: VideoJobProductSnapshot;
   format: VideoJobFormatSnapshot;
   reelPlatform: ReelPlatform;
+  viralRemix?: {
+    referenceVideoUrl: string;
+    productImageUrl: string | null;
+    personImageUrl: string | null;
+    instructions: string | null;
+  };
 }
 
 export class VideoJob {

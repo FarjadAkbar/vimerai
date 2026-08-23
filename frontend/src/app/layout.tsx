@@ -18,8 +18,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "VimeraAI - AI Video Generator",
-  description: "Create short videos in seconds. Transform your text prompts into short-form videos.",
+  title: "Vimerai — Create 100+ Viral Posts in 1 Minute",
+  description:
+    "Turn Brand Kit and Product context into feed-ready Instagram posts. Pick concepts, export, and post when you're ready.",
 };
 
 export default function RootLayout({
@@ -28,15 +29,15 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <QueryProvider>
           <ThemeProvider
             attribute="class"
-            defaultTheme="dark"
-            enableSystem
+            defaultTheme="light"
+            enableSystem={false}
             disableTransitionOnChange
           >
             <AppStateProvider>

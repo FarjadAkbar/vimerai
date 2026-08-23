@@ -29,9 +29,11 @@ export default function StudioLayout({
   }
 
   return (
-    <div className="studio-shell flex h-screen min-h-screen overflow-hidden bg-[var(--studio-canvas)] text-[var(--studio-ink)]">
+    <div className="studio-shell flex h-dvh bg-[var(--studio-canvas)] text-[var(--studio-ink)]">
       <StudioSidebar />
-      <main className="min-h-0 min-w-0 flex-1 overflow-auto p-6">{children}</main>
+      <main className="relative min-h-0 min-w-0 flex-1 overflow-y-auto p-6">
+        {children}
+      </main>
     </div>
   );
 }
