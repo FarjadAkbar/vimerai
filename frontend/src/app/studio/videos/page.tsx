@@ -49,7 +49,9 @@ export default function StudioVideosPage() {
   const productInputRef = useRef<HTMLInputElement>(null);
   const personInputRef = useRef<HTMLInputElement>(null);
 
-  const [formatId, setFormatId] = useState(VIRAL_REMIX_TEMPLATES[0].id);
+  const [formatId, setFormatId] = useState<string>(
+    VIRAL_REMIX_TEMPLATES[0].id,
+  );
   const [referenceVideoUrl, setReferenceVideoUrl] = useState<string | null>(
     null,
   );
