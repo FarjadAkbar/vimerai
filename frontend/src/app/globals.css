@@ -81,7 +81,22 @@
   0% {
     background-position: 0%;}
   100% {
-    background-position: 200%;}}}
+    background-position: 200%;}}
+  @keyframes carousel-scroll {
+    from {
+      transform: translateX(0);
+    }
+    to {
+      transform: translateX(-50%);
+    }
+  }
+}
+
+@layer utilities {
+  .animate-carousel-scroll {
+    animation: carousel-scroll 40s linear infinite;
+  }
+}
 
 :root {
   --radius: 0.625rem;

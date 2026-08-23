@@ -5,8 +5,11 @@
  */
 export const PRODUCT_PATH = {
   studio: "/studio",
+  blitz: "/studio/blitz",
   posts: "/studio/posts",
   videos: "/studio/videos",
+  images: "/studio/images",
+  influencers: "/studio/influencers",
   businessDna: "/studio/business-dna",
   /** @deprecated Demoted library — not primary nav (use Business DNA). */
   brands: "/studio/brands",

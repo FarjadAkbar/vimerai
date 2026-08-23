@@ -2,10 +2,15 @@ import type { VideoJob } from '@/domain/video-job.entity';
 import type { ReelPlatform } from '@/types/video-job/reel-platform';
 
 export interface CreateVideoJobInput {
-  brandId: string;
-  productId: string;
+  brandId?: string;
+  productId?: string;
   formatId: string;
-  reelPlatform: ReelPlatform;
+  reelPlatform?: ReelPlatform;
+  /** Viral Remix path */
+  referenceVideoUrl?: string;
+  productImageUrl?: string;
+  personImageUrl?: string;
+  instructions?: string;
 }
 
 export interface CreateVideoJobResult {

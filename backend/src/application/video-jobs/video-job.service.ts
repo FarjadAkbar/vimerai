@@ -8,6 +8,7 @@ import { v4 as uuidv4 } from 'uuid';
 import type { IBrandKitRepository } from '@/core/ports/brand-kit.repository';
 import type { IFormatCatalog } from '@/core/ports/format.catalog';
 import type { IProductRepository } from '@/core/ports/product.repository';
+import type { IStorageService } from '@/core/ports/storage.service';
 import type { ISubscriptionService } from '@/core/ports/subscription.service';
 import type {
   GenerateVideoResponse,
@@ -25,6 +26,7 @@ import {
   BRAND_KIT_REPOSITORY_TOKEN,
   FORMAT_CATALOG_TOKEN,
   PRODUCT_REPOSITORY_TOKEN,
+  STORAGE_SERVICE_TOKEN,
   SUBSCRIPTION_SERVICE_TOKEN,
   VIDEO_GENERATION_PROVIDER_TOKEN,
   VIDEO_JOB_REPOSITORY_TOKEN,
@@ -55,6 +57,8 @@ export class VideoJobService implements IVideoJobService {
     private readonly brandKitRepository: IBrandKitRepository,
     @Inject(PRODUCT_REPOSITORY_TOKEN)
     private readonly productRepository: IProductRepository,
+    @Inject(STORAGE_SERVICE_TOKEN)
+    private readonly storageService: IStorageService,
     @Inject(FORMAT_CATALOG_TOKEN)
     private readonly formatCatalog: IFormatCatalog,
     @Inject(VIDEO_GENERATION_PROVIDER_TOKEN)
@@ -67,9 +71,20 @@ export class VideoJobService implements IVideoJobService {
     userId: string,
     input: CreateVideoJobInput,
   ): Promise<CreateVideoJobResult> {
+    if (input.referenceVideoUrl) {
+      return this.createRemixVideoJob(userId, input);
+    }
+
+    if (!input.brandId || !input.productId) {
+      throw new BadRequestException(
+        'brandId and productId are required for standard Video Jobs',
+      );
+    }
+
     const brand = await this.requireOwnedBrand(userId, input.brandId);
     const product = await this.requireOwnedProduct(userId, input.productId);
     const format = this.requireVideoFormat(input.formatId);
+    const reelPlatform = input.reelPlatform ?? 'instagram_reels';
 
     if (product.imageUrls.length === 0) {
       throw new BadRequestException(
@@ -81,13 +96,89 @@ export class VideoJobService implements IVideoJobService {
       brand,
       product,
       format,
-      input.reelPlatform,
+      reelPlatform,
     );
     return this.runChargedVideoJob(userId, {
       brandId: brand.id,
       productId: product.id,
       formatId: format.id,
-      reelPlatform: input.reelPlatform,
+      reelPlatform,
+      snapshot,
+    });
+  }
+
+  async uploadReferenceVideo(
+    userId: string,
+    buffer: Buffer,
+    contentType: string,
+  ) {
+    const allowed = ['video/mp4', 'video/webm', 'video/quicktime'];
+    if (!allowed.includes(contentType)) {
+      throw new BadRequestException('Reference video must be MP4, WebM, or MOV');
+    }
+
+    const extension =
+      contentType === 'video/webm'
+        ? 'webm'
+        : contentType === 'video/quicktime'
+          ? 'mov'
+          : 'mp4';
+    const key = `video-jobs/${userId}/${uuidv4()}.${extension}`;
+    const videoUrl = await this.storageService.upload(key, buffer, contentType);
+    return { videoUrl };
+  }
+
+  private async createRemixVideoJob(
+    userId: string,
+    input: CreateVideoJobInput,
+  ): Promise<CreateVideoJobResult> {
+    const referenceVideoUrl = input.referenceVideoUrl?.trim();
+    if (!referenceVideoUrl) {
+      throw new BadRequestException('A reference video is required');
+    }
+
+    const productImageUrl = input.productImageUrl?.trim() || null;
+    const personImageUrl = input.personImageUrl?.trim() || null;
+    if (!productImageUrl && !personImageUrl) {
+      throw new BadRequestException(
+        'Upload at least one Product or Person image',
+      );
+    }
+
+    const brand = input.brandId
+      ? await this.requireOwnedBrand(userId, input.brandId)
+      : await this.requireDefaultBrand(userId);
+    const format = this.requireVideoFormat(input.formatId);
+    const reelPlatform = input.reelPlatform ?? 'instagram_reels';
+    const instructions = input.instructions?.trim() || null;
+
+    const imageUrls = [productImageUrl, personImageUrl].filter(
+      (url): url is string => Boolean(url),
+    );
+    const product = Product.create(
+      uuidv4(),
+      userId,
+      'Viral Remix',
+      instructions ?? 'Viral Remix assets',
+      imageUrls,
+      '',
+      [brand.id],
+      null,
+    );
+    await this.productRepository.create(product);
+
+    const snapshot = this.buildSnapshot(brand, product, format, reelPlatform, {
+      referenceVideoUrl,
+      productImageUrl,
+      personImageUrl,
+      instructions,
+    });
+
+    return this.runChargedVideoJob(userId, {
+      brandId: brand.id,
+      productId: product.id,
+      formatId: format.id,
+      reelPlatform,
       snapshot,
     });
   }
@@ -226,11 +317,23 @@ export class VideoJobService implements IVideoJobService {
     return job;
   }
 
+  private async requireDefaultBrand(userId: string): Promise<BrandKit> {
+    const kits = await this.brandKitRepository.findByUserId(userId);
+    const brand = kits[0];
+    if (!brand) {
+      throw new BadRequestException(
+        'Generate Business DNA first — a Brand is required for Viral Remix',
+      );
+    }
+    return brand;
+  }
+
   private buildSnapshot(
     brand: BrandKit,
     product: Product,
     format: Format,
     reelPlatform: ReelPlatform,
+    viralRemix?: VideoJobSnapshot['viralRemix'],
   ): VideoJobSnapshot {
     return {
       brand: {
@@ -259,6 +362,7 @@ export class VideoJobService implements IVideoJobService {
         promptStructure: format.promptStructure,
       },
       reelPlatform,
+      ...(viralRemix ? { viralRemix } : {}),
     };
   }
 
@@ -284,6 +388,7 @@ export class VideoJobService implements IVideoJobService {
         mode: GenerationMode.CINEMATIC,
         useImageConditioning: true,
         productAssetUrls: snapshot.product.imageUrls,
+        referenceVideoUrl: snapshot.viralRemix?.referenceVideoUrl,
         aspectRatio: '9:16',
         negativePrompt,
       }),
@@ -298,6 +403,7 @@ export class VideoJobService implements IVideoJobService {
         mode: GenerationMode.CINEMATIC,
         useImageConditioning: true,
         productAssetUrls: snapshot.product.imageUrls,
+        referenceVideoUrl: snapshot.viralRemix?.referenceVideoUrl,
         aspectRatio: '9:16',
         negativePrompt,
       }),
@@ -321,7 +427,7 @@ export class VideoJobService implements IVideoJobService {
     snapshot: VideoJobSnapshot,
     beat: 'hook' | 'payoff',
   ): string {
-    const { brand, product, format, reelPlatform } = snapshot;
+    const { brand, product, format, reelPlatform, viralRemix } = snapshot;
     const platformLabel = REEL_PLATFORM_LABELS[reelPlatform];
     const beatLine =
       beat === 'hook'
@@ -329,6 +435,15 @@ export class VideoJobService implements IVideoJobService {
         : 'Closing beat: Product payoff, brand mark, soft CTA energy.';
 
     return [
+      viralRemix
+        ? `Viral Remix: match the pacing, hook structure, and camera energy of this reference video: ${viralRemix.referenceVideoUrl}.`
+        : '',
+      viralRemix?.instructions
+        ? `Creator instructions: ${viralRemix.instructions}.`
+        : '',
+      viralRemix?.personImageUrl
+        ? `Include a person matching the reference person image when relevant.`
+        : '',
       `Brand: ${brand.name}. Tone: ${brand.tone}.`,
       `Primary color: ${brand.colors.primary}. Secondary color: ${brand.colors.secondary}.`,
       brand.audience ? `Audience: ${brand.audience}.` : '',

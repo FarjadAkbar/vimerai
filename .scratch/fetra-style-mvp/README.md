@@ -8,7 +8,7 @@ ADR: `docs/adr/0031-fetra-style-mvp-pivot.md`
 | # | Title | Blocked by | Status |
 |---|--------|------------|--------|
 | 01 | Thin Brand + manual Product (no Brand Kit gate) | — | ready-for-agent |
-| 02 | Product page scrape | 01 | ready-for-agent |
+| 02 | Product page scrape | 01 | done |
 | 03 | Make a Post Job (Formats + AI image + Export) | 01 | done |
 | 04 | Make a Video Job (Formats + platform + Export) | 01, 03 | done |
 | 05 | Primary app = Fetra create path (hide legacy Generation) | 03, 04 | done |

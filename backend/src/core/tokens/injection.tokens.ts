@@ -27,3 +27,5 @@ export const POST_JOB_REPOSITORY_TOKEN = 'IPostJobRepository';
 export const POST_JOB_SERVICE_TOKEN = 'IPostJobService';
 export const VIDEO_JOB_REPOSITORY_TOKEN = 'IVideoJobRepository';
 export const VIDEO_JOB_SERVICE_TOKEN = 'IVideoJobService';
+export const IMAGE_JOB_REPOSITORY_TOKEN = 'IImageJobRepository';
+export const IMAGE_JOB_SERVICE_TOKEN = 'IImageJobService';

@@ -135,9 +135,12 @@ describe('OpenAiBusinessDnaExtractor', () => {
     const result = await extractor.extract(scrape);
 
     expect(mockedAxios.post).toHaveBeenCalledTimes(1);
-    const [, body] = mockedAxios.post.mock.calls[0];
+    const [, body] = mockedAxios.post.mock.calls[0] as [
+      string,
+      { messages: Array<{ content: string }> },
+    ];
     expect(body.messages[0].content).toBe(BUSINESS_DNA_SYSTEM_PROMPT);
-    const userPayload = JSON.parse(body.messages[1].content as string) as {
+    const userPayload = JSON.parse(body.messages[1].content) as {
       schema: typeof BUSINESS_DNA_OUTPUT_SCHEMA;
       textContent: string;
     };

@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
@@ -13,18 +12,24 @@ import {
   FormControl,
   FormField,
   FormItem,
-  FormLabel,
   FormMessage,
 } from "@/components/ui/form";
 import { useSignup } from "@/lib/hooks/use-auth";
 import { useState } from "react";
 import { storage } from "@/lib/utils/storage";
+import { AuthShell } from "@/components/auth/auth-shell";
+import { Checkbox } from "@/components/ui/checkbox";
+
+const inputClassName =
+  "h-11 rounded-xl border-neutral-200 bg-neutral-50 focus-visible:ring-neutral-400";
+
 export default function SignupPage() {
-  const router = useRouter();
   const signup = useSignup();
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const [isConfirmPasswordVisible, setIsConfirmPasswordVisible] =
     useState(false);
+  const [acceptTerms, setAcceptTerms] = useState(true);
+  const [marketingEmails, setMarketingEmails] = useState(true);
 
   const form = useForm<SignupInput>({
     resolver: zodResolver(signupSchema),
@@ -34,8 +39,15 @@ export default function SignupPage() {
       confirmPassword: "",
     },
   });
-  // Auto save to login page
+
   const onSubmit = async (data: SignupInput) => {
+    if (!acceptTerms) {
+      form.setError("root", {
+        message: "Please accept the Terms of Service and Privacy Policy.",
+      });
+      return;
+    }
+
     signup.mutate(data, {
       onSuccess: () => {
         storage.setRememberedEmail(data.email);
@@ -45,13 +57,10 @@ export default function SignupPage() {
           response?: { data?: { message?: string }; status?: number };
         };
         const message =
-        errorResponse?.response?.data?.message ||
-        "Signup failed. Please try again.";
-        
+          errorResponse?.response?.data?.message ||
+          "Signup failed. Please try again.";
         const status = errorResponse?.response?.status;
-        
-        console.log('Signup error:', data);
-        // Check if it's a conflict (user already exists)
+
         if (
           status === 409 ||
           message.toLowerCase().includes("already exists") ||
@@ -70,162 +79,170 @@ export default function SignupPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 py-12">
-      <div className="w-full max-w-md">
-        <div className="text-center mb-8">
-          <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight text-foreground">
-            Create your account
-          </h1>
-          <p className="text-muted-foreground text-sm mt-2">Sign up with your email to get started</p>
-        </div>
-
-        <div className="relative rounded-2xl border border-border/80 bg-card/80 dark:bg-card/60 backdrop-blur-xl p-6 sm:p-8 shadow-xl shadow-black/5 dark:shadow-black/20 ring-1 ring-white/5 dark:ring-white/5">
-          <div className="absolute inset-x-0 top-0 h-px rounded-t-2xl bg-gradient-to-r from-transparent via-primary/50 to-transparent" />
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            {form.formState.errors.root && (
-              <div className="p-4 text-sm bg-destructive/10 border border-destructive/20 rounded-lg space-y-3">
-                <div className="flex items-start gap-2">
-                  <AlertCircle className="h-4 w-4 mt-0.5 text-destructive flex-shrink-0" />
-                  <div className="flex-1">
-                    <p className="text-destructive font-medium">
-                      {form.formState.errors.root.message}
-                    </p>
-                    {form.formState.errors.root.type === "conflict" && (
-                      <div className="mt-3 space-y-2">
-                        <div className="flex flex-col sm:flex-row gap-2">
-                          <Link href="/login" className="block">
-                            <Button
-                              type="button"
-                              variant="outline"
-                              size="sm"
-                              className="w-full sm:w-auto"
-                            >
-                              Sign In Instead
-                            </Button>
-                          </Link>
-                          <Link href="/password-reset" className="block">
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="sm"
-                              className="w-full sm:w-auto"
-                            >
-                              Forgot Password?
-                            </Button>
-                          </Link>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
+    <AuthShell>
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          {form.formState.errors.root && (
+            <div className="p-3 text-sm bg-red-50 border border-red-100 rounded-xl space-y-2">
+              <div className="flex items-start gap-2 text-red-600">
+                <AlertCircle className="h-4 w-4 mt-0.5 shrink-0" />
+                <p>{form.formState.errors.root.message}</p>
               </div>
-            )}
+              {form.formState.errors.root.type === "conflict" && (
+                <div className="flex flex-wrap gap-2 pl-6">
+                  <Link href="/login">
+                    <Button type="button" variant="outline" size="sm">
+                      Sign in instead
+                    </Button>
+                  </Link>
+                  <Link href="/password-reset">
+                    <Button type="button" variant="ghost" size="sm">
+                      Forgot password?
+                    </Button>
+                  </Link>
+                </div>
+              )}
+            </div>
+          )}
 
-            <FormField
-              control={form.control}
-              name="email"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Email</FormLabel>
-                  <FormControl>
+          <FormField
+            control={form.control}
+            name="email"
+            render={({ field }) => (
+              <FormItem>
+                <FormControl>
+                  <Input
+                    type="email"
+                    placeholder="Email address"
+                    className={inputClassName}
+                    {...field}
+                    disabled={signup.isPending}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="password"
+            render={({ field }) => (
+              <FormItem>
+                <FormControl>
+                  <div className="relative">
                     <Input
-                      type="email"
-                      placeholder="you@example.com"
+                      type={isPasswordVisible ? "text" : "password"}
+                      placeholder="Password"
+                      className={`${inputClassName} pr-10`}
                       {...field}
                       disabled={signup.isPending}
                     />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+                    <button
+                      type="button"
+                      onClick={() => setIsPasswordVisible(!isPasswordVisible)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-700"
+                      aria-label={
+                        isPasswordVisible ? "Hide password" : "Show password"
+                      }
+                    >
+                      {isPasswordVisible ? (
+                        <Eye size={18} />
+                      ) : (
+                        <EyeOff size={18} />
+                      )}
+                    </button>
+                  </div>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
-            <FormField
-              control={form.control}
-              name="password"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Password</FormLabel>
-                  <FormControl>
-                    <div className="relative">
-                      <Input
-                        type={isPasswordVisible ? "text" : "password"}
-                        placeholder="••••••••"
-                        {...field}
-                        disabled={signup.isPending}
-                        className="pr-10"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setIsPasswordVisible(!isPasswordVisible)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                        aria-label={isPasswordVisible ? "Hide password" : "Show password"}
-                      >
-                        {isPasswordVisible ? <Eye size={18} /> : <EyeOff size={18} />}
-                      </button>
-                    </div>
-                  </FormControl>
-                  <FormMessage />
-                  <p className="text-xs text-muted-foreground">
-                    Must be at least 8 characters with uppercase, lowercase, and
-                    number
-                  </p>
-                </FormItem>
-              )}
-            />
+          <FormField
+            control={form.control}
+            name="confirmPassword"
+            render={({ field }) => (
+              <FormItem>
+                <FormControl>
+                  <div className="relative">
+                    <Input
+                      type={isConfirmPasswordVisible ? "text" : "password"}
+                      placeholder="Confirm password"
+                      className={`${inputClassName} pr-10`}
+                      {...field}
+                      disabled={signup.isPending}
+                    />
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setIsConfirmPasswordVisible(!isConfirmPasswordVisible)
+                      }
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-700"
+                      aria-label={
+                        isConfirmPasswordVisible
+                          ? "Hide password"
+                          : "Show password"
+                      }
+                    >
+                      {isConfirmPasswordVisible ? (
+                        <Eye size={18} />
+                      ) : (
+                        <EyeOff size={18} />
+                      )}
+                    </button>
+                  </div>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
-            <FormField
-              control={form.control}
-              name="confirmPassword"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Confirm Password</FormLabel>
-                  <FormControl>
-                    <div className="relative">
-                      <Input
-                        type={isConfirmPasswordVisible ? "text" : "password"}
-                        placeholder="••••••••"
-                        {...field}
-                        disabled={signup.isPending}
-                        className="pr-10"
-                      />
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setIsConfirmPasswordVisible(!isConfirmPasswordVisible)
-                        }
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                        aria-label={isConfirmPasswordVisible ? "Hide password" : "Show password"}
-                      >
-                        {isConfirmPasswordVisible ? <Eye size={18} /> : <EyeOff size={18} />}
-                      </button>
-                    </div>
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+          <div className="space-y-3 pt-1">
+            <label className="flex items-start gap-2.5 cursor-pointer">
+              <Checkbox
+                checked={acceptTerms}
+                onCheckedChange={(v) => setAcceptTerms(v === true)}
+                disabled={signup.isPending}
+                className="mt-0.5"
+              />
+              <span className="text-xs text-neutral-600 leading-relaxed">
+                By clicking Continue, you agree to our Terms of Service and
+                Privacy Policy.
+              </span>
+            </label>
+            <label className="flex items-start gap-2.5 cursor-pointer">
+              <Checkbox
+                checked={marketingEmails}
+                onCheckedChange={(v) => setMarketingEmails(v === true)}
+                disabled={signup.isPending}
+                className="mt-0.5"
+              />
+              <span className="text-xs text-neutral-600 leading-relaxed">
+                Keep me updated with tips and messages by email.
+              </span>
+            </label>
+          </div>
 
-            <Button
-              type="submit"
-              className="w-full bg-primary hover:bg-primary/90 text-primary-foreground font-medium"
-              disabled={signup.isPending}
-            >
-              {signup.isPending ? "Creating account..." : "Sign up"}
-              
-            </Button>
-          </form>
-        </Form>
-        </div>
+          <Button
+            type="submit"
+            className="w-full h-11 rounded-full bg-neutral-900 hover:bg-neutral-800 text-white font-medium"
+            disabled={signup.isPending}
+          >
+            {signup.isPending ? "Creating account…" : "Continue"}
+          </Button>
+        </form>
+      </Form>
 
-        <p className="text-center text-sm text-muted-foreground mt-6">
-          Already have an account?{" "}
-          <Link href="/login" className="text-primary hover:underline">
-            Sign in
-          </Link>
-        </p>
-      </div>
-    </div>
+      <p className="text-center text-sm text-neutral-500 mt-6">
+        Already have an account?{" "}
+        <Link
+          href="/login"
+          className="text-neutral-900 font-medium hover:underline"
+        >
+          Log in
+        </Link>
+      </p>
+    </AuthShell>
   );
 }

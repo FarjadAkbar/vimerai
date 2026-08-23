@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Get,
@@ -7,9 +8,13 @@ import {
   Param,
   ParseUUIDPipe,
   Post,
+  UploadedFile,
   UseGuards,
+  UseInterceptors,
   ValidationPipe,
 } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { memoryStorage } from 'multer';
 import { CreateVideoJobDto } from '@/application/video-jobs/dto/create-video-job.dto';
 import { VideoJobService } from '@/application/video-jobs/video-job.service';
 import { CurrentUser } from '@/infrastructure/auth/current-user.decorator';
@@ -19,6 +24,28 @@ import { JwtAuthGuard } from '@/infrastructure/auth/jwt-auth.guard';
 @UseGuards(JwtAuthGuard)
 export class VideoJobsController {
   constructor(private readonly videoJobService: VideoJobService) {}
+
+  @Post('reference-videos')
+  @HttpCode(HttpStatus.CREATED)
+  @UseInterceptors(
+    FileInterceptor('file', {
+      storage: memoryStorage(),
+      limits: { fileSize: 50 * 1024 * 1024 },
+    }),
+  )
+  async uploadReferenceVideo(
+    @CurrentUser() user: { userId: string },
+    @UploadedFile() file: Express.Multer.File | undefined,
+  ) {
+    if (!file) {
+      throw new BadRequestException('Reference video file is required');
+    }
+    return this.videoJobService.uploadReferenceVideo(
+      user.userId,
+      file.buffer,
+      file.mimetype,
+    );
+  }
 
   @Post()
   @HttpCode(HttpStatus.CREATED)
@@ -32,6 +59,10 @@ export class VideoJobsController {
       productId: dto.productId,
       formatId: dto.formatId,
       reelPlatform: dto.reelPlatform,
+      referenceVideoUrl: dto.referenceVideoUrl,
+      productImageUrl: dto.productImageUrl,
+      personImageUrl: dto.personImageUrl,
+      instructions: dto.instructions,
     });
   }
 

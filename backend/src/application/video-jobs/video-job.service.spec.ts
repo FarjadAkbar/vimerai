@@ -68,10 +68,15 @@ describe('VideoJobService', () => {
       },
     } as unknown as ISubscriptionService;
 
+    const storage = {
+      upload: async (key: string) => `https://cdn.example.com/${key}`,
+    };
+
     const service = new VideoJobService(
       jobs,
       brands,
       products,
+      storage,
       formats,
       videos,
       subscription,

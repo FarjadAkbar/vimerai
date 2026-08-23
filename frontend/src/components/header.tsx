@@ -1,20 +1,46 @@
 "use client";
-import { useLogout } from "@/lib/hooks/use-auth";
-import { Progress } from "@/components/ui/progress";
-import { useUser } from "@/lib/hooks/use-user";
-import { LogOut, Mail, LayoutGrid, Menu, X } from "lucide-react";
+
 import Link from "next/link";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { usePathname, useRouter } from "next/navigation";
+import { LayoutGrid, LogOut, Mail, Menu, X } from "lucide-react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Progress } from "@/components/ui/progress";
+import { useLogout } from "@/lib/hooks/use-auth";
+import { useUser } from "@/lib/hooks/use-user";
 import { useCurrentSubscription } from "@/lib/hooks/use-subscription";
-import { usePathname, useRouter } from "next/navigation";
-import { useState } from "react";
 import { PRODUCT_PATH } from "@/lib/product-path";
+
+const MARKETING_PATHS = ["/", "/login", "/signup", "/password-reset"];
+
+function BrandLogo({ dark = false }: { dark?: boolean }) {
+  return (
+    <div className="flex items-center gap-2">
+      <div
+        className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-bold ${
+          dark
+            ? "bg-neutral-900 text-white"
+            : "bg-white text-neutral-900 ring-1 ring-neutral-200"
+        }`}
+      >
+        V
+      </div>
+      <span
+        className={`text-lg font-bold tracking-tight ${
+          dark ? "text-neutral-900" : "text-white"
+        }`}
+      >
+        Vimerai
+      </span>
+    </div>
+  );
+}
 
 const Header = () => {
   const logout = useLogout();
@@ -24,34 +50,141 @@ const Header = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const isLoggedIn = !!userData?.user;
-  const { data: subscription, isLoading: subscriptionLoading } =
-    useCurrentSubscription(isLoggedIn);
+  const isMarketing = MARKETING_PATHS.includes(pathname);
+  const inStudio = pathname.startsWith("/studio");
+
+  const { data: subscription } = useCurrentSubscription(isLoggedIn);
   const usedVideos = subscription
     ? subscription.limit - subscription.videosRemaining
     : 0;
-
   const progressValue = subscription
     ? (usedVideos / subscription.limit) * 100
     : 0;
 
-  const homeHref = isLoggedIn ? PRODUCT_PATH.studio : "/";
-  const inStudio = pathname.startsWith("/studio");
+  const homeHref = "/";
 
-  const handleNavigation = (href: string, e: React.MouseEvent) => {
-    e.preventDefault();
+  const navigate = (href: string) => {
     setMobileMenuOpen(false);
-
-    if (pathname === href) {
-      window.location.href = href;
-      return;
-    }
-
     router.push(href);
   };
 
-  // Brand Studio owns its own full-height rail (logo + nav + account).
   if (inStudio) {
     return null;
+  }
+
+  if (isMarketing) {
+    return (
+      <>
+        <nav className="sticky top-0 z-50 border-b border-neutral-200/80 bg-white/90 backdrop-blur-md">
+          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 h-14 sm:h-16 flex items-center justify-between gap-4">
+            <Link href={homeHref}>
+              <BrandLogo dark />
+            </Link>
+
+            <div className="flex items-center gap-2 ml-auto">
+              {isLoggedIn ? (
+                <>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="rounded-full w-8 h-8"
+                      >
+                        <Avatar className="w-7 h-7">
+                          <AvatarImage alt="" />
+                          <AvatarFallback className="bg-neutral-200 text-neutral-700 text-xs">
+                            {userData.user.email.charAt(0).toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent className="w-72 p-0 mr-4 rounded-2xl">
+                      <div className="p-4 border-b">
+                        <p className="text-sm font-medium truncate">
+                          {userData.user.email}
+                        </p>
+                      </div>
+                      {subscription?.plan !== "free" && (
+                        <div className="p-4 border-b space-y-2">
+                          <p className="text-sm">
+                            {subscription?.videosRemaining}/{subscription?.limit}{" "}
+                            credits
+                          </p>
+                          <Progress value={progressValue} className="h-1.5" />
+                        </div>
+                      )}
+                      <div className="p-2">
+                        <button
+                          className="w-full flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-neutral-100 text-sm"
+                          onClick={logout}
+                        >
+                          <LogOut className="h-4 w-4" />
+                          Log out
+                        </button>
+                      </div>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </>
+              ) : (
+                <>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="hidden sm:inline-flex text-neutral-700"
+                    onClick={() => navigate("/login")}
+                  >
+                    Log In
+                  </Button>
+                  <Button
+                    size="sm"
+                    className="rounded-full bg-neutral-900 hover:bg-neutral-800 text-white px-4"
+                    onClick={() => navigate("/signup")}
+                  >
+                    Start Free Trial
+                  </Button>
+                </>
+              )}
+              {!isLoggedIn && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="md:hidden"
+                  onClick={() => setMobileMenuOpen((v) => !v)}
+                  aria-label="Toggle menu"
+                >
+                  {mobileMenuOpen ? (
+                    <X className="h-5 w-5" />
+                  ) : (
+                    <Menu className="h-5 w-5" />
+                  )}
+                </Button>
+              )}
+            </div>
+          </div>
+        </nav>
+
+        {mobileMenuOpen && !isLoggedIn && (
+          <div className="md:hidden fixed top-14 left-0 right-0 z-40 border-b border-neutral-200 bg-white shadow-lg">
+            <div className="flex flex-col p-4 gap-2">
+              <Button
+                variant="outline"
+                className="w-full"
+                onClick={() => navigate("/login")}
+              >
+                Log In
+              </Button>
+              <Button
+                className="w-full rounded-full bg-neutral-900"
+                onClick={() => navigate("/signup")}
+              >
+                Start Free Trial
+              </Button>
+            </div>
+          </div>
+        )}
+      </>
+    );
   }
 
   return (
@@ -62,78 +195,42 @@ const Header = () => {
             <div className="logo-fallback hidden w-8 h-8 flex items-center justify-center rounded-lg bg-primary">
               <LayoutGrid className="w-5 h-5 text-primary-foreground" />
             </div>
-            <div className="flex items-center gap-6">
-              <img
-                src="/platform/logo-vimera.png"
-                alt="Vimera"
-                className="h-6 sm:h-9 md:h-9 w-auto object-contain"
-              />
-            </div>
+            <BrandLogo dark />
           </Link>
 
           <div className="flex items-center gap-3">
-            {userData?.user ? (
+            {isLoggedIn ? (
               <>
                 <div className="hidden md:flex items-center gap-2">
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={(e) =>
-                      handleNavigation(PRODUCT_PATH.studio, e)
-                    }
+                    onClick={() => navigate(PRODUCT_PATH.studio)}
                   >
                     Brand Studio
                   </Button>
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={(e) =>
-                      handleNavigation(PRODUCT_PATH.posts, e)
-                    }
+                    onClick={() => navigate(PRODUCT_PATH.posts)}
                   >
                     Make a Post
                   </Button>
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={(e) =>
-                      handleNavigation(PRODUCT_PATH.videos, e)
-                    }
+                    onClick={() => navigate(PRODUCT_PATH.videos)}
                   >
                     Make a Video
                   </Button>
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={(e) =>
-                      handleNavigation(PRODUCT_PATH.businessDna, e)
-                    }
+                    onClick={() => navigate(PRODUCT_PATH.businessDna)}
                   >
                     Business DNA
                   </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="text-white"
-                    onClick={(e) => handleNavigation("/pricing", e)}
-                  >
-                    Pricing
-                  </Button>
                 </div>
-
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="md:hidden"
-                  onClick={() => setMobileMenuOpen((prev) => !prev)}
-                  aria-label="Toggle menu"
-                >
-                  {mobileMenuOpen ? (
-                    <X className="w-5 h-5" />
-                  ) : (
-                    <Menu className="w-5 h-5" />
-                  )}
-                </Button>
 
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
@@ -143,82 +240,39 @@ const Header = () => {
                       className="rounded-full bg-gray-600 w-7 h-7"
                     >
                       <Avatar className="w-6 h-6">
-                        <AvatarImage alt="shadcn" />
+                        <AvatarImage alt="" />
                         <AvatarFallback>
                           {userData.user.email.charAt(0).toUpperCase()}
                         </AvatarFallback>
                       </Avatar>
                     </Button>
                   </DropdownMenuTrigger>
-
                   <DropdownMenuContent className="w-80 p-0 mr-4 md:mr-20 my-3 rounded-2xl border border-border overflow-hidden">
                     <div className="p-4 border-b border-border">
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-full bg-secondary flex items-center justify-center">
                           <Mail className="w-5 h-5 text-muted-foreground" />
                         </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-foreground truncate">
-                            {userData.user.email}
-                          </p>
-                          {subscription?.plan !== "free" && (
-                            <span className="text-sm font-semibold text-yellow-600">
-                              {subscription?.plan &&
-                                subscription.plan.charAt(0).toUpperCase() +
-                                  subscription.plan.slice(1)}
-                            </span>
-                          )}
-                        </div>
+                        <p className="text-sm font-medium truncate">
+                          {userData.user.email}
+                        </p>
                       </div>
                     </div>
-
-                    {(subscription?.plan !== "free" ||
-                      (subscription?.singleShotCredits ?? 0) > 0) && (
+                    {subscription?.plan !== "free" && (
                       <div className="p-4 space-y-2 border-b border-border">
-                        <div className="flex items-center gap-4">
-                          {subscription?.plan !== "free" && (
-                            <div className="flex items-center">
-                              <p className="text-lg font-semibold">
-                                {subscription?.videosRemaining}/
-                                {subscription?.limit}
-                              </p>
-                              <span className="text-sm text-muted-foreground ml-2">
-                                Videos
-                              </span>
-                            </div>
-                          )}
-                          {(subscription?.singleShotCredits ?? 0) > 0 && (
-                            <div className="flex items-center">
-                              <p className="text-lg font-semibold">
-                                {subscription?.singleShotCredits}
-                              </p>
-                              <span className="text-sm text-muted-foreground ml-2">
-                                Single Shot
-                                {(subscription?.singleShotCredits ?? 0) !== 1
-                                  ? "s"
-                                  : ""}
-                              </span>
-                            </div>
-                          )}
-                        </div>
-                        {subscription?.plan !== "free" && (
-                          <Progress
-                            className="bg-gray-400 [&>div]:bg-green-600"
-                            value={progressValue}
-                          />
-                        )}
+                        <p className="text-lg font-semibold">
+                          {subscription?.videosRemaining}/{subscription?.limit}
+                        </p>
+                        <Progress value={progressValue} />
                       </div>
                     )}
-
                     <div className="p-2">
                       <button
-                        className="w-full flex items-center gap-3 justify-center px-3 py-2.5 rounded-xl hover:bg-red-800 transition-colors text-left cursor-pointer"
+                        className="w-full flex items-center gap-3 justify-center px-3 py-2.5 rounded-xl hover:bg-red-800 transition-colors"
                         onClick={logout}
                       >
-                        <LogOut className="w-5 h-5 text-muted-foreground" />
-                        <span className="text-sm font-medium text-foreground">
-                          Log Out
-                        </span>
+                        <LogOut className="w-5 h-5" />
+                        Log Out
                       </button>
                     </div>
                   </DropdownMenuContent>
@@ -226,133 +280,17 @@ const Header = () => {
               </>
             ) : (
               <>
-                <div className="hidden md:flex items-center gap-2">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={(e) => handleNavigation("/login", e)}
-                  >
-                    Brand Studio
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={(e) => handleNavigation("/pricing", e)}
-                  >
-                    Pricing
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={(e) => handleNavigation("/login", e)}
-                  >
-                    Sign In
-                  </Button>
-                  <Button
-                    size="sm"
-                    onClick={(e) => handleNavigation("/signup", e)}
-                    className="bg-primary hover:bg-primary/90"
-                  >
-                    Sign up
-                  </Button>
-                </div>
-
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="md:hidden"
-                  onClick={() => setMobileMenuOpen((prev) => !prev)}
-                  aria-label="Toggle menu"
-                >
-                  {mobileMenuOpen ? (
-                    <X className="w-5 h-5" />
-                  ) : (
-                    <Menu className="w-5 h-5" />
-                  )}
-                </Button>
-              </>
-            )}
-          </div>
-        </div>
-      </nav>
-
-      {mobileMenuOpen && (
-        <div className="md:hidden fixed top-[57px] left-0 right-0 z-40 border-b border-border backdrop-blur-md bg-background/95 shadow-lg">
-          <div className="flex flex-col px-4 py-3 gap-1">
-            {userData?.user ? (
-              <>
-                <button
-                  className="text-left px-3 py-2.5 rounded-xl hover:bg-secondary transition-colors text-sm font-medium"
-                  onClick={(e) =>
-                    handleNavigation(PRODUCT_PATH.studio, e)
-                  }
-                >
-                  Brand Studio
-                </button>
-                <button
-                  className="text-left px-3 py-2.5 rounded-xl hover:bg-secondary transition-colors text-sm font-medium"
-                  onClick={(e) => handleNavigation(PRODUCT_PATH.posts, e)}
-                >
-                  Make a Post
-                </button>
-                <button
-                  className="text-left px-3 py-2.5 rounded-xl hover:bg-secondary transition-colors text-sm font-medium"
-                  onClick={(e) =>
-                    handleNavigation(PRODUCT_PATH.videos, e)
-                  }
-                >
-                  Make a Video
-                </button>
-                <button
-                  className="text-left px-3 py-2.5 rounded-xl hover:bg-secondary transition-colors text-sm font-medium"
-                  onClick={(e) =>
-                    handleNavigation(PRODUCT_PATH.businessDna, e)
-                  }
-                >
-                  Business DNA
-                </button>
-                <button
-                  className="text-left px-3 py-2.5 rounded-xl hover:bg-secondary transition-colors text-sm font-medium"
-                  onClick={(e) => handleNavigation("/pricing", e)}
-                >
-                  Pricing
-                </button>
-              </>
-            ) : (
-              <>
-                <button
-                  className="text-left px-3 py-2.5 rounded-xl hover:bg-secondary transition-colors text-sm font-medium"
-                  onClick={(e) => handleNavigation("/login", e)}
-                >
-                  Brand Studio
-                </button>
-                <button
-                  className="text-left px-3 py-2.5 rounded-xl hover:bg-secondary transition-colors text-sm font-medium"
-                  onClick={(e) => handleNavigation("/pricing", e)}
-                >
-                  Pricing
-                </button>
-                <div className="border-t border-border my-1" />
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="w-full justify-center"
-                  onClick={(e) => handleNavigation("/login", e)}
-                >
+                <Button variant="outline" size="sm" onClick={() => navigate("/login")}>
                   Sign In
                 </Button>
-                <Button
-                  size="sm"
-                  className="w-full justify-center mt-2 bg-primary hover:bg-primary/90"
-                  onClick={(e) => handleNavigation("/signup", e)}
-                >
+                <Button size="sm" onClick={() => navigate("/signup")}>
                   Sign up
                 </Button>
               </>
             )}
           </div>
         </div>
-      )}
+      </nav>
     </>
   );
 };
