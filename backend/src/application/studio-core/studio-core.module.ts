@@ -11,6 +11,8 @@ import { ContentLibraryService } from '@/application/studio-core/content-library
 import { ContentLibraryController } from '@/application/studio-core/content-library.controller';
 import { ViralRemixService } from '@/application/studio-core/viral-remix.service';
 import { ViralRemixController } from '@/application/studio-core/viral-remix.controller';
+import { BlitzComposeService } from '@/application/studio-core/blitz-compose.service';
+import { BlitzComposeController } from '@/application/studio-core/blitz-compose.controller';
 import {
   BLITZ_CONFIGURATION_REPOSITORY_TOKEN,
   BLITZ_CONFIGURATION_SERVICE_TOKEN,
@@ -47,6 +49,7 @@ import { TypeOrmAiInfluencerRepository } from '@/infrastructure/persistence/type
     AiInfluencersController,
     ViralRemixController,
     ContentLibraryController,
+    BlitzComposeController,
   ],
   providers: [
     TemplateCatalogService,
@@ -57,6 +60,7 @@ import { TypeOrmAiInfluencerRepository } from '@/infrastructure/persistence/type
     BlitzConfigurationService,
     AiInfluencerService,
     ViralRemixService,
+    BlitzComposeService,
     CuratedFormatCatalog,
     {
       provide: TEMPLATE_REPOSITORY_TOKEN,

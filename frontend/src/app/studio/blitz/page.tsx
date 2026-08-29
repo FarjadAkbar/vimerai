@@ -36,12 +36,13 @@ import {
   useBlitzConfig,
   useBlitzMaterials,
 } from "@/lib/hooks/use-blitz";
+import { useComposeBlitzEdit } from "@/lib/hooks/use-blitz-compose";
+import { composeBlitzEditFile } from "@/lib/blitz/compose-blitz-edit";
 import { useBrandKits } from "@/lib/hooks/use-brand-kits";
 import { useCreateImageJob } from "@/lib/hooks/use-image-jobs";
 import { useProducts } from "@/lib/hooks/use-products";
 import {
   mapTemplateToBlitzTemplate,
-  useSaveBlitzEdit,
   useVideoTemplates,
 } from "@/lib/hooks/use-videos";
 import { PRODUCT_PATH } from "@/lib/product-path";
@@ -64,7 +65,7 @@ export default function StudioBlitzPage() {
     useVideoTemplates();
   const { accept } = useBlitzAccepted();
   const createImageJob = useCreateImageJob();
-  const saveBlitzEdit = useSaveBlitzEdit();
+  const composeBlitzEdit = useComposeBlitzEdit();
 
   const templates = useMemo(() => {
     const mapped = (templatesData?.templates ?? [])
@@ -227,20 +228,23 @@ export default function StudioBlitzPage() {
   };
 
   const onDoneEditing = async (result: BlitzEditResult) => {
-    if (!card) return;
+    if (!card || !brand) return;
     setEditSaveError(null);
     try {
-      await saveBlitzEdit.mutateAsync({
+      const file = await composeBlitzEditFile({
         videoUrl: result.videoUrl,
-        hook: result.hook,
-        formatId: result.formatId,
-        audioUrl: result.audioUrl,
         overlayUrl: result.overlayUrl,
-        volume: result.volume,
+        hook: result.hook,
         textStyle: result.textStyle,
-        mentionBusiness: result.mentionBusiness,
-        sourceTemplateId: result.sourceTemplateId,
       });
+      const saved = await composeBlitzEdit.mutateAsync({
+        brandId: brand.id,
+        formatId: result.formatId,
+        hook: result.hook,
+        sourceTemplateId: result.sourceTemplateId,
+        file,
+      });
+      const composedUrl = saved.compose.mediaUrl ?? result.videoUrl;
       const updated = (liveCards ?? baseQueue).map((entry) =>
         entry.id === card.id
           ? {
@@ -249,8 +253,8 @@ export default function StudioBlitzPage() {
               remix: {
                 ...entry.remix,
                 hook: result.hook,
-                videoUrl: result.videoUrl,
-                imageUrl: result.videoUrl,
+                videoUrl: composedUrl,
+                imageUrl: composedUrl,
               },
             }
           : entry,
@@ -536,7 +540,7 @@ export default function StudioBlitzPage() {
             setEditSaveError(null);
             setEditing(false);
           }}
-          saving={saveBlitzEdit.isPending}
+          saving={composeBlitzEdit.isPending}
           saveError={editSaveError}
         />
       ) : null}
