@@ -3,12 +3,16 @@ import { TemplateCatalogService } from '@/application/studio-core/template-catal
 import { TemplateGenerationService } from '@/application/studio-core/template-generation.service';
 import { MediaAssetService } from '@/application/studio-core/media-asset.service';
 import { MediaAssetsController } from '@/application/studio-core/media-assets.controller';
+import { AiInfluencersController } from '@/application/studio-core/ai-influencers.controller';
+import { AiInfluencerService } from '@/application/studio-core/ai-influencer.service';
 import { BlitzConfigurationService } from '@/application/studio-core/blitz-configuration.service';
 import { JobService } from '@/application/studio-core/job.service';
 import { ContentLibraryService } from '@/application/studio-core/content-library.service';
 import {
   BLITZ_CONFIGURATION_REPOSITORY_TOKEN,
   BLITZ_CONFIGURATION_SERVICE_TOKEN,
+  AI_INFLUENCER_REPOSITORY_TOKEN,
+  AI_INFLUENCER_SERVICE_TOKEN,
   BRAND_KIT_REPOSITORY_TOKEN,
   CONTENT_ITEM_REPOSITORY_TOKEN,
   CONTENT_LIBRARY_TOKEN,
@@ -28,10 +32,11 @@ import { TypeOrmMediaAssetRepository } from '@/infrastructure/persistence/typeor
 import { TypeOrmTemplateRepository } from '@/infrastructure/persistence/typeorm/repositories/template.repository';
 import { TypeOrmBlitzConfigurationRepository } from '@/infrastructure/persistence/typeorm/repositories/blitz-configuration.repository';
 import { TypeOrmBrandKitRepository } from '@/infrastructure/persistence/typeorm/repositories/brand-kit.repository';
+import { TypeOrmAiInfluencerRepository } from '@/infrastructure/persistence/typeorm/repositories/ai-influencer.repository';
 
 @Module({
   imports: [DatabaseModule, StorageModule, VideoGenerationModule],
-  controllers: [MediaAssetsController],
+  controllers: [MediaAssetsController, AiInfluencersController],
   providers: [
     TemplateCatalogService,
     TemplateGenerationService,
@@ -39,6 +44,7 @@ import { TypeOrmBrandKitRepository } from '@/infrastructure/persistence/typeorm/
     JobService,
     ContentLibraryService,
     BlitzConfigurationService,
+    AiInfluencerService,
     {
       provide: TEMPLATE_REPOSITORY_TOKEN,
       useClass: TypeOrmTemplateRepository,
@@ -58,6 +64,10 @@ import { TypeOrmBrandKitRepository } from '@/infrastructure/persistence/typeorm/
     {
       provide: BLITZ_CONFIGURATION_REPOSITORY_TOKEN,
       useClass: TypeOrmBlitzConfigurationRepository,
+    },
+    {
+      provide: AI_INFLUENCER_REPOSITORY_TOKEN,
+      useClass: TypeOrmAiInfluencerRepository,
     },
     {
       provide: BRAND_KIT_REPOSITORY_TOKEN,
@@ -83,6 +93,10 @@ import { TypeOrmBrandKitRepository } from '@/infrastructure/persistence/typeorm/
       provide: BLITZ_CONFIGURATION_SERVICE_TOKEN,
       useExisting: BlitzConfigurationService,
     },
+    {
+      provide: AI_INFLUENCER_SERVICE_TOKEN,
+      useExisting: AiInfluencerService,
+    },
   ],
   exports: [
     TEMPLATE_CATALOG_TOKEN,
@@ -96,6 +110,8 @@ import { TypeOrmBrandKitRepository } from '@/infrastructure/persistence/typeorm/
     MEDIA_ASSET_REPOSITORY_TOKEN,
     JOB_REPOSITORY_TOKEN,
     CONTENT_ITEM_REPOSITORY_TOKEN,
+    AI_INFLUENCER_SERVICE_TOKEN,
+    AI_INFLUENCER_REPOSITORY_TOKEN,
   ],
 })
 export class StudioCoreModule {}

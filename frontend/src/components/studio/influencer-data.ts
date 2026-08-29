@@ -7,9 +7,10 @@ export interface Influencer {
   name: string;
   gender: InfluencerGender;
   age: number;
-  ethnicity: string;
+  ethnicity: string | null;
   appearancePrompt: string;
   portraitSource: PortraitSource;
+  portraitMediaAssetId: string | null;
   portraitUrl: string | null;
   createdAt: string;
   updatedAt: string;
@@ -23,6 +24,7 @@ export interface InfluencerDraft {
   appearancePrompt: string;
   portraitSource: PortraitSource;
   portraitUrl: string | null;
+  portraitMediaAssetId: string | null;
 }
 
 export const DEFAULT_INFLUENCER_DRAFT: InfluencerDraft = {
@@ -33,6 +35,7 @@ export const DEFAULT_INFLUENCER_DRAFT: InfluencerDraft = {
   appearancePrompt: "",
   portraitSource: "ai",
   portraitUrl: null,
+  portraitMediaAssetId: null,
 };
 
 export const GENDER_OPTIONS: Array<{ value: InfluencerGender; label: string }> =

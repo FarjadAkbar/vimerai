@@ -40,3 +40,5 @@ export const CONTENT_LIBRARY_TOKEN = 'IContentLibrary';
 export const BLITZ_CONFIGURATION_REPOSITORY_TOKEN =
   'IBlitzConfigurationRepository';
 export const BLITZ_CONFIGURATION_SERVICE_TOKEN = 'IBlitzConfigurationService';
+export const AI_INFLUENCER_REPOSITORY_TOKEN = 'IAiInfluencerRepository';
+export const AI_INFLUENCER_SERVICE_TOKEN = 'IAiInfluencerService';

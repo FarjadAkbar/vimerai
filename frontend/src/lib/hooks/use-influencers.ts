@@ -1,36 +1,53 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import type { Influencer } from "@/components/studio/influencer-data";
-
-const STORAGE_KEY = "vimerai.influencers";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  aiInfluencersApi,
+  type CreateAiInfluencerPayload,
+} from "@/lib/api/ai-influencers.api";
 
 export function useInfluencers() {
-  const [influencers, setInfluencers] = useState<Influencer[]>([]);
-  const [ready, setReady] = useState(false);
+  const query = useQuery({
+    queryKey: ["ai-influencers"],
+    queryFn: () => aiInfluencersApi.list(),
+  });
 
-  useEffect(() => {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (raw) setInfluencers(JSON.parse(raw) as Influencer[]);
-    } catch {
-      /* ignore */
-    }
-    setReady(true);
-  }, []);
-
-  const persist = (next: Influencer[]) => {
-    setInfluencers(next);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+  return {
+    influencers: query.data?.influencers ?? [],
+    ready: !query.isLoading,
+    isLoading: query.isLoading,
+    error: query.error,
+    refetch: query.refetch,
   };
+}
 
-  const add = (influencer: Influencer) => {
-    persist([influencer, ...influencers]);
-  };
+export function useInfluencer(id: string | undefined) {
+  return useQuery({
+    queryKey: ["ai-influencers", id],
+    queryFn: () => aiInfluencersApi.get(id!),
+    enabled: Boolean(id),
+  });
+}
 
-  const remove = (id: string) => {
-    persist(influencers.filter((entry) => entry.id !== id));
-  };
+export function useCreateInfluencer() {
+  const queryClient = useQueryClient();
 
-  return { influencers, add, remove, ready };
+  return useMutation({
+    mutationFn: (payload: CreateAiInfluencerPayload) =>
+      aiInfluencersApi.create(payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["ai-influencers"] });
+    },
+  });
+}
+
+export function useDeleteInfluencer() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (id: string) => aiInfluencersApi.delete(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["ai-influencers"] });
+    },
+  });
 }

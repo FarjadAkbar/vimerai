@@ -1,15 +1,32 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import { CircleHelp, Plus, Trash2, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { NewInfluencerModal } from "@/components/studio/new-influencer-modal";
 import { GENDER_OPTIONS } from "@/components/studio/influencer-data";
-import { useInfluencers } from "@/lib/hooks/use-influencers";
+import {
+  useDeleteInfluencer,
+  useInfluencers,
+} from "@/lib/hooks/use-influencers";
+import { influencerDetailPath } from "@/lib/product-path";
+import { getApiErrorMessage } from "@/lib/api/errors";
 
 export default function StudioInfluencersPage() {
-  const { influencers, add, remove, ready } = useInfluencers();
+  const { influencers, ready } = useInfluencers();
+  const deleteInfluencer = useDeleteInfluencer();
   const [createOpen, setCreateOpen] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const onDelete = async (id: string) => {
+    setError(null);
+    try {
+      await deleteInfluencer.mutateAsync(id);
+    } catch (err) {
+      setError(getApiErrorMessage(err, "Could not delete influencer"));
+    }
+  };
 
   return (
     <div className="mx-auto flex min-h-full w-full max-w-5xl flex-col">
@@ -29,6 +46,8 @@ export default function StudioInfluencersPage() {
             New Influencer
           </Button>
         </div>
+
+        {error ? <p className="mt-4 text-sm text-red-600">{error}</p> : null}
 
         {!ready ? (
           <div className="flex flex-1 items-center justify-center text-sm text-[var(--studio-muted)]">
@@ -65,7 +84,10 @@ export default function StudioInfluencersPage() {
                   key={influencer.id}
                   className="overflow-hidden rounded-2xl border border-[var(--studio-border)] bg-[var(--studio-canvas)]"
                 >
-                  <div className="aspect-[3/4] bg-neutral-200">
+                  <Link
+                    href={influencerDetailPath(influencer.id)}
+                    className="block aspect-[3/4] bg-neutral-200"
+                  >
                     {influencer.portraitUrl ? (
                       // eslint-disable-next-line @next/next/no-img-element
                       <img
@@ -74,11 +96,16 @@ export default function StudioInfluencersPage() {
                         className="h-full w-full object-cover"
                       />
                     ) : null}
-                  </div>
+                  </Link>
                   <div className="p-4">
                     <div className="flex items-start justify-between gap-2">
                       <div>
-                        <p className="font-semibold">{influencer.name}</p>
+                        <Link
+                          href={influencerDetailPath(influencer.id)}
+                          className="font-semibold hover:underline"
+                        >
+                          {influencer.name}
+                        </Link>
                         <p className="mt-1 text-xs text-[var(--studio-muted)]">
                           {genderLabel} · {influencer.age}
                           {influencer.ethnicity
@@ -90,7 +117,8 @@ export default function StudioInfluencersPage() {
                         type="button"
                         aria-label={`Delete ${influencer.name}`}
                         className="rounded-full p-1.5 text-[var(--studio-muted)] hover:bg-white hover:text-red-600"
-                        onClick={() => remove(influencer.id)}
+                        disabled={deleteInfluencer.isPending}
+                        onClick={() => void onDelete(influencer.id)}
                       >
                         <Trash2 className="h-4 w-4" />
                       </button>
@@ -109,7 +137,6 @@ export default function StudioInfluencersPage() {
       <NewInfluencerModal
         open={createOpen}
         onClose={() => setCreateOpen(false)}
-        onCreated={add}
       />
     </div>
   );

@@ -22,3 +22,7 @@ export const PRODUCT_PATH = {
  * the primary path is Brand Studio only (spec: feature-flag / hide legacy).
  */
 export const LEGACY_GENERATION_PRIMARY = false;
+
+export function influencerDetailPath(id: string): string {
+  return `${PRODUCT_PATH.influencers}/${id}`;
+}

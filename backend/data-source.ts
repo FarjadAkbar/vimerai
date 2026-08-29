@@ -15,6 +15,7 @@ import { MediaAssetEntity } from './src/infrastructure/persistence/typeorm/entit
 import { JobEntity } from './src/infrastructure/persistence/typeorm/entities/job.entity';
 import { ContentItemEntity } from './src/infrastructure/persistence/typeorm/entities/content-item.entity';
 import { BlitzConfigurationEntity } from './src/infrastructure/persistence/typeorm/entities/blitz-configuration.entity';
+import { AiInfluencerEntity } from './src/infrastructure/persistence/typeorm/entities/ai-influencer.entity';
 
 config();
 
@@ -37,6 +38,7 @@ export default new DataSource({
     JobEntity,
     ContentItemEntity,
     BlitzConfigurationEntity,
+    AiInfluencerEntity,
   ],
   migrations: [
     'src/infrastructure/persistence/migrations/*.ts',
