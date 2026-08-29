@@ -11,6 +11,7 @@ import { PostJobsModule } from './application/post-jobs/post-jobs.module';
 import { VideoJobsModule } from './application/video-jobs/video-jobs.module';
 import { ImageJobsModule } from './application/image-jobs/image-jobs.module';
 import { VideosModule } from './application/videos/videos.module';
+import { StudioCoreModule } from './application/studio-core/studio-core.module';
 import { SubscriptionModule } from './application/subscription/subscription.module';
 import { UsersModule } from './application/users/users.module';
 import databaseConfig from './infrastructure/config/database.config';
@@ -49,6 +50,7 @@ import imageGenerationConfig from './infrastructure/config/image-generation.conf
     VideoJobsModule,
     ImageJobsModule,
     VideosModule,
+    StudioCoreModule,
     SubscriptionModule,
     UsersModule,
   ],
