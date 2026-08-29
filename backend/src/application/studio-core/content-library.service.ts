@@ -37,7 +37,12 @@ export class ContentLibraryService implements IContentLibrary {
         if (!job) {
           return null;
         }
-        return { contentItem, jobStatus: job.status };
+        return {
+          contentItem,
+          jobType: job.type,
+          jobStatus: job.status,
+          jobError: job.error,
+        };
       })
       .filter((entry): entry is ContentLibraryEntry => entry !== null)
       .filter((entry) =>

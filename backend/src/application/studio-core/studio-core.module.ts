@@ -8,6 +8,9 @@ import { AiInfluencerService } from '@/application/studio-core/ai-influencer.ser
 import { BlitzConfigurationService } from '@/application/studio-core/blitz-configuration.service';
 import { JobService } from '@/application/studio-core/job.service';
 import { ContentLibraryService } from '@/application/studio-core/content-library.service';
+import { ContentLibraryController } from '@/application/studio-core/content-library.controller';
+import { ViralRemixService } from '@/application/studio-core/viral-remix.service';
+import { ViralRemixController } from '@/application/studio-core/viral-remix.controller';
 import {
   BLITZ_CONFIGURATION_REPOSITORY_TOKEN,
   BLITZ_CONFIGURATION_SERVICE_TOKEN,
@@ -22,10 +25,13 @@ import {
   MEDIA_ASSET_SERVICE_TOKEN,
   TEMPLATE_CATALOG_TOKEN,
   TEMPLATE_REPOSITORY_TOKEN,
+  FORMAT_CATALOG_TOKEN,
 } from '@/core/tokens/injection.tokens';
 import { DatabaseModule } from '@/infrastructure/persistence/database.module';
 import { StorageModule } from '@/infrastructure/storage/storage.module';
 import { VideoGenerationModule } from '@/infrastructure/video-generation/video-generation.module';
+import { SubscriptionModule } from '@/application/subscription/subscription.module';
+import { CuratedFormatCatalog } from '@/infrastructure/formats/curated-format.catalog';
 import { TypeOrmContentItemRepository } from '@/infrastructure/persistence/typeorm/repositories/content-item.repository';
 import { TypeOrmJobRepository } from '@/infrastructure/persistence/typeorm/repositories/job.repository';
 import { TypeOrmMediaAssetRepository } from '@/infrastructure/persistence/typeorm/repositories/media-asset.repository';
@@ -35,8 +41,13 @@ import { TypeOrmBrandKitRepository } from '@/infrastructure/persistence/typeorm/
 import { TypeOrmAiInfluencerRepository } from '@/infrastructure/persistence/typeorm/repositories/ai-influencer.repository';
 
 @Module({
-  imports: [DatabaseModule, StorageModule, VideoGenerationModule],
-  controllers: [MediaAssetsController, AiInfluencersController],
+  imports: [DatabaseModule, StorageModule, VideoGenerationModule, SubscriptionModule],
+  controllers: [
+    MediaAssetsController,
+    AiInfluencersController,
+    ViralRemixController,
+    ContentLibraryController,
+  ],
   providers: [
     TemplateCatalogService,
     TemplateGenerationService,
@@ -45,6 +56,8 @@ import { TypeOrmAiInfluencerRepository } from '@/infrastructure/persistence/type
     ContentLibraryService,
     BlitzConfigurationService,
     AiInfluencerService,
+    ViralRemixService,
+    CuratedFormatCatalog,
     {
       provide: TEMPLATE_REPOSITORY_TOKEN,
       useClass: TypeOrmTemplateRepository,
@@ -96,6 +109,10 @@ import { TypeOrmAiInfluencerRepository } from '@/infrastructure/persistence/type
     {
       provide: AI_INFLUENCER_SERVICE_TOKEN,
       useExisting: AiInfluencerService,
+    },
+    {
+      provide: FORMAT_CATALOG_TOKEN,
+      useExisting: CuratedFormatCatalog,
     },
   ],
   exports: [

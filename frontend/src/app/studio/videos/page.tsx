@@ -23,14 +23,16 @@ import {
   type ViralRemixTemplate,
 } from "@/components/studio/viral-remix-data";
 import { getApiErrorMessage } from "@/lib/api/errors";
-import type { VideoJob } from "@/lib/api/video-jobs.api";
+import type { ViralRemixJob } from "@/lib/api/viral-remix.api";
+import type { ContentLibraryItem } from "@/lib/api/content-library.api";
 import { PRODUCT_PATH } from "@/lib/product-path";
 import { useBrandKits } from "@/lib/hooks/use-brand-kits";
 import { useUploadMediaAsset } from "@/lib/hooks/use-media-assets";
 import {
-  useCreateVideoJob,
-  useRegenerateVideoJob,
-} from "@/lib/hooks/use-video-jobs";
+  useContentLibrary,
+  useCreateViralRemix,
+  useRegenerateViralRemix,
+} from "@/lib/hooks/use-viral-remix";
 import {
   useGenerateViralRemixTemplates,
   useViralRemixTemplates,
@@ -41,9 +43,10 @@ const VIDEO_JOB_CREDIT_COST = 2;
 
 export default function StudioVideosPage() {
   const { data: brandsData } = useBrandKits();
-  const createJob = useCreateVideoJob();
-  const regenerateJob = useRegenerateVideoJob();
+  const createRemix = useCreateViralRemix();
+  const regenerateRemix = useRegenerateViralRemix();
   const uploadMedia = useUploadMediaAsset();
+  const { data: contentLibraryData } = useContentLibrary();
   const { data: templatesData, isLoading: templatesLoading } =
     useViralRemixTemplates();
   const generateTemplates = useGenerateViralRemixTemplates();
@@ -79,19 +82,32 @@ export default function StudioVideosPage() {
   const [referenceVideoUrl, setReferenceVideoUrl] = useState<string | null>(
     null,
   );
+  const [referenceVideoMediaAssetId, setReferenceVideoMediaAssetId] = useState<
+    string | null
+  >(null);
   const [productImageUrl, setProductImageUrl] = useState<string | null>(null);
+  const [productImageMediaAssetId, setProductImageMediaAssetId] = useState<
+    string | null
+  >(null);
   const [personImageUrl, setPersonImageUrl] = useState<string | null>(null);
+  const [personImageMediaAssetId, setPersonImageMediaAssetId] = useState<
+    string | null
+  >(null);
   const [instructions, setInstructions] = useState("");
-  const [activeJob, setActiveJob] = useState<VideoJob | null>(null);
+  const [activeJob, setActiveJob] = useState<ViralRemixJob | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [uploadingSlot, setUploadingSlot] = useState<
     "video" | "product" | "person" | null
   >(null);
 
   const busy =
-    createJob.isPending ||
-    regenerateJob.isPending ||
+    createRemix.isPending ||
+    regenerateRemix.isPending ||
     uploadingSlot !== null;
+
+  const myContentItems = (contentLibraryData?.items ?? []).filter(
+    (item: ContentLibraryItem) => item.jobType === "viral_remix",
+  );
 
   const canGenerate =
     hasBrand &&
@@ -100,7 +116,7 @@ export default function StudioVideosPage() {
     !busy;
 
   const previewReady =
-    activeJob?.status === "completed" && !!activeJob.videoUrl;
+    activeJob?.status === "completed" && !!activeJob.mediaUrl;
   const showGettingStarted = !previewReady && !activeJob;
 
   useEffect(() => {
@@ -126,6 +142,7 @@ export default function StudioVideosPage() {
     setSelectedTemplateId(template.id);
     setFormatId(template.remixFormatId);
     setReferenceVideoUrl(template.videoUrl);
+    setReferenceVideoMediaAssetId(null);
     setError(null);
   };
 
@@ -135,6 +152,7 @@ export default function StudioVideosPage() {
     try {
       const result = await uploadMedia.mutateAsync(file);
       setReferenceVideoUrl(result.asset.url);
+      setReferenceVideoMediaAssetId(result.asset.id);
     } catch (err) {
       setError(getApiErrorMessage(err, "Could not upload reference video"));
     } finally {
@@ -148,6 +166,7 @@ export default function StudioVideosPage() {
     try {
       const result = await uploadMedia.mutateAsync(file);
       setProductImageUrl(result.asset.url);
+      setProductImageMediaAssetId(result.asset.id);
     } catch (err) {
       setError(getApiErrorMessage(err, "Could not upload product image"));
     } finally {
@@ -161,6 +180,7 @@ export default function StudioVideosPage() {
     try {
       const result = await uploadMedia.mutateAsync(file);
       setPersonImageUrl(result.asset.url);
+      setPersonImageMediaAssetId(result.asset.id);
     } catch (err) {
       setError(getApiErrorMessage(err, "Could not upload person image"));
     } finally {
@@ -172,15 +192,21 @@ export default function StudioVideosPage() {
     if (!canGenerate || !referenceVideoUrl) return;
     setError(null);
     try {
-      const result = await createJob.mutateAsync({
+      const result = await createRemix.mutateAsync({
+        brandId: brands[0]!.id,
         formatId,
-        referenceVideoUrl,
-        productImageUrl: productImageUrl ?? undefined,
-        personImageUrl: personImageUrl ?? undefined,
+        referenceVideoMediaAssetId: referenceVideoMediaAssetId ?? undefined,
+        referenceVideoUrl: referenceVideoMediaAssetId
+          ? undefined
+          : referenceVideoUrl,
+        productImageMediaAssetId: productImageMediaAssetId ?? undefined,
+        personImageMediaAssetId: personImageMediaAssetId ?? undefined,
         instructions: instructions.trim() || undefined,
-        brandId: brands[0]?.id,
+        aspectRatio: "9:16",
+        durationSeconds: 20,
+        quality: "720p",
       });
-      setActiveJob(result.videoJob);
+      setActiveJob(result.remix);
     } catch (err) {
       setError(getApiErrorMessage(err, "Could not start Viral Remix"));
     }
@@ -190,21 +216,21 @@ export default function StudioVideosPage() {
     if (!activeJob) return;
     setError(null);
     try {
-      const result = await regenerateJob.mutateAsync(activeJob.id);
-      setActiveJob(result.videoJob);
+      const result = await regenerateRemix.mutateAsync(activeJob.jobId);
+      setActiveJob(result.remix);
     } catch (err) {
       setError(getApiErrorMessage(err, "Could not regenerate remix"));
     }
   };
 
   const onExport = async () => {
-    if (!activeJob?.videoUrl) return;
-    const response = await fetch(activeJob.videoUrl);
+    if (!activeJob?.mediaUrl) return;
+    const response = await fetch(activeJob.mediaUrl);
     const blob = await response.blob();
     const url = URL.createObjectURL(blob);
     const anchor = document.createElement("a");
     anchor.href = url;
-    anchor.download = `viral-remix-${activeJob.id.slice(0, 8)}.mp4`;
+    anchor.download = `viral-remix-${activeJob.jobId.slice(0, 8)}.mp4`;
     anchor.click();
     URL.revokeObjectURL(url);
   };
@@ -382,8 +408,8 @@ export default function StudioVideosPage() {
                   <div className="relative aspect-[9/16] w-full max-w-xs overflow-hidden rounded-2xl border border-[var(--studio-border)] bg-black shadow-lg">
                     {previewReady ? (
                       <video
-                        key={activeJob!.videoUrl!}
-                        src={activeJob!.videoUrl!}
+                        key={activeJob!.mediaUrl!}
+                        src={activeJob!.mediaUrl!}
                         className="h-full w-full object-cover"
                         controls
                         playsInline
@@ -403,7 +429,7 @@ export default function StudioVideosPage() {
                         disabled={busy}
                         onClick={onRegenerate}
                       >
-                        {regenerateJob.isPending ? (
+                        {regenerateRemix.isPending ? (
                           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                         ) : (
                           <RefreshCw className="mr-2 h-4 w-4" />
@@ -422,6 +448,50 @@ export default function StudioVideosPage() {
                 </div>
               </section>
             ) : null}
+
+            {myContentItems.length > 0 ? (
+              <section className="mt-10">
+                <h2 className="text-sm font-medium uppercase tracking-[0.14em] text-[var(--studio-muted)]">
+                  My Content
+                </h2>
+                <p className="mt-1 text-xs text-[var(--studio-muted)]">
+                  Viral Remix outputs saved to your library
+                </p>
+                <ul className="mt-4 grid gap-3 sm:grid-cols-2 md:grid-cols-3">
+                  {myContentItems.map((item) => (
+                    <li
+                      key={item.id}
+                      className="overflow-hidden rounded-2xl border border-[var(--studio-border)] bg-white"
+                    >
+                      <div className="aspect-[9/16] bg-neutral-100">
+                        {item.mediaUrl && item.jobStatus === "completed" ? (
+                          <video
+                            src={item.mediaUrl}
+                            className="h-full w-full object-cover"
+                            muted
+                            playsInline
+                          />
+                        ) : (
+                          <div className="flex h-full items-center justify-center p-4 text-center text-xs text-[var(--studio-muted)]">
+                            {item.jobStatus === "failed"
+                              ? (item.jobError ?? "Remix failed")
+                              : "Building…"}
+                          </div>
+                        )}
+                      </div>
+                      <div className="p-3">
+                        <p className="text-xs font-medium capitalize">
+                          {item.jobStatus}
+                        </p>
+                        <p className="mt-1 text-[10px] text-[var(--studio-muted)]">
+                          {new Date(item.createdAt).toLocaleString()}
+                        </p>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            ) : null}
           </>
         )}
       </div>
@@ -437,7 +507,10 @@ export default function StudioVideosPage() {
                   icon={Video}
                   previewUrl={referenceVideoUrl}
                   uploading={uploadingSlot === "video"}
-                  onClear={() => setReferenceVideoUrl(null)}
+                  onClear={() => {
+                    setReferenceVideoUrl(null);
+                    setReferenceVideoMediaAssetId(null);
+                  }}
                   onClick={() => refVideoInputRef.current?.click()}
                 />
                 <AssetSlot
@@ -445,7 +518,10 @@ export default function StudioVideosPage() {
                   icon={Box}
                   previewUrl={productImageUrl}
                   uploading={uploadingSlot === "product"}
-                  onClear={() => setProductImageUrl(null)}
+                  onClear={() => {
+                    setProductImageUrl(null);
+                    setProductImageMediaAssetId(null);
+                  }}
                   onClick={() => productInputRef.current?.click()}
                 />
                 <AssetSlot
@@ -453,7 +529,10 @@ export default function StudioVideosPage() {
                   icon={User}
                   previewUrl={personImageUrl}
                   uploading={uploadingSlot === "person"}
-                  onClear={() => setPersonImageUrl(null)}
+                  onClear={() => {
+                    setPersonImageUrl(null);
+                    setPersonImageMediaAssetId(null);
+                  }}
                   onClick={() => personInputRef.current?.click()}
                 />
               </div>
@@ -489,7 +568,7 @@ export default function StudioVideosPage() {
                 disabled={!canGenerate}
                 onClick={onGenerate}
               >
-                {createJob.isPending ? (
+                {createRemix.isPending ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     Generating…

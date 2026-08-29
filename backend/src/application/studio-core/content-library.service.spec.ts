@@ -19,7 +19,7 @@ describe('ContentLibraryService', () => {
     await jobService.markJobProcessing(buildingJob.id);
 
     const createdJob = await jobService.createJob('user-1', {
-      type: JobType.BLITZ_COMPOSE,
+      type: JobType.VIRAL_REMIX,
       jobInput: {},
     });
     await jobService.completeJob('user-1', createdJob.id, {
@@ -37,6 +37,7 @@ describe('ContentLibraryService', () => {
 
     expect(all).toHaveLength(1);
     expect(all[0].jobStatus).toBe(JobStatus.COMPLETED);
+    expect(all[0].jobType).toBe(JobType.VIRAL_REMIX);
     expect(building).toHaveLength(0);
     expect(created).toHaveLength(1);
     expect(created[0].contentItem.mediaUrl).toBe(
