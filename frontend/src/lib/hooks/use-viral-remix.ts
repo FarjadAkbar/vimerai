@@ -5,11 +5,6 @@ import {
   viralRemixApi,
   type CreateViralRemixPayload,
 } from "@/lib/api/viral-remix.api";
-import {
-  contentLibraryApi,
-  type ContentLibraryItem,
-  type ContentLibraryJobStatus,
-} from "@/lib/api/content-library.api";
 
 export function useCreateViralRemix() {
   const queryClient = useQueryClient();
@@ -46,12 +41,5 @@ export function useRegenerateViralRemix() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["content-library"] });
     },
-  });
-}
-
-export function useContentLibrary(jobStatus?: ContentLibraryJobStatus) {
-  return useQuery({
-    queryKey: ["content-library", jobStatus ?? "all"],
-    queryFn: () => contentLibraryApi.list(jobStatus),
   });
 }

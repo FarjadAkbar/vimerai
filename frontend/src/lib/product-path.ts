@@ -10,6 +10,7 @@ export const PRODUCT_PATH = {
   videos: "/studio/videos",
   images: "/studio/images",
   influencers: "/studio/influencers",
+  library: "/studio/library",
   businessDna: "/studio/business-dna",
   /** @deprecated Demoted library — not primary nav (use Business DNA). */
   brands: "/studio/brands",

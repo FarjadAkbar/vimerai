@@ -9,7 +9,8 @@ import {
   CONTENT_ITEM_REPOSITORY_TOKEN,
   JOB_REPOSITORY_TOKEN,
 } from '@/core/tokens/injection.tokens';
-import type { JobStatus } from '@/domain/job.entity';
+import type { ContentStatusBucket } from '@/core/ports/content-library.service';
+import { JobStatus } from '@/domain/job.entity';
 
 @Injectable()
 export class ContentLibraryService implements IContentLibrary {
@@ -22,7 +23,7 @@ export class ContentLibraryService implements IContentLibrary {
 
   async listUserContent(
     userId: string,
-    filter?: { jobStatus?: JobStatus },
+    filter?: { statusBucket?: ContentStatusBucket },
   ): Promise<ContentLibraryEntry[]> {
     const [contentItems, jobs] = await Promise.all([
       this.contentItemRepository.findByUserId(userId),
@@ -45,12 +46,28 @@ export class ContentLibraryService implements IContentLibrary {
         };
       })
       .filter((entry): entry is ContentLibraryEntry => entry !== null)
-      .filter((entry) =>
-        filter?.jobStatus ? entry.jobStatus === filter.jobStatus : true,
-      )
+      .filter((entry) => matchesStatusBucket(entry.jobStatus, filter?.statusBucket))
       .sort(
         (a, b) =>
           b.contentItem.createdAt.getTime() - a.contentItem.createdAt.getTime(),
       );
   }
+}
+
+function matchesStatusBucket(
+  jobStatus: JobStatus,
+  bucket?: ContentStatusBucket,
+): boolean {
+  if (!bucket) {
+    return true;
+  }
+  if (bucket === 'building') {
+    return (
+      jobStatus === JobStatus.PENDING || jobStatus === JobStatus.PROCESSING
+    );
+  }
+  if (bucket === 'created') {
+    return jobStatus === JobStatus.COMPLETED;
+  }
+  return jobStatus === JobStatus.FAILED;
 }

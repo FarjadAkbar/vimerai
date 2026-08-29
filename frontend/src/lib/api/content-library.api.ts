@@ -1,5 +1,7 @@
 import { api } from './client';
 
+export type ContentStatusBucket = 'building' | 'created' | 'failed';
+
 export type ContentLibraryJobStatus =
   | 'pending'
   | 'processing'
@@ -26,10 +28,10 @@ export interface ContentLibraryResponse {
 
 export const contentLibraryApi = {
   list: async (
-    jobStatus?: ContentLibraryJobStatus,
+    statusBucket?: ContentStatusBucket,
   ): Promise<ContentLibraryResponse> => {
     const response = await api.get<ContentLibraryResponse>('/content-library', {
-      params: jobStatus ? { jobStatus } : undefined,
+      params: statusBucket ? { statusBucket } : undefined,
     });
     return response.data;
   },

@@ -1,6 +1,8 @@
 import type { ContentItem } from '@/domain/content-item.entity';
 import type { JobStatus, JobType } from '@/domain/job.entity';
 
+export type ContentStatusBucket = 'building' | 'created' | 'failed';
+
 export interface ContentLibraryEntry {
   contentItem: ContentItem;
   jobType: JobType;
@@ -11,6 +13,6 @@ export interface ContentLibraryEntry {
 export interface IContentLibrary {
   listUserContent(
     userId: string,
-    filter?: { jobStatus?: JobStatus },
+    filter?: { statusBucket?: ContentStatusBucket },
   ): Promise<ContentLibraryEntry[]>;
 }

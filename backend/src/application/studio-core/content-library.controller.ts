@@ -3,7 +3,7 @@ import { ContentLibraryService } from '@/application/studio-core/content-library
 import { toContentLibraryItemResponse } from '@/application/studio-core/content-library-response';
 import { JwtAuthGuard } from '@/infrastructure/auth/jwt-auth.guard';
 import { CurrentUser } from '@/infrastructure/auth/current-user.decorator';
-import { JobStatus } from '@/domain/job.entity';
+import type { ContentStatusBucket } from '@/core/ports/content-library.service';
 
 @Controller('content-library')
 @UseGuards(JwtAuthGuard)
@@ -13,12 +13,12 @@ export class ContentLibraryController {
   @Get()
   async listContent(
     @CurrentUser() user: { userId: string },
-    @Query('jobStatus') jobStatus?: string,
+    @Query('statusBucket') statusBucket?: string,
   ) {
-    const parsedStatus = parseJobStatusQuery(jobStatus);
+    const parsedBucket = parseStatusBucketQuery(statusBucket);
     const entries = await this.contentLibraryService.listUserContent(
       user.userId,
-      parsedStatus ? { jobStatus: parsedStatus } : undefined,
+      parsedBucket ? { statusBucket: parsedBucket } : undefined,
     );
 
     return {
@@ -34,14 +34,10 @@ export class ContentLibraryController {
   }
 }
 
-function parseJobStatusQuery(value?: string): JobStatus | undefined {
-  if (!value) return undefined;
-  if (
-    value === JobStatus.PENDING ||
-    value === JobStatus.PROCESSING ||
-    value === JobStatus.COMPLETED ||
-    value === JobStatus.FAILED
-  ) {
+function parseStatusBucketQuery(
+  value?: string,
+): ContentStatusBucket | undefined {
+  if (value === 'building' || value === 'created' || value === 'failed') {
     return value;
   }
   return undefined;

@@ -29,10 +29,10 @@ import { PRODUCT_PATH } from "@/lib/product-path";
 import { useBrandKits } from "@/lib/hooks/use-brand-kits";
 import { useUploadMediaAsset } from "@/lib/hooks/use-media-assets";
 import {
-  useContentLibrary,
   useCreateViralRemix,
   useRegenerateViralRemix,
 } from "@/lib/hooks/use-viral-remix";
+import { useContentLibrary } from "@/lib/hooks/use-library";
 import {
   useGenerateViralRemixTemplates,
   useViralRemixTemplates,
