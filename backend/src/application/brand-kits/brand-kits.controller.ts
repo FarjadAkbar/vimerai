@@ -17,6 +17,9 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { memoryStorage } from 'multer';
 import { BrandKitService } from '@/application/brand-kits/brand-kit.service';
 import { BusinessDnaService } from '@/application/brand-kits/business-dna.service';
+import { BlitzConfigurationService } from '@/application/studio-core/blitz-configuration.service';
+import { toBlitzConfigurationResponse } from '@/application/studio-core/blitz-configuration-response';
+import { UpdateBlitzConfigurationDto } from '@/application/brand-kits/dto/blitz-configuration.dto';
 import {
   CreateBrandKitDto,
   UpdateBrandKitDto,
@@ -31,6 +34,7 @@ export class BrandKitsController {
   constructor(
     private readonly brandKitService: BrandKitService,
     private readonly businessDnaService: BusinessDnaService,
+    private readonly blitzConfigurationService: BlitzConfigurationService,
   ) {}
 
   @Post('business-dna')
@@ -94,5 +98,32 @@ export class BrandKitsController {
     dto: UpdateBrandKitDto,
   ) {
     return this.brandKitService.updateBrandKit(user.userId, id, dto);
+  }
+
+  @Get(':id/blitz-configuration')
+  async getBlitzConfiguration(
+    @CurrentUser() user: { userId: string },
+    @Param('id') id: string,
+  ) {
+    const configuration = await this.blitzConfigurationService.getForBrand(
+      user.userId,
+      id,
+    );
+    return { configuration: toBlitzConfigurationResponse(configuration) };
+  }
+
+  @Put(':id/blitz-configuration')
+  async updateBlitzConfiguration(
+    @CurrentUser() user: { userId: string },
+    @Param('id') id: string,
+    @Body(new ValidationPipe({ whitelist: true, transform: true }))
+    dto: UpdateBlitzConfigurationDto,
+  ) {
+    const configuration = await this.blitzConfigurationService.updateForBrand(
+      user.userId,
+      id,
+      dto,
+    );
+    return { configuration: toBlitzConfigurationResponse(configuration) };
   }
 }

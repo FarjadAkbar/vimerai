@@ -37,3 +37,6 @@ export const JOB_REPOSITORY_TOKEN = 'IJobRepository';
 export const JOB_SERVICE_TOKEN = 'IJobService';
 export const CONTENT_ITEM_REPOSITORY_TOKEN = 'IContentItemRepository';
 export const CONTENT_LIBRARY_TOKEN = 'IContentLibrary';
+export const BLITZ_CONFIGURATION_REPOSITORY_TOKEN =
+  'IBlitzConfigurationRepository';
+export const BLITZ_CONFIGURATION_SERVICE_TOKEN = 'IBlitzConfigurationService';

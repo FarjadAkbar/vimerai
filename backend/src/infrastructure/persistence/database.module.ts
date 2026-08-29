@@ -15,6 +15,7 @@ import { TemplateEntity } from './typeorm/entities/template.entity';
 import { MediaAssetEntity } from './typeorm/entities/media-asset.entity';
 import { JobEntity } from './typeorm/entities/job.entity';
 import { ContentItemEntity } from './typeorm/entities/content-item.entity';
+import { BlitzConfigurationEntity } from './typeorm/entities/blitz-configuration.entity';
 import databaseConfig from '@/infrastructure/config/database.config';
 
 @Module({
@@ -39,6 +40,7 @@ import databaseConfig from '@/infrastructure/config/database.config';
           MediaAssetEntity,
           JobEntity,
           ContentItemEntity,
+          BlitzConfigurationEntity,
         ],
         migrations: ['dist/infrastructure/persistence/migrations/*.js'],
         migrationsRun: false, // Set to true to auto-run migrations on app start
@@ -59,6 +61,7 @@ import databaseConfig from '@/infrastructure/config/database.config';
       MediaAssetEntity,
       JobEntity,
       ContentItemEntity,
+      BlitzConfigurationEntity,
     ]),
   ],
   exports: [TypeOrmModule],

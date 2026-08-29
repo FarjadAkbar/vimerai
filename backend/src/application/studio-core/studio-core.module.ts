@@ -3,9 +3,13 @@ import { TemplateCatalogService } from '@/application/studio-core/template-catal
 import { TemplateGenerationService } from '@/application/studio-core/template-generation.service';
 import { MediaAssetService } from '@/application/studio-core/media-asset.service';
 import { MediaAssetsController } from '@/application/studio-core/media-assets.controller';
+import { BlitzConfigurationService } from '@/application/studio-core/blitz-configuration.service';
 import { JobService } from '@/application/studio-core/job.service';
 import { ContentLibraryService } from '@/application/studio-core/content-library.service';
 import {
+  BLITZ_CONFIGURATION_REPOSITORY_TOKEN,
+  BLITZ_CONFIGURATION_SERVICE_TOKEN,
+  BRAND_KIT_REPOSITORY_TOKEN,
   CONTENT_ITEM_REPOSITORY_TOKEN,
   CONTENT_LIBRARY_TOKEN,
   JOB_REPOSITORY_TOKEN,
@@ -22,6 +26,8 @@ import { TypeOrmContentItemRepository } from '@/infrastructure/persistence/typeo
 import { TypeOrmJobRepository } from '@/infrastructure/persistence/typeorm/repositories/job.repository';
 import { TypeOrmMediaAssetRepository } from '@/infrastructure/persistence/typeorm/repositories/media-asset.repository';
 import { TypeOrmTemplateRepository } from '@/infrastructure/persistence/typeorm/repositories/template.repository';
+import { TypeOrmBlitzConfigurationRepository } from '@/infrastructure/persistence/typeorm/repositories/blitz-configuration.repository';
+import { TypeOrmBrandKitRepository } from '@/infrastructure/persistence/typeorm/repositories/brand-kit.repository';
 
 @Module({
   imports: [DatabaseModule, StorageModule, VideoGenerationModule],
@@ -32,6 +38,7 @@ import { TypeOrmTemplateRepository } from '@/infrastructure/persistence/typeorm/
     MediaAssetService,
     JobService,
     ContentLibraryService,
+    BlitzConfigurationService,
     {
       provide: TEMPLATE_REPOSITORY_TOKEN,
       useClass: TypeOrmTemplateRepository,
@@ -49,6 +56,14 @@ import { TypeOrmTemplateRepository } from '@/infrastructure/persistence/typeorm/
       useClass: TypeOrmContentItemRepository,
     },
     {
+      provide: BLITZ_CONFIGURATION_REPOSITORY_TOKEN,
+      useClass: TypeOrmBlitzConfigurationRepository,
+    },
+    {
+      provide: BRAND_KIT_REPOSITORY_TOKEN,
+      useClass: TypeOrmBrandKitRepository,
+    },
+    {
       provide: TEMPLATE_CATALOG_TOKEN,
       useExisting: TemplateCatalogService,
     },
@@ -64,10 +79,16 @@ import { TypeOrmTemplateRepository } from '@/infrastructure/persistence/typeorm/
       provide: CONTENT_LIBRARY_TOKEN,
       useExisting: ContentLibraryService,
     },
+    {
+      provide: BLITZ_CONFIGURATION_SERVICE_TOKEN,
+      useExisting: BlitzConfigurationService,
+    },
   ],
   exports: [
     TEMPLATE_CATALOG_TOKEN,
     TemplateGenerationService,
+    BLITZ_CONFIGURATION_SERVICE_TOKEN,
+    BlitzConfigurationService,
     MEDIA_ASSET_SERVICE_TOKEN,
     JOB_SERVICE_TOKEN,
     CONTENT_LIBRARY_TOKEN,

@@ -1,4 +1,5 @@
 import { api } from './client';
+import type { BlitzConfig } from '@/components/studio/blitz-data';
 
 export type BrandKitTone =
   | 'luxury'
@@ -44,6 +45,16 @@ export interface BrandKit {
 
 export interface BrandKitsListResponse {
   brandKits: BrandKit[];
+}
+
+export interface BlitzConfiguration extends BlitzConfig {
+  brandId: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface BlitzConfigurationResponse {
+  configuration: BlitzConfiguration;
 }
 
 export interface BrandKitResponse {
@@ -114,6 +125,26 @@ export const brandKitsApi = {
       {
         headers: { 'Content-Type': 'multipart/form-data' },
       },
+    );
+    return response.data;
+  },
+
+  getBlitzConfiguration: async (
+    brandId: string,
+  ): Promise<BlitzConfigurationResponse> => {
+    const response = await api.get<BlitzConfigurationResponse>(
+      `/brand-kits/${brandId}/blitz-configuration`,
+    );
+    return response.data;
+  },
+
+  updateBlitzConfiguration: async (
+    brandId: string,
+    configuration: BlitzConfig,
+  ): Promise<BlitzConfigurationResponse> => {
+    const response = await api.put<BlitzConfigurationResponse>(
+      `/brand-kits/${brandId}/blitz-configuration`,
+      configuration,
     );
     return response.data;
   },

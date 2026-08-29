@@ -1,39 +1,51 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   DEFAULT_BLITZ_CONFIG,
   type BlitzConfig,
   type BlitzMaterial,
 } from "@/components/studio/blitz-data";
+import { brandKitsApi } from "@/lib/api/brand-kits.api";
 
-const CONFIG_KEY = "vimerai.blitz.config";
+export function useBlitzConfig(brandId: string | undefined) {
+  const queryClient = useQueryClient();
+  const query = useQuery({
+    queryKey: ["blitz-configuration", brandId],
+    queryFn: () => brandKitsApi.getBlitzConfiguration(brandId!),
+    enabled: Boolean(brandId),
+  });
+
+  const saveMutation = useMutation({
+    mutationFn: (next: BlitzConfig) =>
+      brandKitsApi.updateBlitzConfiguration(brandId!, next),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ["blitz-configuration", brandId],
+      });
+    },
+  });
+
+  const configuration = query.data?.configuration;
+
+  return {
+    config: configuration
+      ? {
+          mentionFrequency: configuration.mentionFrequency,
+          showInfluencerMaterials: configuration.showInfluencerMaterials,
+          enabledFormats: configuration.enabledFormats,
+        }
+      : DEFAULT_BLITZ_CONFIG,
+    save: saveMutation.mutate,
+    saveAsync: saveMutation.mutateAsync,
+    ready: !brandId || !query.isLoading,
+    isSaving: saveMutation.isPending,
+  };
+}
+
 const MATERIALS_KEY = "vimerai.blitz.materials";
 const ACCEPTED_KEY = "vimerai.blitz.accepted";
-
-export function useBlitzConfig() {
-  const [config, setConfig] = useState<BlitzConfig>(DEFAULT_BLITZ_CONFIG);
-  const [ready, setReady] = useState(false);
-
-  useEffect(() => {
-    try {
-      const raw = localStorage.getItem(CONFIG_KEY);
-      if (raw) {
-        setConfig({ ...DEFAULT_BLITZ_CONFIG, ...JSON.parse(raw) });
-      }
-    } catch {
-      /* ignore */
-    }
-    setReady(true);
-  }, []);
-
-  const save = (next: BlitzConfig) => {
-    setConfig(next);
-    localStorage.setItem(CONFIG_KEY, JSON.stringify(next));
-  };
-
-  return { config, save, ready };
-}
 
 export function useBlitzMaterials() {
   const [materials, setMaterials] = useState<BlitzMaterial[]>([]);

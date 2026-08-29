@@ -14,6 +14,7 @@ import { TemplateEntity } from './src/infrastructure/persistence/typeorm/entitie
 import { MediaAssetEntity } from './src/infrastructure/persistence/typeorm/entities/media-asset.entity';
 import { JobEntity } from './src/infrastructure/persistence/typeorm/entities/job.entity';
 import { ContentItemEntity } from './src/infrastructure/persistence/typeorm/entities/content-item.entity';
+import { BlitzConfigurationEntity } from './src/infrastructure/persistence/typeorm/entities/blitz-configuration.entity';
 
 config();
 
@@ -35,6 +36,7 @@ export default new DataSource({
     MediaAssetEntity,
     JobEntity,
     ContentItemEntity,
+    BlitzConfigurationEntity,
   ],
   migrations: [
     'src/infrastructure/persistence/migrations/*.ts',

@@ -25,6 +25,7 @@ import { BlitzTemplatesModal } from "@/components/studio/blitz-templates-modal";
 import {
   BLITZ_FORMATS,
   buildBlitzQueue,
+  filterBlitzTemplatesByConfig,
   type BlitzCard,
   type BlitzFormatId,
 } from "@/components/studio/blitz-data";
@@ -49,7 +50,14 @@ import { cn } from "@/lib/utils";
 export default function StudioBlitzPage() {
   const { data: brandsData } = useBrandKits();
   const { data: productsData } = useProducts();
-  const { config, save: saveConfig, ready: configReady } = useBlitzConfig();
+  const brands = brandsData?.brandKits ?? [];
+  const products = productsData?.products ?? [];
+  const brand = brands[0];
+  const product = products[0];
+
+  const { config, save: saveConfig, ready: configReady } = useBlitzConfig(
+    brand?.id,
+  );
   const { materials, add: addMaterial, ready: materialsReady } =
     useBlitzMaterials();
   const { data: templatesData, isLoading: templatesLoading } =
@@ -58,19 +66,14 @@ export default function StudioBlitzPage() {
   const createImageJob = useCreateImageJob();
   const saveBlitzEdit = useSaveBlitzEdit();
 
-  const brands = brandsData?.brandKits ?? [];
-  const products = productsData?.products ?? [];
-  const brand = brands[0];
-  const product = products[0];
-  const templates = useMemo(
-    () =>
-      (templatesData?.templates ?? [])
-        .map(mapTemplateToBlitzTemplate)
-        .filter((template): template is NonNullable<typeof template> =>
-          Boolean(template),
-        ),
-    [templatesData?.templates],
-  );
+  const templates = useMemo(() => {
+    const mapped = (templatesData?.templates ?? [])
+      .map(mapTemplateToBlitzTemplate)
+      .filter((template): template is NonNullable<typeof template> =>
+        Boolean(template),
+      );
+    return filterBlitzTemplatesByConfig(mapped, config);
+  }, [templatesData?.templates, config]);
 
   const [activeFormat, setActiveFormat] =
     useState<BlitzFormatId>("green-screen");

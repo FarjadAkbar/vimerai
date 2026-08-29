@@ -202,6 +202,15 @@ export function isBlitzFormatId(value: string | null | undefined): value is Blit
   return BLITZ_FORMATS.some((format) => format.id === value);
 }
 
+export function filterBlitzTemplatesByConfig(
+  templates: BlitzTemplateAsset[],
+  config: BlitzConfig,
+): BlitzTemplateAsset[] {
+  return templates.filter(
+    (template) => config.enabledFormats[template.formatId] ?? true,
+  );
+}
+
 export function buildBlitzQueue(input: {
   brandName: string;
   productName?: string;

@@ -16,11 +16,13 @@ import { DatabaseModule } from '@/infrastructure/persistence/database.module';
 import { TypeOrmBrandKitRepository } from '@/infrastructure/persistence/typeorm/repositories/brand-kit.repository';
 import { HtmlHomepageScrapeProvider } from '@/infrastructure/scrape/html-homepage-scrape.provider';
 import { StorageModule } from '@/infrastructure/storage/storage.module';
+import { StudioCoreModule } from '@/application/studio-core/studio-core.module';
 
 @Module({
   imports: [
     DatabaseModule,
     StorageModule,
+    StudioCoreModule,
     ConfigModule.forFeature(openaiConfig),
   ],
   controllers: [BrandKitsController],
