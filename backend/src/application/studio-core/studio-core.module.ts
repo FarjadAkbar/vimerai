@@ -13,6 +13,8 @@ import { ViralRemixService } from '@/application/studio-core/viral-remix.service
 import { ViralRemixController } from '@/application/studio-core/viral-remix.controller';
 import { BlitzComposeService } from '@/application/studio-core/blitz-compose.service';
 import { BlitzComposeController } from '@/application/studio-core/blitz-compose.controller';
+import { InfluencerImageService } from '@/application/studio-core/influencer-image.service';
+import { ImageGenerationModule } from '@/infrastructure/image-generation/image-generation.module';
 import {
   BLITZ_CONFIGURATION_REPOSITORY_TOKEN,
   BLITZ_CONFIGURATION_SERVICE_TOKEN,
@@ -43,7 +45,13 @@ import { TypeOrmBrandKitRepository } from '@/infrastructure/persistence/typeorm/
 import { TypeOrmAiInfluencerRepository } from '@/infrastructure/persistence/typeorm/repositories/ai-influencer.repository';
 
 @Module({
-  imports: [DatabaseModule, StorageModule, VideoGenerationModule, SubscriptionModule],
+  imports: [
+    DatabaseModule,
+    StorageModule,
+    VideoGenerationModule,
+    ImageGenerationModule,
+    SubscriptionModule,
+  ],
   controllers: [
     MediaAssetsController,
     AiInfluencersController,
@@ -61,6 +69,7 @@ import { TypeOrmAiInfluencerRepository } from '@/infrastructure/persistence/type
     AiInfluencerService,
     ViralRemixService,
     BlitzComposeService,
+    InfluencerImageService,
     CuratedFormatCatalog,
     {
       provide: TEMPLATE_REPOSITORY_TOKEN,

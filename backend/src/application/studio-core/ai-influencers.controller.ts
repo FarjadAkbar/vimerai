@@ -11,6 +11,8 @@ import {
 } from '@nestjs/common';
 import { AiInfluencerService } from '@/application/studio-core/ai-influencer.service';
 import { toAiInfluencerResponse } from '@/application/studio-core/ai-influencer-response';
+import { CreateInfluencerImageDto } from '@/application/studio-core/dto/create-influencer-image.dto';
+import { InfluencerImageService } from '@/application/studio-core/influencer-image.service';
 import { CreateAiInfluencerDto } from '@/application/studio-core/dto/create-ai-influencer.dto';
 import { JwtAuthGuard } from '@/infrastructure/auth/jwt-auth.guard';
 import { CurrentUser } from '@/infrastructure/auth/current-user.decorator';
@@ -18,7 +20,10 @@ import { CurrentUser } from '@/infrastructure/auth/current-user.decorator';
 @Controller('ai-influencers')
 @UseGuards(JwtAuthGuard)
 export class AiInfluencersController {
-  constructor(private readonly aiInfluencerService: AiInfluencerService) {}
+  constructor(
+    private readonly aiInfluencerService: AiInfluencerService,
+    private readonly influencerImageService: InfluencerImageService,
+  ) {}
 
   @Get()
   async listInfluencers(@CurrentUser() user: { userId: string }) {
@@ -28,6 +33,60 @@ export class AiInfluencersController {
     return {
       influencers: influencers.map(toAiInfluencerResponse),
     };
+  }
+
+  @Get(':id/images')
+  async listInfluencerImages(
+    @CurrentUser() user: { userId: string },
+    @Param('id') id: string,
+  ) {
+    const items = await this.influencerImageService.listInfluencerImages(
+      user.userId,
+      id,
+    );
+    return { items };
+  }
+
+  @Post(':id/images')
+  @HttpCode(HttpStatus.CREATED)
+  async generateInfluencerImage(
+    @CurrentUser() user: { userId: string },
+    @Param('id') id: string,
+    @Body() body: CreateInfluencerImageDto,
+  ) {
+    const item = await this.influencerImageService.generateImage(
+      user.userId,
+      id,
+      body,
+    );
+    return { item };
+  }
+
+  @Post(':id/images/:contentItemId/animate')
+  @HttpCode(HttpStatus.CREATED)
+  async animateInfluencerImage(
+    @CurrentUser() user: { userId: string },
+    @Param('id') id: string,
+    @Param('contentItemId') contentItemId: string,
+  ) {
+    const item = await this.influencerImageService.animateImage(
+      user.userId,
+      id,
+      contentItemId,
+    );
+    return { item };
+  }
+
+  @Get(':id/videos')
+  async listInfluencerVideos(
+    @CurrentUser() user: { userId: string },
+    @Param('id') id: string,
+  ) {
+    const items = await this.influencerImageService.listInfluencerVideos(
+      user.userId,
+      id,
+    );
+    return { items };
   }
 
   @Get(':id')
