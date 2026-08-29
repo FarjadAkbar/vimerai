@@ -110,7 +110,7 @@ export class InfluencerVideoService implements IInfluencerVideoService {
       );
     }
 
-    const sourceInput = sourceJob.input as InfluencerImageJobInput;
+    const sourceInput = sourceJob.input as unknown as InfluencerImageJobInput;
     if (sourceInput.influencerId !== influencerId) {
       throw new NotFoundException('Content item not found');
     }

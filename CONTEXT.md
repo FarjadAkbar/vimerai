@@ -7,7 +7,7 @@ Ecommerce-focused AI creative studio (Fetra-style): paste a business URL to gene
 ### Product roadmap (locked)
 
 **Fetra-clone create studio (current scope)**:
-Happy path: business/homepage URL → Business DNA on a Brand → Brand Studio surfaces: Blitz (Make a Post–style), Viral Remix (Make a Video–style), AI Influencers, AI Image Generator, Library (My Content + My Media Store), and Media Store pickers. Shared platform Templates (Blitz vs Viral Remix types) feed those flows; users Edit Blitz outputs and Export. Product page scrape remains available where a sellable item image is needed; Brand Confirm stays the manual Brand fallback.
+Happy path: business/homepage URL → Business DNA on a Brand → Brand Studio surfaces: Blitz (Make a Post–style), Viral Remix (Make a Video–style), AI Influencers, AI Image Generator, Library (My Content + My Media Store), and Media Store pickers. Shared platform Templates (Blitz vs Viral Remix types) feed those flows; users Edit Blitz outputs and Export. Reference images for Jobs come from Media Store uploads; Brand Confirm stays the manual Brand fallback.
 _Avoid_: Treating the older “MVP-only Posts+Videos, Influencers parked” cut as current scope; cloning Fetra’s marketing site, publish, trend scrape, warmed accounts, or Calendar before the create/edit/library loop is solid
 
 **Parked (not current scope)**:
@@ -184,7 +184,7 @@ Downloading the Post image or Video file for the user to post manually on social
 _Avoid_: Publish, schedule, post (as a platform API action)
 
 **Asset**:
-An input media file (image, video, logo) attached to a Brand or Product — not a job output. Product images condition Post image and Video generation.
+An input media file (image, video, logo) stored as a Media Asset — not a job output. Reference images condition Viral Remix, AI Image Generator, and related Jobs.
 _Avoid_: File, media, creative (for inputs)
 
 **Credit**:

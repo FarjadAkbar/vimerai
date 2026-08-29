@@ -6,8 +6,8 @@ import {
   PrimaryGeneratedColumn,
   UpdateDateColumn,
 } from 'typeorm';
-import {
-  BlitzConfiguration,
+import { BlitzConfiguration } from '@/domain/blitz-configuration.entity';
+import type {
   BlitzEnabledFormats,
   MentionFrequency,
 } from '@/domain/blitz-configuration.entity';

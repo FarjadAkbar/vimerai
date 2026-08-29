@@ -73,7 +73,7 @@ export class AiImageService implements IAiImageService {
         'Only a completed AI Image job can be regenerated',
       );
     }
-    const jobInput = existing.input as AiImageJobInput;
+    const jobInput = existing.input as unknown as AiImageJobInput;
     return this.runImageJob(userId, jobInput);
   }
 

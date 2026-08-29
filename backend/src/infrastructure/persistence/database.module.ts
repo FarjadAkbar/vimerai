@@ -6,7 +6,6 @@ import { VideoEntity } from './typeorm/entities/video.entity';
 import { SubscriptionEntity } from './typeorm/entities/subscription.entity';
 import { PlanEntity } from './typeorm/entities/plan.entity';
 import { BrandKitEntity } from './typeorm/entities/brand-kit.entity';
-import { ProductEntity } from './typeorm/entities/product.entity';
 import { GenerationEntity } from './typeorm/entities/generation.entity';
 import { PostJobEntity } from './typeorm/entities/post-job.entity';
 import { VideoJobEntity } from './typeorm/entities/video-job.entity';
@@ -32,7 +31,6 @@ import databaseConfig from '@/infrastructure/config/database.config';
           SubscriptionEntity,
           PlanEntity,
           BrandKitEntity,
-          ProductEntity,
           GenerationEntity,
           PostJobEntity,
           VideoJobEntity,
@@ -54,7 +52,6 @@ import databaseConfig from '@/infrastructure/config/database.config';
       SubscriptionEntity,
       PlanEntity,
       BrandKitEntity,
-      ProductEntity,
       GenerationEntity,
       PostJobEntity,
       VideoJobEntity,

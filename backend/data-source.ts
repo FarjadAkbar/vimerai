@@ -5,7 +5,6 @@ import { VideoEntity } from './src/infrastructure/persistence/typeorm/entities/v
 import { SubscriptionEntity } from './src/infrastructure/persistence/typeorm/entities/subscription.entity';
 import { PlanEntity } from './src/infrastructure/persistence/typeorm/entities/plan.entity';
 import { BrandKitEntity } from './src/infrastructure/persistence/typeorm/entities/brand-kit.entity';
-import { ProductEntity } from './src/infrastructure/persistence/typeorm/entities/product.entity';
 import { GenerationEntity } from './src/infrastructure/persistence/typeorm/entities/generation.entity';
 import { PostJobEntity } from './src/infrastructure/persistence/typeorm/entities/post-job.entity';
 import { VideoJobEntity } from './src/infrastructure/persistence/typeorm/entities/video-job.entity';
@@ -28,7 +27,6 @@ export default new DataSource({
     SubscriptionEntity,
     PlanEntity,
     BrandKitEntity,
-    ProductEntity,
     GenerationEntity,
     PostJobEntity,
     VideoJobEntity,

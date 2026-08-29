@@ -20,7 +20,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Vimerai — Create 100+ Viral Posts in 1 Minute",
   description:
-    "Turn Brand Kit and Product context into feed-ready Instagram posts. Pick concepts, export, and post when you're ready.",
+    "Turn Business DNA into feed-ready Instagram posts and videos. Create in Brand Studio, export, and post when you're ready.",
 };
 
 export default function RootLayout({

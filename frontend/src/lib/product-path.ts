@@ -14,8 +14,6 @@ export const PRODUCT_PATH = {
   businessDna: "/studio/business-dna",
   /** @deprecated Demoted library — not primary nav (use Business DNA). */
   brands: "/studio/brands",
-  /** @deprecated Demoted library — redirect to Media Store in Library. */
-  products: "/studio/library",
 } as const;
 
 /**

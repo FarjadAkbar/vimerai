@@ -45,4 +45,42 @@ describe('Legacy schema contract (ticket 13)', () => {
     expect(studioCoreModule).toMatch(/ContentLibraryController/);
     expect(studioCoreModule).toMatch(/AiInfluencersController/);
   });
+
+  it('does not register Product entity or brand_kit_products persistence', () => {
+    const databaseModule = read(
+      'infrastructure',
+      'persistence',
+      'database.module.ts',
+    );
+    const dataSource = fs.readFileSync(
+      path.join(backendSrc, '..', 'data-source.ts'),
+      'utf8',
+    );
+    const migrationsDir = path.join(
+      backendSrc,
+      'infrastructure',
+      'persistence',
+      'migrations',
+    );
+
+    expect(databaseModule).not.toMatch(/\bProductEntity\b/);
+    expect(dataSource).not.toMatch(/\bProductEntity\b/);
+    expect(
+      fs.existsSync(
+        path.join(
+          backendSrc,
+          'infrastructure',
+          'persistence',
+          'typeorm',
+          'entities',
+          'product.entity.ts',
+        ),
+      ),
+    ).toBe(false);
+    expect(
+      fs.readdirSync(migrationsDir).some((file) =>
+        /DropBrandKitProducts/.test(file),
+      ),
+    ).toBe(true);
+  });
 });

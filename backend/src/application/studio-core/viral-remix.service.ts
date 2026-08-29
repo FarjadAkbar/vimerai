@@ -92,7 +92,7 @@ export class ViralRemixService implements IViralRemixService {
         'Only a completed Viral Remix can be regenerated',
       );
     }
-    const jobInput = existing.input as ViralRemixJobInput;
+    const jobInput = existing.input as unknown as ViralRemixJobInput;
     return this.runRemixJob(userId, jobInput);
   }
 
