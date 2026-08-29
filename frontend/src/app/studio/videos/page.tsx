@@ -26,11 +26,10 @@ import { getApiErrorMessage } from "@/lib/api/errors";
 import type { VideoJob } from "@/lib/api/video-jobs.api";
 import { PRODUCT_PATH } from "@/lib/product-path";
 import { useBrandKits } from "@/lib/hooks/use-brand-kits";
-import { useUploadProductImage } from "@/lib/hooks/use-products";
+import { useUploadMediaAsset } from "@/lib/hooks/use-media-assets";
 import {
   useCreateVideoJob,
   useRegenerateVideoJob,
-  useUploadReferenceVideo,
 } from "@/lib/hooks/use-video-jobs";
 import {
   useGenerateViralRemixTemplates,
@@ -44,8 +43,7 @@ export default function StudioVideosPage() {
   const { data: brandsData } = useBrandKits();
   const createJob = useCreateVideoJob();
   const regenerateJob = useRegenerateVideoJob();
-  const uploadReference = useUploadReferenceVideo();
-  const uploadImage = useUploadProductImage();
+  const uploadMedia = useUploadMediaAsset();
   const { data: templatesData, isLoading: templatesLoading } =
     useViralRemixTemplates();
   const generateTemplates = useGenerateViralRemixTemplates();
@@ -135,8 +133,8 @@ export default function StudioVideosPage() {
     setUploadingSlot("video");
     setError(null);
     try {
-      const result = await uploadReference.mutateAsync(file);
-      setReferenceVideoUrl(result.videoUrl);
+      const result = await uploadMedia.mutateAsync(file);
+      setReferenceVideoUrl(result.asset.url);
     } catch (err) {
       setError(getApiErrorMessage(err, "Could not upload reference video"));
     } finally {
@@ -148,8 +146,8 @@ export default function StudioVideosPage() {
     setUploadingSlot("product");
     setError(null);
     try {
-      const result = await uploadImage.mutateAsync(file);
-      setProductImageUrl(result.imageUrl);
+      const result = await uploadMedia.mutateAsync(file);
+      setProductImageUrl(result.asset.url);
     } catch (err) {
       setError(getApiErrorMessage(err, "Could not upload product image"));
     } finally {
@@ -161,8 +159,8 @@ export default function StudioVideosPage() {
     setUploadingSlot("person");
     setError(null);
     try {
-      const result = await uploadImage.mutateAsync(file);
-      setPersonImageUrl(result.imageUrl);
+      const result = await uploadMedia.mutateAsync(file);
+      setPersonImageUrl(result.asset.url);
     } catch (err) {
       setError(getApiErrorMessage(err, "Could not upload person image"));
     } finally {

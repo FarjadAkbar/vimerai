@@ -8,7 +8,18 @@ export interface CreateMediaAssetInput {
   sizeBytes?: number | null;
 }
 
+export interface UploadMediaAssetInput {
+  buffer: Buffer;
+  contentType: string;
+  originalName: string;
+  sizeBytes: number;
+}
+
 export interface IMediaAssetService {
+  uploadMediaAsset(
+    userId: string,
+    input: UploadMediaAssetInput,
+  ): Promise<MediaAsset>;
   createMediaAsset(
     userId: string,
     input: CreateMediaAssetInput,
