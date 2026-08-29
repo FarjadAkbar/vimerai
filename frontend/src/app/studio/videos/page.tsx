@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import {
   Box,
@@ -15,9 +15,12 @@ import {
   X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { BlitzHoverVideo } from "@/components/studio/blitz-hover-video";
 import {
   REMIX_STEPS,
-  VIRAL_REMIX_TEMPLATES,
+  VIRAL_REMIX_TEMPLATE_META,
+  mapTemplateToViralRemixTemplate,
+  type ViralRemixTemplate,
 } from "@/components/studio/viral-remix-data";
 import { getApiErrorMessage } from "@/lib/api/errors";
 import type { VideoJob } from "@/lib/api/video-jobs.api";
@@ -28,29 +31,52 @@ import {
   useCreateVideoJob,
   useRegenerateVideoJob,
   useUploadReferenceVideo,
-  useVideoJobs,
 } from "@/lib/hooks/use-video-jobs";
+import {
+  useGenerateViralRemixTemplates,
+  useViralRemixTemplates,
+} from "@/lib/hooks/use-videos";
+import { cn } from "@/lib/utils";
 
 const VIDEO_JOB_CREDIT_COST = 2;
 
 export default function StudioVideosPage() {
   const { data: brandsData } = useBrandKits();
-  const { data: jobsData } = useVideoJobs();
   const createJob = useCreateVideoJob();
   const regenerateJob = useRegenerateVideoJob();
   const uploadReference = useUploadReferenceVideo();
   const uploadImage = useUploadProductImage();
+  const { data: templatesData, isLoading: templatesLoading } =
+    useViralRemixTemplates();
+  const generateTemplates = useGenerateViralRemixTemplates();
 
   const brands = brandsData?.brandKits ?? [];
-  const recentJobs = jobsData?.videoJobs ?? [];
   const hasBrand = brands.length > 0;
+
+  const templates = useMemo(() => {
+    return (templatesData?.templates ?? [])
+      .map(mapTemplateToViralRemixTemplate)
+      .filter((template): template is ViralRemixTemplate => Boolean(template));
+  }, [templatesData?.templates]);
+
+  const completedTemplates = templates.filter(
+    (template) => template.status === "completed" && template.videoUrl,
+  );
+  const pendingTemplates = templates.filter(
+    (template) =>
+      template.status === "pending" || template.status === "processing",
+  );
 
   const refVideoInputRef = useRef<HTMLInputElement>(null);
   const productInputRef = useRef<HTMLInputElement>(null);
   const personInputRef = useRef<HTMLInputElement>(null);
+  const seededRef = useRef(false);
 
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string>(
+    VIRAL_REMIX_TEMPLATE_META[0].id,
+  );
   const [formatId, setFormatId] = useState<string>(
-    VIRAL_REMIX_TEMPLATES[0].id,
+    VIRAL_REMIX_TEMPLATE_META[0].remixFormatId,
   );
   const [referenceVideoUrl, setReferenceVideoUrl] = useState<string | null>(
     null,
@@ -75,8 +101,35 @@ export default function StudioVideosPage() {
     Boolean(productImageUrl || personImageUrl) &&
     !busy;
 
-  const previewReady = activeJob?.status === "completed" && !!activeJob.videoUrl;
-  const showGettingStarted = !previewReady && recentJobs.length === 0;
+  const previewReady =
+    activeJob?.status === "completed" && !!activeJob.videoUrl;
+  const showGettingStarted = !previewReady && !activeJob;
+
+  useEffect(() => {
+    if (!hasBrand || templatesLoading || seededRef.current) return;
+    if (templates.length >= VIRAL_REMIX_TEMPLATE_META.length) {
+      seededRef.current = true;
+      return;
+    }
+    if (generateTemplates.isPending) return;
+    seededRef.current = true;
+    void generateTemplates.mutateAsync().catch(() => {
+      seededRef.current = false;
+    });
+  }, [
+    hasBrand,
+    templatesLoading,
+    templates.length,
+    generateTemplates,
+  ]);
+
+  const applyTemplateAsRef = (template: ViralRemixTemplate) => {
+    if (!template.videoUrl) return;
+    setSelectedTemplateId(template.id);
+    setFormatId(template.remixFormatId);
+    setReferenceVideoUrl(template.videoUrl);
+    setError(null);
+  };
 
   const onUploadReferenceVideo = async (file: File) => {
     setUploadingSlot("video");
@@ -211,32 +264,115 @@ export default function StudioVideosPage() {
             ) : null}
 
             <section className="mt-10">
-              <h2 className="text-sm font-medium text-[var(--studio-ink)]">
-                Viral Remix Templates
-              </h2>
-              <div className="mt-4 flex gap-3 overflow-x-auto pb-2">
-                {VIRAL_REMIX_TEMPLATES.map((template) => (
-                  <button
-                    key={template.id}
-                    type="button"
-                    onClick={() => setFormatId(template.id)}
-                    className={`relative h-44 w-28 shrink-0 overflow-hidden rounded-2xl border transition ${
-                      formatId === template.id
-                        ? "border-[var(--studio-ink)] ring-2 ring-[var(--studio-ink)]/20"
-                        : "border-transparent hover:border-black/10"
-                    }`}
-                  >
-                    <div
-                      className={`absolute inset-0 bg-gradient-to-b ${template.gradient}`}
-                    />
-                    <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent p-3">
-                      <p className="text-left text-[11px] font-medium leading-tight text-white">
-                        {template.label}
-                      </p>
-                    </div>
-                  </button>
-                ))}
+              <div className="flex flex-wrap items-end justify-between gap-3">
+                <div>
+                  <h2 className="text-sm font-medium text-[var(--studio-ink)]">
+                    Viral Remix Templates
+                  </h2>
+                  <p className="mt-1 text-xs text-[var(--studio-muted)]">
+                    Generated 6–10s ad-style refs — hover to play, then Ref
+                    video
+                  </p>
+                </div>
+                {pendingTemplates.length > 0 || generateTemplates.isPending ? (
+                  <p className="text-xs text-[var(--studio-muted)]">
+                    <Loader2 className="mr-1.5 inline h-3.5 w-3.5 animate-spin" />
+                    Generating templates…
+                  </p>
+                ) : null}
               </div>
+
+              {templatesLoading && completedTemplates.length === 0 ? (
+                <div className="mt-8 flex justify-center py-12 text-sm text-[var(--studio-muted)]">
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Loading templates…
+                </div>
+              ) : completedTemplates.length === 0 ? (
+                <div className="mt-8 rounded-2xl border border-dashed border-[var(--studio-border)] px-6 py-12 text-center">
+                  <p className="text-sm text-[var(--studio-muted)]">
+                    {generateTemplates.isPending || pendingTemplates.length > 0
+                      ? "Viral Remix templates are rendering — this grid updates automatically."
+                      : "No Viral Remix templates yet."}
+                  </p>
+                  {!generateTemplates.isPending &&
+                  pendingTemplates.length === 0 ? (
+                    <Button
+                      className="mt-4 rounded-full"
+                      onClick={() => {
+                        seededRef.current = true;
+                        void generateTemplates.mutateAsync().catch((err) => {
+                          seededRef.current = false;
+                          setError(
+                            getApiErrorMessage(
+                              err,
+                              "Could not generate templates",
+                            ),
+                          );
+                        });
+                      }}
+                    >
+                      <Sparkles className="mr-2 h-4 w-4" />
+                      Generate templates
+                    </Button>
+                  ) : null}
+                </div>
+              ) : (
+                <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
+                  {completedTemplates.map((template) => {
+                    const selected = selectedTemplateId === template.id;
+                    const isRef = referenceVideoUrl === template.videoUrl;
+                    return (
+                      <div
+                        key={template.id}
+                        className={cn(
+                          "relative aspect-[9/14] overflow-hidden rounded-2xl border bg-zinc-950 transition",
+                          selected || isRef
+                            ? "border-[var(--studio-ink)] ring-2 ring-[var(--studio-ink)]/20"
+                            : "border-[var(--studio-border)] hover:border-black/20",
+                        )}
+                      >
+                        <button
+                          type="button"
+                          className="absolute inset-0"
+                          onClick={() => {
+                            setSelectedTemplateId(template.id);
+                            setFormatId(template.remixFormatId);
+                          }}
+                          aria-label={`Select ${template.label}`}
+                        >
+                          <BlitzHoverVideo
+                            src={template.videoUrl}
+                            className="absolute inset-0 h-full w-full"
+                          />
+                          <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent px-2.5 pb-12 pt-10">
+                            <p className="text-left text-[11px] font-semibold leading-tight text-white">
+                              {template.label}
+                            </p>
+                            <p className="mt-0.5 text-left text-[10px] text-white/75">
+                              {template.durationLabel} ad
+                            </p>
+                          </div>
+                        </button>
+                        <button
+                          type="button"
+                          className={cn(
+                            "absolute inset-x-2 bottom-2 z-10 rounded-full px-2 py-1.5 text-[10px] font-semibold transition",
+                            isRef
+                              ? "bg-white text-zinc-950"
+                              : "bg-zinc-950/80 text-white ring-1 ring-white/25 hover:bg-zinc-950",
+                          )}
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            applyTemplateAsRef(template);
+                          }}
+                        >
+                          {isRef ? "Ref video ✓" : "Ref video"}
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </section>
 
             {previewReady || activeJob?.status === "failed" ? (
@@ -286,49 +422,6 @@ export default function StudioVideosPage() {
                     </div>
                   ) : null}
                 </div>
-              </section>
-            ) : null}
-
-            {recentJobs.length > 0 && !previewReady ? (
-              <section className="mt-10 border-t border-[var(--studio-border)] pt-8">
-                <h2 className="text-sm font-medium uppercase tracking-[0.14em] text-[var(--studio-muted)]">
-                  Recent remixes
-                </h2>
-                <ul className="mt-4 grid gap-3 sm:grid-cols-3">
-                  {recentJobs.slice(0, 6).map((job) => (
-                    <li key={job.id}>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setActiveJob(job);
-                          setFormatId(job.formatId);
-                          if (job.snapshot.viralRemix) {
-                            setReferenceVideoUrl(
-                              job.snapshot.viralRemix.referenceVideoUrl,
-                            );
-                            setProductImageUrl(
-                              job.snapshot.viralRemix.productImageUrl,
-                            );
-                            setPersonImageUrl(
-                              job.snapshot.viralRemix.personImageUrl,
-                            );
-                            setInstructions(
-                              job.snapshot.viralRemix.instructions ?? "",
-                            );
-                          }
-                        }}
-                        className="w-full rounded-2xl border border-[var(--studio-border)] bg-white/70 px-4 py-3 text-left hover:border-black/20"
-                      >
-                        <p className="text-sm font-medium">
-                          {job.snapshot.format.label}
-                        </p>
-                        <p className="mt-1 text-xs text-[var(--studio-muted)]">
-                          {job.status}
-                        </p>
-                      </button>
-                    </li>
-                  ))}
-                </ul>
               </section>
             ) : null}
           </>

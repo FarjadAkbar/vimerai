@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { TemplateCatalogService } from '@/application/studio-core/template-catalog.service';
+import { TemplateGenerationService } from '@/application/studio-core/template-generation.service';
 import { MediaAssetService } from '@/application/studio-core/media-asset.service';
 import { JobService } from '@/application/studio-core/job.service';
 import { ContentLibraryService } from '@/application/studio-core/content-library.service';
@@ -14,15 +15,17 @@ import {
   TEMPLATE_REPOSITORY_TOKEN,
 } from '@/core/tokens/injection.tokens';
 import { DatabaseModule } from '@/infrastructure/persistence/database.module';
+import { VideoGenerationModule } from '@/infrastructure/video-generation/video-generation.module';
 import { TypeOrmContentItemRepository } from '@/infrastructure/persistence/typeorm/repositories/content-item.repository';
 import { TypeOrmJobRepository } from '@/infrastructure/persistence/typeorm/repositories/job.repository';
 import { TypeOrmMediaAssetRepository } from '@/infrastructure/persistence/typeorm/repositories/media-asset.repository';
 import { TypeOrmTemplateRepository } from '@/infrastructure/persistence/typeorm/repositories/template.repository';
 
 @Module({
-  imports: [DatabaseModule],
+  imports: [DatabaseModule, VideoGenerationModule],
   providers: [
     TemplateCatalogService,
+    TemplateGenerationService,
     MediaAssetService,
     JobService,
     ContentLibraryService,
@@ -61,6 +64,7 @@ import { TypeOrmTemplateRepository } from '@/infrastructure/persistence/typeorm/
   ],
   exports: [
     TEMPLATE_CATALOG_TOKEN,
+    TemplateGenerationService,
     MEDIA_ASSET_SERVICE_TOKEN,
     JOB_SERVICE_TOKEN,
     CONTENT_LIBRARY_TOKEN,
