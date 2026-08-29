@@ -86,16 +86,18 @@ export class FalImageGenerationProvider implements IImageGenerationProvider {
       );
     }
 
-    const composedPrompt = [
-      prompt,
-      'Use the Product photo as visual conditioning — keep the product recognizable.',
-      'Photoreal ecommerce Instagram feed still.',
-      request.negativePrompt?.trim()
-        ? `Avoid: ${request.negativePrompt.trim()}`
-        : '',
-    ]
-      .filter(Boolean)
-      .join('\n');
+    const composedPrompt = request.enhancePrompt === false
+      ? prompt
+      : [
+          prompt,
+          'Use the Product photo as visual conditioning — keep the product recognizable.',
+          'Photoreal ecommerce Instagram feed still.',
+          request.negativePrompt?.trim()
+            ? `Avoid: ${request.negativePrompt.trim()}`
+            : '',
+        ]
+          .filter(Boolean)
+          .join('\n');
 
     try {
       const submitEndpoint = this.joinUrl(
@@ -107,9 +109,9 @@ export class FalImageGenerationProvider implements IImageGenerationProvider {
         {
           prompt: composedPrompt,
           image_url: imageUrl,
-          aspect_ratio: '1:1',
+          aspect_ratio: request.aspectRatio ?? '1:1',
           num_images: 1,
-          output_format: 'png',
+          output_format: request.outputFormat ?? 'png',
         },
         {
           headers: this.jsonHeaders(),

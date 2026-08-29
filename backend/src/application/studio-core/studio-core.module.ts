@@ -13,6 +13,8 @@ import { ViralRemixService } from '@/application/studio-core/viral-remix.service
 import { ViralRemixController } from '@/application/studio-core/viral-remix.controller';
 import { BlitzComposeService } from '@/application/studio-core/blitz-compose.service';
 import { BlitzComposeController } from '@/application/studio-core/blitz-compose.controller';
+import { AiImageService } from '@/application/studio-core/ai-image.service';
+import { AiImagesController } from '@/application/studio-core/ai-images.controller';
 import { InfluencerImageService } from '@/application/studio-core/influencer-image.service';
 import { InfluencerVideoService } from '@/application/studio-core/influencer-video.service';
 import { ImageGenerationModule } from '@/infrastructure/image-generation/image-generation.module';
@@ -59,6 +61,7 @@ import { TypeOrmAiInfluencerRepository } from '@/infrastructure/persistence/type
     ViralRemixController,
     ContentLibraryController,
     BlitzComposeController,
+    AiImagesController,
   ],
   providers: [
     TemplateCatalogService,
@@ -72,6 +75,7 @@ import { TypeOrmAiInfluencerRepository } from '@/infrastructure/persistence/type
     BlitzComposeService,
     InfluencerImageService,
     InfluencerVideoService,
+    AiImageService,
     CuratedFormatCatalog,
     {
       provide: TEMPLATE_REPOSITORY_TOKEN,

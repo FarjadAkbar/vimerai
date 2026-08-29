@@ -30,6 +30,14 @@ export function formatJobTypeLabel(jobType: string): string {
       return "Viral Remix";
     case "blitz_compose":
       return "Blitz";
+    case "ai_image":
+      return "AI Image";
+    case "influencer_image":
+      return "Influencer Image";
+    case "influencer_video_i2v":
+      return "Influencer Video";
+    case "influencer_talking_head":
+      return "Talking Head";
     default:
       return jobType.replace(/_/g, " ");
   }
