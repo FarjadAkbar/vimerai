@@ -17,9 +17,11 @@ import { GENDER_OPTIONS } from "@/components/studio/influencer-data";
 import { Button } from "@/components/ui/button";
 import { getApiErrorMessage } from "@/lib/api/errors";
 import type { InfluencerContentItem } from "@/lib/api/influencer-images.api";
+import type { InfluencerVideoMode } from "@/lib/api/influencer-images.api";
 import {
   useAnimateInfluencerImage,
   useGenerateInfluencerImage,
+  useGenerateInfluencerVideo,
   useInfluencerImages,
   useInfluencerVideos,
 } from "@/lib/hooks/use-influencer-images";
@@ -129,7 +131,10 @@ export default function InfluencerDetailPage() {
           {tab === "images" ? (
             <ImagesTab influencerId={id} portraitUrl={influencer.portraitUrl} />
           ) : (
-            <VideosTab influencerId={id} />
+            <VideosTab
+              influencerId={id}
+              portraitUrl={influencer.portraitUrl}
+            />
           )}
         </div>
       </div>
@@ -374,79 +379,323 @@ function InfluencerImageCard({
   );
 }
 
-function VideosTab({ influencerId }: { influencerId: string }) {
+function VideosTab({
+  influencerId,
+  portraitUrl,
+}: {
+  influencerId: string;
+  portraitUrl: string | null;
+}) {
   const { data, isLoading } = useInfluencerVideos(influencerId);
+  const { data: imagesData } = useInfluencerImages(influencerId);
+  const generate = useGenerateInfluencerVideo(influencerId);
+  const [mode, setMode] = useState<InfluencerVideoMode>("image_to_video");
+  const [instructions, setInstructions] = useState("");
+  const [script, setScript] = useState("");
+  const [sourceContentItemId, setSourceContentItemId] = useState<string | null>(
+    null,
+  );
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
+
   const items = data?.items ?? [];
+  const imageSources = (imagesData?.items ?? []).filter(
+    (item) => item.status === "completed" && item.mediaUrl,
+  );
 
-  if (isLoading) {
-    return (
-      <div className="flex min-h-40 items-center justify-center text-sm text-[var(--studio-muted)]">
-        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-        Loading videos…
-      </div>
-    );
-  }
+  const selectedImage = imageSources.find(
+    (item) => item.id === sourceContentItemId,
+  );
 
-  if (items.length === 0) {
-    return (
-      <TabShell
-        icon={Video}
-        title="No videos yet"
-        body="Hover an image and choose Animate to create a video."
-      />
-    );
-  }
+  const handleGenerate = async () => {
+    setFormError(null);
+    try {
+      await generate.mutateAsync({
+        mode,
+        sourceContentItemId: sourceContentItemId ?? undefined,
+        instructions:
+          mode === "image_to_video" && instructions.trim()
+            ? instructions.trim()
+            : undefined,
+        script:
+          mode === "talking_head" && script.trim() ? script.trim() : undefined,
+      });
+      if (mode === "image_to_video") {
+        setInstructions("");
+      } else {
+        setScript("");
+      }
+    } catch (err) {
+      setFormError(getApiErrorMessage(err, "Could not generate video"));
+    }
+  };
+
+  const canGenerate =
+    mode === "talking_head"
+      ? script.trim().length > 0 && Boolean(portraitUrl || sourceContentItemId)
+      : Boolean(portraitUrl || sourceContentItemId);
 
   return (
-    <ul className="grid grid-cols-2 gap-4 sm:grid-cols-3">
-      {items.map((item) => (
-        <li
-          key={item.id}
-          className="overflow-hidden rounded-2xl border border-[var(--studio-border)] bg-[var(--studio-canvas)]"
-        >
-          <div className="aspect-[9/16] bg-neutral-100">
-            {item.mediaUrl && item.status === "completed" ? (
-              <video
-                src={item.mediaUrl}
-                className="h-full w-full object-cover"
-                controls
-                playsInline
-              />
-            ) : item.thumbnailUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={item.thumbnailUrl}
-                alt=""
-                className="h-full w-full object-cover opacity-70"
-              />
-            ) : (
-              <div className="flex h-full flex-col items-center justify-center p-4 text-center text-xs text-[var(--studio-muted)]">
-                {item.status === "failed" ? (
-                  <span className="text-red-600">{item.error ?? "Failed"}</span>
-                ) : (
-                  <>
-                    <Loader2 className="mb-2 h-5 w-5 animate-spin" />
-                    Building…
-                  </>
-                )}
+    <div className="space-y-8">
+      <section className="rounded-2xl border border-[var(--studio-border)] bg-[var(--studio-canvas)] p-5">
+        <h2 className="text-sm font-semibold">Generate video</h2>
+        <p className="mt-1 text-sm text-[var(--studio-muted)]">
+          Choose image-to-video or talking head. Portrait is used when no
+          source image is selected.
+        </p>
+
+        <div className="mt-4 flex flex-wrap gap-2">
+          <ModeButton
+            active={mode === "image_to_video"}
+            onClick={() => setMode("image_to_video")}
+            label="Image to video"
+          />
+          <ModeButton
+            active={mode === "talking_head"}
+            onClick={() => setMode("talking_head")}
+            label="Talking head"
+          />
+        </div>
+
+        <div className="mt-4">
+          <p className="text-xs font-medium text-[var(--studio-muted)]">
+            Source image
+          </p>
+          <div className="mt-2 flex flex-wrap items-center gap-2">
+            {portraitUrl && !sourceContentItemId ? (
+              <div className="relative h-16 w-16 overflow-hidden rounded-xl border border-[var(--studio-border)] bg-white">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={portraitUrl}
+                  alt="Portrait"
+                  className="h-full w-full object-cover"
+                />
+                <span className="absolute bottom-0 left-0 right-0 bg-black/60 px-1 py-0.5 text-center text-[10px] text-white">
+                  Portrait
+                </span>
               </div>
+            ) : null}
+            {selectedImage ? (
+              <div className="relative h-16 w-16 overflow-hidden rounded-xl border border-[var(--studio-border)] bg-white">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={selectedImage.mediaUrl!}
+                  alt={selectedImage.title ?? "Source image"}
+                  className="h-full w-full object-cover"
+                />
+                <button
+                  type="button"
+                  onClick={() => setSourceContentItemId(null)}
+                  className="absolute right-1 top-1 rounded-full bg-black/60 p-0.5 text-white"
+                  aria-label="Clear source image"
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              </div>
+            ) : null}
+            {imageSources.length > 0 ? (
+              <button
+                type="button"
+                onClick={() => setPickerOpen(true)}
+                className="flex h-16 min-w-[5rem] flex-col items-center justify-center rounded-xl border border-dashed border-[var(--studio-border)] bg-white px-3 text-[var(--studio-muted)] hover:border-neutral-400 hover:text-[var(--studio-ink)]"
+              >
+                <ImageIcon className="h-4 w-4" />
+                <span className="mt-1 text-[10px]">From images</span>
+              </button>
+            ) : null}
+          </div>
+        </div>
+
+        {mode === "image_to_video" ? (
+          <textarea
+            value={instructions}
+            onChange={(event) => setInstructions(event.target.value)}
+            placeholder="Motion instructions (optional) — e.g. slow zoom, hair blowing in wind"
+            rows={3}
+            className="mt-4 w-full rounded-xl border border-[var(--studio-border)] bg-white px-4 py-3 text-sm outline-none focus:border-neutral-400"
+          />
+        ) : (
+          <textarea
+            value={script}
+            onChange={(event) => setScript(event.target.value)}
+            placeholder="Script — what should the influencer say?"
+            rows={4}
+            className="mt-4 w-full rounded-xl border border-[var(--studio-border)] bg-white px-4 py-3 text-sm outline-none focus:border-neutral-400"
+          />
+        )}
+
+        {formError ? (
+          <p className="mt-3 text-sm text-red-600">{formError}</p>
+        ) : null}
+
+        <Button
+          className="mt-4 rounded-full bg-zinc-950 text-white hover:bg-zinc-800 disabled:bg-neutral-300"
+          disabled={generate.isPending || !canGenerate}
+          onClick={handleGenerate}
+        >
+          {generate.isPending ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Generating…
+            </>
+          ) : (
+            <>
+              <Sparkles className="mr-2 h-4 w-4" />
+              Generate
+            </>
+          )}
+        </Button>
+      </section>
+
+      {isLoading ? (
+        <div className="flex min-h-40 items-center justify-center text-sm text-[var(--studio-muted)]">
+          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+          Loading videos…
+        </div>
+      ) : items.length === 0 ? (
+        <TabShell
+          icon={Video}
+          title="No videos yet"
+          body="Generate a video above, or hover an image and choose Animate."
+        />
+      ) : (
+        <ul className="grid grid-cols-2 gap-4 sm:grid-cols-3">
+          {items.map((item) => (
+            <InfluencerVideoCard key={item.id} item={item} />
+          ))}
+        </ul>
+      )}
+
+      {pickerOpen ? (
+        <SourceImagePickerModal
+          images={imageSources}
+          onClose={() => setPickerOpen(false)}
+          onSelect={(id) => {
+            setSourceContentItemId(id);
+            setPickerOpen(false);
+          }}
+        />
+      ) : null}
+    </div>
+  );
+}
+
+function ModeButton({
+  active,
+  onClick,
+  label,
+}: {
+  active: boolean;
+  onClick: () => void;
+  label: string;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        "rounded-full px-4 py-2 text-sm font-medium transition",
+        active
+          ? "bg-neutral-900 text-white"
+          : "border border-[var(--studio-border)] bg-white text-[var(--studio-muted)] hover:text-[var(--studio-ink)]",
+      )}
+    >
+      {label}
+    </button>
+  );
+}
+
+function SourceImagePickerModal({
+  images,
+  onClose,
+  onSelect,
+}: {
+  images: InfluencerContentItem[];
+  onClose: () => void;
+  onSelect: (contentItemId: string) => void;
+}) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+      <div className="max-h-[80vh] w-full max-w-lg overflow-hidden rounded-2xl bg-white shadow-xl">
+        <div className="flex items-center justify-between border-b border-[var(--studio-border)] px-5 py-4">
+          <h3 className="text-sm font-semibold">Pick a source image</h3>
+          <button type="button" onClick={onClose} aria-label="Close">
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+        <ul className="grid max-h-[60vh] grid-cols-3 gap-3 overflow-y-auto p-5">
+          {images.map((item) => (
+            <li key={item.id}>
+              <button
+                type="button"
+                onClick={() => onSelect(item.id)}
+                className="block w-full overflow-hidden rounded-xl border border-[var(--studio-border)]"
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={item.mediaUrl!}
+                  alt={item.title ?? "Influencer image"}
+                  className="aspect-[3/4] w-full object-cover"
+                />
+              </button>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </div>
+  );
+}
+
+function InfluencerVideoCard({ item }: { item: InfluencerContentItem }) {
+  const typeLabel =
+    item.jobType === "influencer_talking_head"
+      ? "Talking head"
+      : "Image to video";
+
+  return (
+    <li className="overflow-hidden rounded-2xl border border-[var(--studio-border)] bg-[var(--studio-canvas)]">
+      <div className="aspect-[9/16] bg-neutral-100">
+        {item.mediaUrl && item.status === "completed" ? (
+          <video
+            src={item.mediaUrl}
+            className="h-full w-full object-cover"
+            controls
+            playsInline
+          />
+        ) : item.thumbnailUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={item.thumbnailUrl}
+            alt=""
+            className="h-full w-full object-cover opacity-70"
+          />
+        ) : (
+          <div className="flex h-full flex-col items-center justify-center p-4 text-center text-xs text-[var(--studio-muted)]">
+            {item.status === "failed" ? (
+              <span className="text-red-600">{item.error ?? "Failed"}</span>
+            ) : (
+              <>
+                <Loader2 className="mb-2 h-5 w-5 animate-spin" />
+                Building…
+              </>
             )}
           </div>
-          <div className="p-3">
-            <p className="truncate text-sm font-medium">
-              {item.title ?? "Influencer video"}
-            </p>
-            <p className="mt-0.5 text-xs text-[var(--studio-muted)]">
-              {item.status === "completed"
-                ? "Created"
-                : item.status === "failed"
-                  ? "Failed"
-                  : "Building"}
-            </p>
-          </div>
-        </li>
-      ))}
-    </ul>
+        )}
+      </div>
+      <div className="p-3">
+        <p className="truncate text-sm font-medium">
+          {item.title ?? "Influencer video"}
+        </p>
+        <p className="mt-0.5 text-xs text-[var(--studio-muted)]">
+          {typeLabel} ·{" "}
+          {item.status === "completed"
+            ? "Created"
+            : item.status === "failed"
+              ? "Failed"
+              : "Building"}
+        </p>
+      </div>
+    </li>
   );
 }
 

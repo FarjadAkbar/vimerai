@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   influencerImagesApi,
   type CreateInfluencerImagePayload,
+  type CreateInfluencerVideoPayload,
 } from "@/lib/api/influencer-images.api";
 
 function influencerImagesKey(influencerId: string) {
@@ -53,6 +54,21 @@ export function useGenerateInfluencerImage(influencerId: string) {
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: influencerImagesKey(influencerId),
+      });
+      queryClient.invalidateQueries({ queryKey: ["content-library"] });
+    },
+  });
+}
+
+export function useGenerateInfluencerVideo(influencerId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (payload: CreateInfluencerVideoPayload) =>
+      influencerImagesApi.generateVideo(influencerId, payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: influencerVideosKey(influencerId),
       });
       queryClient.invalidateQueries({ queryKey: ["content-library"] });
     },

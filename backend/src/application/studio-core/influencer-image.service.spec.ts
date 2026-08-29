@@ -1,5 +1,6 @@
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { InfluencerImageService } from '@/application/studio-core/influencer-image.service';
+import { InfluencerVideoService } from '@/application/studio-core/influencer-video.service';
 import { JobService } from '@/application/studio-core/job.service';
 import { MediaAssetService } from '@/application/studio-core/media-asset.service';
 import {
@@ -59,14 +60,23 @@ describe('InfluencerImageService', () => {
     const imageProvider = new FakeImageGenerationProvider(imageUrl);
     const videoProvider = new FakeVideoGenerationProvider(videoUrl);
 
+    const videoService = new InfluencerVideoService(
+      jobService,
+      contentRepo,
+      influencerRepo,
+      mediaAssetService,
+      videoProvider,
+      subscriptionFake(),
+    );
+
     const service = new InfluencerImageService(
       jobService,
       contentRepo,
       influencerRepo,
       mediaAssetService,
       imageProvider,
-      videoProvider,
       subscriptionFake(),
+      videoService,
     );
 
     return {

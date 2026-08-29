@@ -12,7 +12,9 @@ import {
 import { AiInfluencerService } from '@/application/studio-core/ai-influencer.service';
 import { toAiInfluencerResponse } from '@/application/studio-core/ai-influencer-response';
 import { CreateInfluencerImageDto } from '@/application/studio-core/dto/create-influencer-image.dto';
+import { CreateInfluencerVideoDto } from '@/application/studio-core/dto/create-influencer-video.dto';
 import { InfluencerImageService } from '@/application/studio-core/influencer-image.service';
+import { InfluencerVideoService } from '@/application/studio-core/influencer-video.service';
 import { CreateAiInfluencerDto } from '@/application/studio-core/dto/create-ai-influencer.dto';
 import { JwtAuthGuard } from '@/infrastructure/auth/jwt-auth.guard';
 import { CurrentUser } from '@/infrastructure/auth/current-user.decorator';
@@ -23,6 +25,7 @@ export class AiInfluencersController {
   constructor(
     private readonly aiInfluencerService: AiInfluencerService,
     private readonly influencerImageService: InfluencerImageService,
+    private readonly influencerVideoService: InfluencerVideoService,
   ) {}
 
   @Get()
@@ -82,11 +85,26 @@ export class AiInfluencersController {
     @CurrentUser() user: { userId: string },
     @Param('id') id: string,
   ) {
-    const items = await this.influencerImageService.listInfluencerVideos(
+    const items = await this.influencerVideoService.listInfluencerVideos(
       user.userId,
       id,
     );
     return { items };
+  }
+
+  @Post(':id/videos')
+  @HttpCode(HttpStatus.CREATED)
+  async generateInfluencerVideo(
+    @CurrentUser() user: { userId: string },
+    @Param('id') id: string,
+    @Body() body: CreateInfluencerVideoDto,
+  ) {
+    const item = await this.influencerVideoService.generateVideo(
+      user.userId,
+      id,
+      body,
+    );
+    return { item };
   }
 
   @Get(':id')

@@ -33,6 +33,16 @@ export type CreateInfluencerImagePayload = {
   referenceMediaAssetIds?: string[];
 };
 
+export type InfluencerVideoMode = 'image_to_video' | 'talking_head';
+
+export type CreateInfluencerVideoPayload = {
+  mode: InfluencerVideoMode;
+  sourceContentItemId?: string;
+  sourceMediaAssetId?: string;
+  instructions?: string;
+  script?: string;
+};
+
 export const influencerImagesApi = {
   list: async (influencerId: string): Promise<InfluencerContentListResponse> => {
     const response = await api.get<InfluencerContentListResponse>(
@@ -67,6 +77,17 @@ export const influencerImagesApi = {
   ): Promise<InfluencerContentItemResponse> => {
     const response = await api.post<InfluencerContentItemResponse>(
       `/ai-influencers/${influencerId}/images/${contentItemId}/animate`,
+    );
+    return response.data;
+  },
+
+  generateVideo: async (
+    influencerId: string,
+    payload: CreateInfluencerVideoPayload,
+  ): Promise<InfluencerContentItemResponse> => {
+    const response = await api.post<InfluencerContentItemResponse>(
+      `/ai-influencers/${influencerId}/videos`,
+      payload,
     );
     return response.data;
   },

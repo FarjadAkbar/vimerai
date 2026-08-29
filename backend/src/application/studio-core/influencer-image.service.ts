@@ -5,6 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { v4 as uuidv4 } from 'uuid';
+import { InfluencerVideoService } from '@/application/studio-core/influencer-video.service';
 import { toInfluencerContentItemResult } from '@/application/studio-core/influencer-image-response';
 import type { IAiInfluencerRepository } from '@/core/ports/ai-influencer.repository';
 import type { IContentItemRepository } from '@/core/ports/content-item.repository';
@@ -12,17 +13,12 @@ import type { IImageGenerationProvider } from '@/core/ports/image-generation.pro
 import type {
   CreateInfluencerImageInput,
   IInfluencerImageService,
-  InfluencerAnimateJobInput,
   InfluencerContentItemResult,
   InfluencerImageJobInput,
 } from '@/core/ports/influencer-image.service';
 import type { IJobService } from '@/core/ports/job.service';
 import type { IMediaAssetService } from '@/core/ports/media-asset.service';
 import type { ISubscriptionService } from '@/core/ports/subscription.service';
-import type {
-  GenerateVideoResponse,
-  IVideoGenerationProvider,
-} from '@/core/ports/video-generation.provider';
 import {
   AI_INFLUENCER_REPOSITORY_TOKEN,
   CONTENT_ITEM_REPOSITORY_TOKEN,
@@ -30,7 +26,6 @@ import {
   JOB_SERVICE_TOKEN,
   MEDIA_ASSET_SERVICE_TOKEN,
   SUBSCRIPTION_SERVICE_TOKEN,
-  VIDEO_GENERATION_PROVIDER_TOKEN,
 } from '@/core/tokens/injection.tokens';
 import { AiInfluencer } from '@/domain/ai-influencer.entity';
 import {
@@ -39,9 +34,7 @@ import {
 } from '@/domain/content-item.entity';
 import { JobType } from '@/domain/job.entity';
 import { MediaAssetKind } from '@/domain/media-asset.entity';
-import { GenerationMode } from '@/domain/video.entity';
 import { IMAGE_JOB_CREDIT_COST } from '@/types/image-job/credits';
-import { VIDEO_JOB_CREDIT_COST } from '@/types/video-job/credits';
 
 @Injectable()
 export class InfluencerImageService implements IInfluencerImageService {
@@ -56,10 +49,9 @@ export class InfluencerImageService implements IInfluencerImageService {
     private readonly mediaAssetService: IMediaAssetService,
     @Inject(IMAGE_GENERATION_PROVIDER_TOKEN)
     private readonly imageGenerationProvider: IImageGenerationProvider,
-    @Inject(VIDEO_GENERATION_PROVIDER_TOKEN)
-    private readonly videoGenerationProvider: IVideoGenerationProvider,
     @Inject(SUBSCRIPTION_SERVICE_TOKEN)
     private readonly subscriptionService: ISubscriptionService,
+    private readonly influencerVideoService: InfluencerVideoService,
   ) {}
 
   async generateImage(
@@ -77,35 +69,11 @@ export class InfluencerImageService implements IInfluencerImageService {
     influencerId: string,
     contentItemId: string,
   ): Promise<InfluencerContentItemResult> {
-    const influencer = await this.requireInfluencer(userId, influencerId);
-    const contentItem = await this.contentItemRepository.findById(contentItemId);
-    if (!contentItem || contentItem.userId !== userId) {
-      throw new NotFoundException('Content item not found');
-    }
-
-    const sourceJob = await this.jobService.getJob(userId, contentItem.jobId);
-    if (sourceJob.type !== JobType.INFLUENCER_IMAGE) {
-      throw new BadRequestException('Only influencer images can be animated');
-    }
-    if (sourceJob.status !== 'completed' || !contentItem.mediaUrl) {
-      throw new BadRequestException(
-        'Only a completed influencer image can be animated',
-      );
-    }
-
-    const sourceInput = sourceJob.input as InfluencerImageJobInput;
-    if (sourceInput.influencerId !== influencerId) {
-      throw new NotFoundException('Content item not found');
-    }
-
-    const jobInput: InfluencerAnimateJobInput = {
+    return this.influencerVideoService.animateFromContentItem(
+      userId,
       influencerId,
-      sourceContentItemId: contentItemId,
-      sourceImageUrl: contentItem.mediaUrl,
-      prompt: this.buildAnimatePrompt(influencer),
-    };
-
-    return this.runAnimateJob(userId, influencer, jobInput);
+      contentItemId,
+    );
   }
 
   async listInfluencerImages(
@@ -121,10 +89,10 @@ export class InfluencerImageService implements IInfluencerImageService {
     userId: string,
     influencerId: string,
   ): Promise<InfluencerContentItemResult[]> {
-    return this.listInfluencerContent(userId, influencerId, [
-      JobType.INFLUENCER_VIDEO_I2V,
-      JobType.INFLUENCER_TALKING_HEAD,
-    ]);
+    return this.influencerVideoService.listInfluencerVideos(
+      userId,
+      influencerId,
+    );
   }
 
   private async listInfluencerContent(
@@ -207,72 +175,6 @@ export class InfluencerImageService implements IInfluencerImageService {
     }
   }
 
-  private async runAnimateJob(
-    userId: string,
-    influencer: AiInfluencer,
-    jobInput: InfluencerAnimateJobInput,
-  ): Promise<InfluencerContentItemResult> {
-    const canGenerate = await this.subscriptionService.canGenerate(
-      userId,
-      VIDEO_JOB_CREDIT_COST,
-    );
-    if (!canGenerate) {
-      throw new BadRequestException('Video generation credit limit reached');
-    }
-
-    const job = await this.jobService.createJob(userId, {
-      type: JobType.INFLUENCER_VIDEO_I2V,
-      jobInput: jobInput as unknown as Record<string, unknown>,
-      creditCharge: VIDEO_JOB_CREDIT_COST,
-    });
-
-    const title = `${influencer.name} video`;
-    const placeholder = ContentItem.create({
-      id: uuidv4(),
-      userId,
-      jobId: job.id,
-      mediaKind: ContentItemMediaKind.VIDEO,
-      title,
-      thumbnailUrl: jobInput.sourceImageUrl,
-    });
-    await this.contentItemRepository.create(placeholder);
-
-    await this.subscriptionService.recordVideoGeneration(
-      userId,
-      VIDEO_JOB_CREDIT_COST,
-    );
-
-    try {
-      await this.jobService.markJobProcessing(job.id);
-      const video = await this.waitForVideo(
-        await this.videoGenerationProvider.generateVideo({
-          prompt: jobInput.prompt,
-          mode: GenerationMode.CINEMATIC,
-          useImageConditioning: true,
-          productAssetUrls: [jobInput.sourceImageUrl],
-          aspectRatio: '9:16',
-        }),
-      );
-      if (video.status === 'failed' || !video.videoUrl) {
-        throw new Error(video.error ?? 'Image-to-video generation failed');
-      }
-
-      const result = await this.jobService.completeJob(userId, job.id, {
-        mediaKind: ContentItemMediaKind.VIDEO,
-        mediaUrl: video.videoUrl,
-        thumbnailUrl: jobInput.sourceImageUrl,
-        title,
-      });
-      return toInfluencerContentItemResult(result.job, result.contentItem);
-    } catch (error) {
-      const message =
-        error instanceof Error ? error.message : 'Influencer animate failed';
-      const failed = await this.jobService.failJob(job.id, message);
-      const contentItem = await this.contentItemRepository.findByJobId(job.id);
-      return toInfluencerContentItemResult(failed, contentItem);
-    }
-  }
-
   private async buildImageJobInput(
     userId: string,
     influencer: AiInfluencer,
@@ -336,44 +238,6 @@ export class InfluencerImageService implements IInfluencerImageService {
     ]
       .filter(Boolean)
       .join(' ');
-  }
-
-  private buildAnimatePrompt(influencer: AiInfluencer): string {
-    return [
-      `Animate this image of ${influencer.name} into a short vertical social video.`,
-      `Appearance: ${influencer.appearancePrompt}.`,
-      `Gender: ${influencer.gender}. Age: ${influencer.age}.`,
-      influencer.ethnicity ? `Ethnicity: ${influencer.ethnicity}.` : '',
-      'Subtle natural motion, cinematic lighting, vertical 9:16 framing.',
-    ]
-      .filter(Boolean)
-      .join(' ');
-  }
-
-  private async waitForVideo(
-    initial: GenerateVideoResponse,
-  ): Promise<GenerateVideoResponse> {
-    if (initial.status === 'completed' || initial.status === 'failed') {
-      return initial;
-    }
-
-    const deadline = Date.now() + 5 * 60_000;
-    let latest = initial;
-    while (Date.now() < deadline) {
-      await new Promise((resolve) => setTimeout(resolve, 3_000));
-      latest = await this.videoGenerationProvider.getGenerationStatus(
-        initial.jobId,
-      );
-      if (latest.status === 'completed' || latest.status === 'failed') {
-        return latest;
-      }
-    }
-
-    return {
-      ...latest,
-      status: 'failed',
-      error: latest.error ?? 'Video generation timed out',
-    };
   }
 
   private async requireInfluencer(
