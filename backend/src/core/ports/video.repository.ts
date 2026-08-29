@@ -1,4 +1,4 @@
-import { Video } from '@/domain/video.entity';
+import { Video, VideoKind } from '@/domain/video.entity';
 
 export interface IVideoRepository {
   createVideo(video: Video): Promise<void>;
@@ -12,3 +12,5 @@ export interface IVideoRepository {
   updateVideo(video: Video): Promise<void>;
   deleteVideo(id: string): Promise<void>;
 }
+
+export type { VideoKind };

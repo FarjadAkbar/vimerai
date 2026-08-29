@@ -39,8 +39,8 @@ import {
 import { useComposeBlitzEdit } from "@/lib/hooks/use-blitz-compose";
 import { composeBlitzEditFile } from "@/lib/blitz/compose-blitz-edit";
 import { useBrandKits } from "@/lib/hooks/use-brand-kits";
-import { useCreateImageJob } from "@/lib/hooks/use-image-jobs";
-import { useProducts } from "@/lib/hooks/use-products";
+import { useGenerateAiImage } from "@/lib/hooks/use-ai-images";
+import { useMediaAssets } from "@/lib/hooks/use-media-assets";
 import {
   mapTemplateToBlitzTemplate,
   useVideoTemplates,
@@ -50,11 +50,10 @@ import { cn } from "@/lib/utils";
 
 export default function StudioBlitzPage() {
   const { data: brandsData } = useBrandKits();
-  const { data: productsData } = useProducts();
+  const { data: mediaData } = useMediaAssets("image");
   const brands = brandsData?.brandKits ?? [];
-  const products = productsData?.products ?? [];
+  const heroImage = mediaData?.assets[0];
   const brand = brands[0];
-  const product = products[0];
 
   const { config, save: saveConfig, ready: configReady } = useBlitzConfig(
     brand?.id,
@@ -64,7 +63,7 @@ export default function StudioBlitzPage() {
   const { data: templatesData, isLoading: templatesLoading } =
     useVideoTemplates();
   const { accept } = useBlitzAccepted();
-  const createImageJob = useCreateImageJob();
+  const generateAiImage = useGenerateAiImage();
   const composeBlitzEdit = useComposeBlitzEdit();
 
   const templates = useMemo(() => {
@@ -100,8 +99,8 @@ export default function StudioBlitzPage() {
     if (!brand || !configReady || !materialsReady || !templatesReady) return [];
     return buildBlitzQueue({
       brandName: brand.name,
-      productName: product?.name,
-      productImageUrl: product?.imageUrls[0] ?? null,
+      productName: brand.name,
+      productImageUrl: heroImage?.url ?? null,
       materialUrls: materials
         .filter((m) => m.status === "completed" && m.imageUrl)
         .map((m) => m.imageUrl),
@@ -110,7 +109,7 @@ export default function StudioBlitzPage() {
     });
   }, [
     brand,
-    product,
+    heroImage,
     materials,
     templates,
     config,
@@ -217,7 +216,7 @@ export default function StudioBlitzPage() {
     const nextHook = editPrompt.trim()
       ? editPrompt.trim()
       : card.mentionBusiness
-        ? `POV: ${brand.name} just changed the game for ${product?.name ?? "your brand"}`
+        ? `POV: ${brand.name} just changed the game for ${brand.name}`
         : card.remix.hook;
     const updated = (liveCards ?? baseQueue).map((entry) =>
       entry.id === card.id
@@ -270,22 +269,28 @@ export default function StudioBlitzPage() {
   };
 
   const onGenerateMaterials = async () => {
-    if (!product?.imageUrls[0]) {
-      setError("Add a Product with an image first (Make a Post or Products).");
+    if (!heroImage) {
+      setError(
+        "Upload a product image to Media Store first (Library → My Media Store).",
+      );
       return;
     }
     setError(null);
     try {
-      const result = await createImageJob.mutateAsync({
-        prompt: `Premium lifestyle background for ${brand?.name ?? "brand"} social slideshow. Soft light, clean composition, no text.`,
-        referenceImageUrls: [product.imageUrls[0]],
+      const result = await generateAiImage.mutateAsync({
+        instructions: `Premium lifestyle background for ${brand?.name ?? "brand"} social slideshow. Soft light, clean composition, no text.`,
+        referenceMediaAssetIds: [heroImage.id],
       });
+      const item = result.item;
+      if (!item.mediaUrl) {
+        throw new Error(item.error ?? "Material generation failed");
+      }
       addMaterial({
-        id: result.imageJob.id,
-        imageUrl: result.imageJob.imageUrl ?? "",
-        prompt: result.imageJob.prompt,
-        createdAt: result.imageJob.createdAt,
-        status: result.imageJob.status,
+        id: item.jobId,
+        imageUrl: item.mediaUrl,
+        prompt: item.title ?? "",
+        createdAt: item.createdAt,
+        status: item.status === "failed" ? "failed" : "completed",
       });
     } catch (err) {
       setError(getApiErrorMessage(err, "Could not generate materials"));
@@ -491,7 +496,7 @@ export default function StudioBlitzPage() {
         )}
       </div>
 
-      {createImageJob.isPending ? (
+      {generateAiImage.isPending ? (
         <p className="shrink-0 pb-4 text-center text-sm text-zinc-500">
           <Loader2 className="mr-2 inline h-4 w-4 animate-spin" />
           Generating materials…
@@ -502,7 +507,7 @@ export default function StudioBlitzPage() {
         open={materialsOpen}
         onClose={() => setMaterialsOpen(false)}
         materials={materials}
-        generating={createImageJob.isPending}
+        generating={generateAiImage.isPending}
         onGenerate={onGenerateMaterials}
       />
       <BlitzTemplatesModal
@@ -513,7 +518,6 @@ export default function StudioBlitzPage() {
           const idx = queue.findIndex((entry) => entry.formatId === formatId);
           setQueueIndex(idx >= 0 ? idx : 0);
         }}
-        templates={templates}
       />
       <BlitzConfigureModal
         open={configureOpen}

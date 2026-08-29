@@ -15,6 +15,36 @@ const nextConfig: NextConfig = {
         destination: "/studio/business-dna",
         permanent: false,
       },
+      {
+        source: "/studio/posts",
+        destination: "/studio/blitz",
+        permanent: false,
+      },
+      {
+        source: "/products",
+        destination: "/studio/library",
+        permanent: false,
+      },
+      {
+        source: "/generations",
+        destination: "/studio/library",
+        permanent: false,
+      },
+      {
+        source: "/generations/:path*",
+        destination: "/studio/library",
+        permanent: false,
+      },
+      {
+        source: "/my-videos",
+        destination: "/studio/library",
+        permanent: false,
+      },
+      {
+        source: "/editor/:path*",
+        destination: "/studio/library",
+        permanent: false,
+      },
     ];
   },
 };

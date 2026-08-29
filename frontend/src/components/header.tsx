@@ -212,16 +212,16 @@ const Header = () => {
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => navigate(PRODUCT_PATH.posts)}
+                    onClick={() => navigate(PRODUCT_PATH.blitz)}
                   >
-                    Make a Post
+                    Blitz
                   </Button>
                   <Button
                     variant="ghost"
                     size="sm"
                     onClick={() => navigate(PRODUCT_PATH.videos)}
                   >
-                    Make a Video
+                    Viral Remix
                   </Button>
                   <Button
                     variant="ghost"

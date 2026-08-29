@@ -15,6 +15,8 @@ import { BlitzComposeService } from '@/application/studio-core/blitz-compose.ser
 import { BlitzComposeController } from '@/application/studio-core/blitz-compose.controller';
 import { AiImageService } from '@/application/studio-core/ai-image.service';
 import { AiImagesController } from '@/application/studio-core/ai-images.controller';
+import { TemplatesController } from '@/application/studio-core/templates.controller';
+import { FormatsController } from '@/application/studio-core/formats.controller';
 import { InfluencerImageService } from '@/application/studio-core/influencer-image.service';
 import { InfluencerVideoService } from '@/application/studio-core/influencer-video.service';
 import { ImageGenerationModule } from '@/infrastructure/image-generation/image-generation.module';
@@ -62,6 +64,8 @@ import { TypeOrmAiInfluencerRepository } from '@/infrastructure/persistence/type
     ContentLibraryController,
     BlitzComposeController,
     AiImagesController,
+    TemplatesController,
+    FormatsController,
   ],
   providers: [
     TemplateCatalogService,

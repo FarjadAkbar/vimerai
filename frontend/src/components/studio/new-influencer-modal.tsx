@@ -20,7 +20,7 @@ import {
   type PortraitSource,
 } from "@/components/studio/influencer-data";
 import { getApiErrorMessage } from "@/lib/api/errors";
-import { useCreateImageJob } from "@/lib/hooks/use-image-jobs";
+import { useGenerateAiImage } from "@/lib/hooks/use-ai-images";
 import { useCreateInfluencer } from "@/lib/hooks/use-influencers";
 import { useUploadMediaAsset } from "@/lib/hooks/use-media-assets";
 import { influencerDetailPath } from "@/lib/product-path";
@@ -34,7 +34,7 @@ export function NewInfluencerModal({
   onClose: () => void;
 }) {
   const router = useRouter();
-  const createImageJob = useCreateImageJob();
+  const generateAiImage = useGenerateAiImage();
   const createInfluencer = useCreateInfluencer();
   const uploadMedia = useUploadMediaAsset();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -128,25 +128,25 @@ export function NewInfluencerModal({
 
   const onGeneratePortrait = async () => {
     setError(null);
-    const seedUrl = draft.portraitUrl;
-    if (!seedUrl) {
+    const seedAssetId = draft.portraitMediaAssetId;
+    if (!seedAssetId) {
       setError("Upload or choose a seed image from Media Store first.");
       return;
     }
 
     setGenerating(true);
     try {
-      const result = await createImageJob.mutateAsync({
-        prompt: buildPortraitPrompt(draft),
-        referenceImageUrls: [seedUrl],
+      const result = await generateAiImage.mutateAsync({
+        instructions: buildPortraitPrompt(draft),
+        referenceMediaAssetIds: [seedAssetId],
       });
-      if (!result.imageJob.imageUrl) {
-        throw new Error(result.imageJob.error ?? "Portrait generation failed");
+      if (!result.item.mediaUrl) {
+        throw new Error(result.item.error ?? "Portrait generation failed");
       }
       setDraft((prev) => ({
         ...prev,
         portraitSource: "ai",
-        portraitUrl: result.imageJob.imageUrl,
+        portraitUrl: result.item.mediaUrl,
         portraitMediaAssetId: null,
       }));
       setStep(3);
@@ -184,7 +184,7 @@ export function NewInfluencerModal({
 
   const busy =
     generating ||
-    createImageJob.isPending ||
+    generateAiImage.isPending ||
     uploadMedia.isPending ||
     createInfluencer.isPending;
 

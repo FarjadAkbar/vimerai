@@ -5,7 +5,12 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
 } from 'typeorm';
-import { Video, VideoStatus, GenerationMode } from '@/domain/video.entity';
+import {
+  Video,
+  VideoStatus,
+  GenerationMode,
+  VideoKind,
+} from '@/domain/video.entity';
 
 @Entity('videos')
 export class VideoEntity {
@@ -33,6 +38,15 @@ export class VideoEntity {
   @Column({ unique: true })
   jobId: string;
 
+  @Column({
+    type: 'varchar',
+    default: VideoKind.USER,
+  })
+  kind: VideoKind;
+
+  @Column({ nullable: true, type: 'varchar' })
+  formatId: string | null;
+
   @CreateDateColumn()
   createdAt: Date;
 
@@ -49,6 +63,8 @@ export class VideoEntity {
       entity.videoUrl,
       entity.previewUrl,
       entity.jobId,
+      entity.kind ?? VideoKind.USER,
+      entity.formatId ?? null,
       entity.createdAt,
       entity.updatedAt,
     );
@@ -64,6 +80,8 @@ export class VideoEntity {
     entity.videoUrl = domain.videoUrl;
     entity.previewUrl = domain.previewUrl;
     entity.jobId = domain.jobId;
+    entity.kind = domain.kind;
+    entity.formatId = domain.formatId;
     if (domain.createdAt) entity.createdAt = domain.createdAt;
     if (domain.updatedAt) entity.updatedAt = domain.updatedAt;
     return entity;

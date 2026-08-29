@@ -34,21 +34,6 @@ export class InMemoryVideoRepository implements IVideoRepository {
     };
   }
 
-  async getTemplateVideosByUserId(userId: string): Promise<Video[]> {
-    return [...this.videos.values()]
-      .filter(
-        (video) =>
-          video.userId === userId && video.kind === VideoKind.TEMPLATE,
-      )
-      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
-  }
-
-  async getAllTemplateVideos(): Promise<Video[]> {
-    return [...this.videos.values()]
-      .filter((video) => video.kind === VideoKind.TEMPLATE)
-      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
-  }
-
   async updateVideo(video: Video): Promise<void> {
     this.videos.set(video.id, video);
   }

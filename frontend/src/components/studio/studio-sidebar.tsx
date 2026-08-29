@@ -6,7 +6,6 @@ import {
   Clapperboard,
   Dna,
   FolderOpen,
-  ImageIcon,
   LayoutGrid,
   LogOut,
   Mail,
@@ -32,7 +31,6 @@ const brandStudioItems = [
   { href: PRODUCT_PATH.blitz, label: "Blitz", icon: Rocket },
   { href: PRODUCT_PATH.videos, label: "Viral Remix", icon: Clapperboard },
   { href: PRODUCT_PATH.influencers, label: "AI Influencers", icon: Users },
-  { href: PRODUCT_PATH.posts, label: "Make a Post", icon: ImageIcon },
   { href: PRODUCT_PATH.library, label: "Library", icon: FolderOpen },
   { href: PRODUCT_PATH.businessDna, label: "Business DNA", icon: Dna },
 ] as const;

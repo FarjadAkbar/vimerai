@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { IVideoRepository } from '@/core/ports/video.repository';
-import { Video } from '@/domain/video.entity';
+import { Video, VideoKind } from '@/domain/video.entity';
 import { VideoEntity } from '../entities/video.entity';
 
 @Injectable()
@@ -33,7 +33,7 @@ export class TypeOrmVideoRepository implements IVideoRepository {
     offset: number,
   ): Promise<{ videos: Video[]; total: number }> {
     const [entities, total] = await this.repository.findAndCount({
-      where: { userId },
+      where: { userId, kind: VideoKind.USER },
       order: { createdAt: 'DESC' },
       take: limit,
       skip: offset,

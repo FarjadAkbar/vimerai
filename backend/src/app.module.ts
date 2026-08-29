@@ -4,13 +4,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { DatabaseModule } from './infrastructure/persistence/database.module';
 import { AuthModule } from './application/auth/auth.module';
-import { GenerationModule } from './application/generation/generation.module';
 import { BrandKitsModule } from './application/brand-kits/brand-kits.module';
-import { ProductsModule } from './application/products/products.module';
-import { PostJobsModule } from './application/post-jobs/post-jobs.module';
-import { VideoJobsModule } from './application/video-jobs/video-jobs.module';
-import { ImageJobsModule } from './application/image-jobs/image-jobs.module';
-import { VideosModule } from './application/videos/videos.module';
 import { StudioCoreModule } from './application/studio-core/studio-core.module';
 import { SubscriptionModule } from './application/subscription/subscription.module';
 import { UsersModule } from './application/users/users.module';
@@ -43,13 +37,7 @@ import imageGenerationConfig from './infrastructure/config/image-generation.conf
     }),
     DatabaseModule,
     AuthModule,
-    GenerationModule,
     BrandKitsModule,
-    ProductsModule,
-    PostJobsModule,
-    VideoJobsModule,
-    ImageJobsModule,
-    VideosModule,
     StudioCoreModule,
     SubscriptionModule,
     UsersModule,

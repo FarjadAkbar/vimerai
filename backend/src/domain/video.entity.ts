@@ -11,6 +11,11 @@ export enum GenerationMode {
   AVATAR = 'avatar',
 }
 
+export enum VideoKind {
+  USER = 'user',
+  TEMPLATE = 'template',
+}
+
 export class Video {
   constructor(
     public readonly id: string,
@@ -21,6 +26,8 @@ export class Video {
     public readonly videoUrl: string | null,
     public readonly previewUrl: string | null,
     public readonly jobId: string,
+    public readonly kind: VideoKind,
+    public readonly formatId: string | null,
     public readonly createdAt: Date,
     public readonly updatedAt: Date,
   ) {}
@@ -31,6 +38,7 @@ export class Video {
     prompt: string,
     mode: GenerationMode,
     jobId: string,
+    options?: { kind?: VideoKind; formatId?: string | null },
   ): Video {
     const now = new Date();
     return new Video(
@@ -42,6 +50,8 @@ export class Video {
       null,
       null,
       jobId,
+      options?.kind ?? VideoKind.USER,
+      options?.formatId ?? null,
       now,
       now,
     );
@@ -54,9 +64,11 @@ export class Video {
       this.prompt,
       this.mode,
       status,
-      videoUrl ?? this.videoUrl,
+      videoUrl !== undefined ? videoUrl : this.videoUrl,
       this.previewUrl,
       this.jobId,
+      this.kind,
+      this.formatId,
       this.createdAt,
       new Date(),
     );
@@ -72,6 +84,8 @@ export class Video {
       this.videoUrl,
       previewUrl,
       this.jobId,
+      this.kind,
+      this.formatId,
       this.createdAt,
       new Date(),
     );
@@ -87,6 +101,8 @@ export class Video {
       this.videoUrl,
       this.previewUrl,
       jobId,
+      this.kind,
+      this.formatId,
       this.createdAt,
       new Date(),
     );

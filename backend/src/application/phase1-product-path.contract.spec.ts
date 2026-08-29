@@ -1,7 +1,7 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 
-describe('Phase 1 product path contract (ticket 12)', () => {
+describe('Phase 1 product path contract (ticket 12 / 13)', () => {
   const backendSrc = path.join(__dirname, '..');
   const appModulePath = path.join(backendSrc, 'app.module.ts');
   const envExamplePath = path.join(backendSrc, '..', '.env.example');
@@ -25,26 +25,16 @@ describe('Phase 1 product path contract (ticket 12)', () => {
     expect(source).not.toMatch(/ACTIVE_KIT/);
   });
 
-  it('Generation module has no Product Kit or Prompt Studio dependency', () => {
-    const generationModulePath = path.join(
-      backendSrc,
-      'application',
-      'generation',
-      'generation.module.ts',
-    );
-    const generationServicePath = path.join(
-      backendSrc,
-      'application',
-      'generation',
-      'generation.service.ts',
-    );
-    const moduleSource = fs.readFileSync(generationModulePath, 'utf8');
-    const serviceSource = fs.readFileSync(generationServicePath, 'utf8');
+  it('does not wire legacy Generation or modality job modules (ticket 13 close)', () => {
+    const source = fs.readFileSync(appModulePath, 'utf8');
 
-    expect(moduleSource).not.toMatch(/KitsModule|ProductKit|ACTIVE_KIT|PromptsModule/);
-    expect(serviceSource).not.toMatch(
-      /ProductKit|IProductKitService|ACTIVE_KIT|PromptTemplate/,
-    );
+    expect(source).not.toMatch(/\bGenerationModule\b/);
+    expect(source).not.toMatch(/\bProductsModule\b/);
+    expect(source).not.toMatch(/\bPostJobsModule\b/);
+    expect(source).not.toMatch(/\bVideoJobsModule\b/);
+    expect(source).not.toMatch(/\bImageJobsModule\b/);
+    expect(source).not.toMatch(/\bVideosModule\b/);
+    expect(source).toMatch(/\bStudioCoreModule\b/);
   });
 
   it('does not require ACTIVE_KIT / KIT_ROOT in env example', () => {
@@ -68,8 +58,9 @@ describe('Phase 1 product path contract (ticket 12)', () => {
       '..',
       'frontend',
       'src',
-      'app',
-      'page.tsx',
+      'components',
+      'marketing',
+      'landing-page.tsx',
     );
     const source = fs.readFileSync(homePath, 'utf8');
 

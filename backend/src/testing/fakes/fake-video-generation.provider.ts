@@ -10,6 +10,8 @@ export class FakeVideoGenerationProvider implements IVideoGenerationProvider {
   readonly stitchCalls: string[][] = [];
   failNextGenerate = false;
   failNextStitch = false;
+  /** When false, generateVideo returns processing and status must be polled. */
+  completeOnGenerate = true;
 
   constructor(private readonly videoUrl: string) {}
 
@@ -22,6 +24,12 @@ export class FakeVideoGenerationProvider implements IVideoGenerationProvider {
       throw new Error('AI Video provider failed');
     }
     const jobId = `fal-video-${this.generateCalls.length}`;
+    if (!this.completeOnGenerate) {
+      return {
+        jobId,
+        status: 'processing',
+      };
+    }
     return {
       jobId,
       status: 'completed',
