@@ -5,7 +5,7 @@ export class AddBlitzConfiguration1735462800000 implements MigrationInterface {
 
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(`
-      CREATE TABLE "blitz_configurations" (
+      CREATE TABLE IF NOT EXISTS "blitz_configurations" (
         "id" uuid NOT NULL DEFAULT uuid_generate_v4(),
         "brandId" uuid NOT NULL,
         "userId" uuid NOT NULL,
@@ -18,14 +18,14 @@ export class AddBlitzConfiguration1735462800000 implements MigrationInterface {
       )
     `);
     await queryRunner.query(
-      `CREATE UNIQUE INDEX "IDX_blitz_configurations_brandId" ON "blitz_configurations" ("brandId")`,
+      `CREATE UNIQUE INDEX IF NOT EXISTS "IDX_blitz_configurations_brandId" ON "blitz_configurations" ("brandId")`,
     );
     await queryRunner.query(
-      `CREATE INDEX "IDX_blitz_configurations_userId" ON "blitz_configurations" ("userId")`,
+      `CREATE INDEX IF NOT EXISTS "IDX_blitz_configurations_userId" ON "blitz_configurations" ("userId")`,
     );
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.query(`DROP TABLE "blitz_configurations"`);
+    await queryRunner.query(`DROP TABLE IF EXISTS "blitz_configurations"`);
   }
 }
