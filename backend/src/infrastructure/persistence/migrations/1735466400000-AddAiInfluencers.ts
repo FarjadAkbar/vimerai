@@ -5,7 +5,7 @@ export class AddAiInfluencers1735466400000 implements MigrationInterface {
 
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(`
-      CREATE TABLE "ai_influencers" (
+      CREATE TABLE IF NOT EXISTS "ai_influencers" (
         "id" uuid NOT NULL DEFAULT uuid_generate_v4(),
         "userId" uuid NOT NULL,
         "name" text NOT NULL,
@@ -22,12 +22,12 @@ export class AddAiInfluencers1735466400000 implements MigrationInterface {
       )
     `);
     await queryRunner.query(
-      `CREATE INDEX "IDX_ai_influencers_userId" ON "ai_influencers" ("userId")`,
+      `CREATE INDEX IF NOT EXISTS "IDX_ai_influencers_userId" ON "ai_influencers" ("userId")`,
     );
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.query(`DROP INDEX "IDX_ai_influencers_userId"`);
-    await queryRunner.query(`DROP TABLE "ai_influencers"`);
+    await queryRunner.query(`DROP INDEX IF EXISTS "IDX_ai_influencers_userId"`);
+    await queryRunner.query(`DROP TABLE IF EXISTS "ai_influencers"`);
   }
 }

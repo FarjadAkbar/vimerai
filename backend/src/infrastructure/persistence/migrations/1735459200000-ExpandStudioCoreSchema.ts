@@ -5,7 +5,7 @@ export class ExpandStudioCoreSchema1735459200000 implements MigrationInterface {
 
   public async up(queryRunner: QueryRunner): Promise<void> {
     await queryRunner.query(`
-      CREATE TABLE "templates" (
+      CREATE TABLE IF NOT EXISTS "templates" (
         "id" uuid NOT NULL DEFAULT uuid_generate_v4(),
         "slug" character varying(64) NOT NULL,
         "type" character varying(32) NOT NULL,
@@ -25,11 +25,11 @@ export class ExpandStudioCoreSchema1735459200000 implements MigrationInterface {
       )
     `);
     await queryRunner.query(
-      `CREATE UNIQUE INDEX "IDX_templates_slug" ON "templates" ("slug")`,
+      `CREATE UNIQUE INDEX IF NOT EXISTS "IDX_templates_slug" ON "templates" ("slug")`,
     );
 
     await queryRunner.query(`
-      CREATE TABLE "media_assets" (
+      CREATE TABLE IF NOT EXISTS "media_assets" (
         "id" uuid NOT NULL DEFAULT uuid_generate_v4(),
         "userId" uuid NOT NULL,
         "kind" character varying(16) NOT NULL,
@@ -43,11 +43,11 @@ export class ExpandStudioCoreSchema1735459200000 implements MigrationInterface {
       )
     `);
     await queryRunner.query(
-      `CREATE INDEX "IDX_media_assets_userId" ON "media_assets" ("userId")`,
+      `CREATE INDEX IF NOT EXISTS "IDX_media_assets_userId" ON "media_assets" ("userId")`,
     );
 
     await queryRunner.query(`
-      CREATE TABLE "jobs" (
+      CREATE TABLE IF NOT EXISTS "jobs" (
         "id" uuid NOT NULL DEFAULT uuid_generate_v4(),
         "userId" uuid NOT NULL,
         "brandId" uuid,
@@ -63,11 +63,11 @@ export class ExpandStudioCoreSchema1735459200000 implements MigrationInterface {
       )
     `);
     await queryRunner.query(
-      `CREATE INDEX "IDX_jobs_userId" ON "jobs" ("userId")`,
+      `CREATE INDEX IF NOT EXISTS "IDX_jobs_userId" ON "jobs" ("userId")`,
     );
 
     await queryRunner.query(`
-      CREATE TABLE "content_items" (
+      CREATE TABLE IF NOT EXISTS "content_items" (
         "id" uuid NOT NULL DEFAULT uuid_generate_v4(),
         "userId" uuid NOT NULL,
         "jobId" uuid NOT NULL,
@@ -81,17 +81,17 @@ export class ExpandStudioCoreSchema1735459200000 implements MigrationInterface {
       )
     `);
     await queryRunner.query(
-      `CREATE INDEX "IDX_content_items_userId" ON "content_items" ("userId")`,
+      `CREATE INDEX IF NOT EXISTS "IDX_content_items_userId" ON "content_items" ("userId")`,
     );
     await queryRunner.query(
-      `CREATE UNIQUE INDEX "IDX_content_items_jobId" ON "content_items" ("jobId")`,
+      `CREATE UNIQUE INDEX IF NOT EXISTS "IDX_content_items_jobId" ON "content_items" ("jobId")`,
     );
   }
 
   public async down(queryRunner: QueryRunner): Promise<void> {
-    await queryRunner.query(`DROP TABLE "content_items"`);
-    await queryRunner.query(`DROP TABLE "jobs"`);
-    await queryRunner.query(`DROP TABLE "media_assets"`);
-    await queryRunner.query(`DROP TABLE "templates"`);
+    await queryRunner.query(`DROP TABLE IF EXISTS "content_items"`);
+    await queryRunner.query(`DROP TABLE IF EXISTS "jobs"`);
+    await queryRunner.query(`DROP TABLE IF EXISTS "media_assets"`);
+    await queryRunner.query(`DROP TABLE IF EXISTS "templates"`);
   }
 }

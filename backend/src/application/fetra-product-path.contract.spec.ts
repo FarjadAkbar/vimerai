@@ -64,13 +64,13 @@ describe('Fetra product path contract (ticket 05 / 13)', () => {
 
     const header = read('components', 'header.tsx');
 
-    const products = read('app', 'products', 'page.tsx');
-
     const businessDna = read('app', 'studio', 'business-dna', 'page.tsx');
 
 
 
     expect(nextConfig).toMatch(/source:\s*["']\/brand-kits["']/);
+    expect(nextConfig).toMatch(/source:\s*["']\/products["']/);
+    expect(nextConfig).toMatch(/destination:\s*["']\/studio\/library["']/);
 
     expect(nextConfig).toMatch(
 
@@ -99,10 +99,6 @@ describe('Fetra product path contract (ticket 05 / 13)', () => {
     expect(header).not.toMatch(/PRODUCT_PATH\.brands/);
 
     expect(header).not.toMatch(/PRODUCT_PATH\.products/);
-
-    expect(products).toMatch(/redirect/);
-
-    expect(products).toMatch(/PRODUCT_PATH\.library/);
 
     expect(businessDna).toMatch(/BrandConfirmForm|Brand Confirm/);
 
@@ -144,7 +140,9 @@ describe('Fetra product path contract (ticket 05 / 13)', () => {
 
     expect(videos).not.toMatch(/InlineProductCreate/);
 
-    expect(videos).not.toMatch(/href=["']\/products["']/);
+    expect(
+      fs.existsSync(path.join(frontendSrc, 'app', 'products', 'page.tsx')),
+    ).toBe(false);
 
   });
 
